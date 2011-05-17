@@ -5,7 +5,7 @@ Also run elastic search on the default ports locally.
 """
 from unittest import TestCase
 
-from elasticutils import S, get_es
+from elasticutils import F, S, get_es
 from nose.tools import eq_
 
 
@@ -33,6 +33,21 @@ class QueryTest(TestCase):
 
     def test_filter(self):
         eq_(len(S(tag='awesome')), 3)
+
+    def test_filter_and(self):
+        eq_(len(S(tag='awesome', foo='bar')), 1)
+
+    def test_filter_or(self):
+        eq_(len(S().filter(F(tag='awesome') | F(tag='boat'))), 4)
+
+    def test_filter_or_3(self):
+        eq_(len(S().filter(F(tag='awesome') | F(tag='boat') |
+                           F(tag='boring'))), 5)
+        eq_(len(S().filter(F(foo='bar') |
+                           (F(tag='boat') | F(tag='boring')))), 3)
+
+    def test_filter_complicated(self):
+        eq_(len(S().filter(F(tag='awesome', foo='bar') | F(tag='boring'))), 2)
 
     def test_facet(self):
         eq_(S().facet('tag').get_facet('tag'),

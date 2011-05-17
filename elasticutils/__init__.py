@@ -43,6 +43,26 @@ def _process_filters(filters):
         return qfilters[0]
 
 
+class F(object):
+    """
+    Filter objects.
+    """
+    def __init__(self, **filters):
+        self.filters = _process_filters(filters) if filters else {}
+
+    def __or__(self, other):
+        f = F()
+        if 'or' in self.filters:
+            f.filters = self.filters
+            f.filters['or'].append(other.filters)
+        elif 'or' in other.filters:
+            f.filters = other.filters
+            f.filters['or'].append(self.filters)
+        else:
+            f.filters = {'or': [self.filters, other.filters]}
+        return f
+
+
 class S(object):
     def __init__(self, query=None, type=None, **filters):
         if query:
@@ -58,8 +78,15 @@ class S(object):
         self.objects = []
         self.type = type
 
-    def filter(self, **filters):
-        self.filter_ = _process_filters(filters)
+    def filter(self, f=None, **filters):
+        """
+        Takes either a kwargs of ``and`` filters.  Or it takes an ``F`` object.
+        """
+        if f:
+            self.filter_ = f.filters
+        else:
+            self.filter_ = _process_filters(filters)
+
         return self
 
     def facet(self, field, global_=False):
