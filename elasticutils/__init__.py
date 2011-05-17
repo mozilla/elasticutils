@@ -6,8 +6,8 @@ from pyes import ES
 
 try:
     from django.conf import settings
-except:
-    import settings
+except ImportError:
+    import es_settings as settings
 
 
 _local = local()
