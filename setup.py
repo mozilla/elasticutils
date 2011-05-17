@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='elasticutils',
-    version='0.1',
+    version='0.2',
     description='Chainable interface to querying ElasticSearch',
     long_description=open('README').read(),
     author='Dave Dash',
