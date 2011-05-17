@@ -43,7 +43,7 @@ def _process_filters(filters):
         return qfilters[0]
 
 
-class Q(object):
+class S(object):
     def __init__(self, query=None, type=None, **filters):
         if query:
             self.query = dict(query_string=dict(query=query))

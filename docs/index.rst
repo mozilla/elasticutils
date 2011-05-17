@@ -10,27 +10,31 @@ ElasticUtils makes querying and filtering and collecting facets from
 ElasticSearch simple ::
 
 
-    q = (Q(product='firefox').filter(version='4.0', platform='all')
-                             .facet('product', True).facet('version')
+    q = (S(product='firefox').filter(version='4.0', platform='all')
+                             .facet('product', global_=True).facet('version')
                              .facet('platform').facet('type'))
 
 Search All
 ----------
-By default ``Q()`` will do a ``match_all`` query in ElasticSearch.
+
+By default ``S()`` will do a ``match_all`` query in ElasticSearch.
+
 
 Search Query
 ------------
 
-*Not implemented*
+``S('taco trucks')`` will do a query for "taco trucks".
 
-``Q('taco trucks')`` will do a query for "taco trucks".
 
 Filters
 -------
-``Q('taco trucks').filter(style='korean')`` will do a query for "taco trucks"
+
+``S('taco trucks').filter(style='korean')`` will do a query for "taco trucks"
 filtering on the attribute ``style``.  This is how we find Korean Taco Trucks.
+
 
 Facets
 ------
-``Q('taco trucks').facet('style').facet('location')`` will do a query for
+
+``S('taco trucks').facet('style').facet('location')`` will do a query for
 "taco trucks" and return facets for the ``style`` and ``location`` fields.
