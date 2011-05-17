@@ -27,7 +27,7 @@ Search Query
 
 Filters
 -------
-``Q('taco trucks').filer(style='korean')`` will do a query for "taco trucks"
+``Q('taco trucks').filter(style='korean')`` will do a query for "taco trucks"
 filtering on the attribute ``style``.  This is how we find Korean Taco Trucks.
 
 Facets
