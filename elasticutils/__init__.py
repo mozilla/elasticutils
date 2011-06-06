@@ -77,6 +77,7 @@ class S(object):
         self.facets = {}
         self.objects = []
         self.type = type
+        self.total = None
 
     def filter(self, f=None, **filters):
         """
@@ -89,8 +90,13 @@ class S(object):
 
         return self
 
-    def facet(self, field, global_=False):
-        facet = dict(terms=dict(field=field))
+    def facet(self, field, script=None, global_=False):
+        facetdetails = dict(field=field)
+        if script:
+            facetdetails['script'] = script
+
+        facet = dict(terms=facetdetails)
+
         if global_:
             facet['global'] = True
         self.facets[field] = facet
@@ -108,6 +114,7 @@ class S(object):
             query['from'] = (page - 1) * perpage
         self.offset = query.get('from', 0)
         self.results = es.search(query, settings.ES_INDEX, self.type)
+        self.total = self.results['hits']['total']
         return self
 
     def get_results(self, **kw):

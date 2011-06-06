@@ -68,3 +68,21 @@ Facets
 
 ``S('taco trucks').facet('style').facet('location')`` will do a query for
 "taco trucks" and return facets for the ``style`` and ``location`` fields.
+
+Facets can also be scripted_::
+
+    S('taco trucks').facet('style', script='term == korean ? true : false')
+
+.. _scripted: http://www.elasticsearch.org/guide/reference/api/search/facets/terms-facet.html
+
+Results
+-------
+
+Results are accessible via ``S('taco trucks').get_results()``.
+
+Total hits can be found by doing::
+
+    r = S('taco trucks').get_results()
+    r.total
+
+
