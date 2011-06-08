@@ -64,7 +64,14 @@ class F(object):
 
 
 class S(object):
-    def __init__(self, query=None, type=None, **filters):
+    def __init__(self, query=None, type=None, result_transform=None,
+                 **filters):
+        """
+        `query` is the string we are querying.
+        `type` is the object type we are querying
+        `result_transform` is a callable that transforms the results from
+            ElasticSearch into a set of objects.
+        """
         if query:
             self.query = dict(query_string=dict(query=query))
         else:
@@ -78,6 +85,7 @@ class S(object):
         self.objects = []
         self.type = type
         self.total = None
+        self.result_transform = result_transform
 
     def filter(self, f=None, **filters):
         """
@@ -102,18 +110,22 @@ class S(object):
         self.facets[field] = facet
         return self
 
-    def execute(self, page=1, perpage=None):
+    def execute(self, start=0, stop=None):
         es = get_es()
         query = dict(query=self.query)
         if self.filter_:
             query['filter'] = self.filter_
         if self.facets:
             query['facets'] = self.facets
-        if page and perpage:
-            query['size'] = perpage
-            query['from'] = (page - 1) * perpage
+        if stop:
+            query['size'] = stop-start
+        if start:
+            query['from'] = start
         self.offset = query.get('from', 0)
         self.results = es.search(query, settings.ES_INDEX, self.type)
+
+        if self.result_transform:
+            self.objects = self.result_transform(self.results)
         self.total = self.results['hits']['total']
         return self
 
@@ -132,10 +144,6 @@ class S(object):
         return dict((t['term'], t['count']) for t
                      in self.results['facets'][key]['terms'])
 
-    def results_as(self, meth):
-        self.objects = meth(self.get_results())
-        return self.objects
-
     def __len__(self):
         if not self.results:
             self.execute()
@@ -153,6 +161,14 @@ class S(object):
         ``objects`` doesn't contain all ``total`` items, just the items for
         the current page, so we need to adjust ``k``
         """
+        if self.objects:
+            start = 0
+            stop = None
+            if isinstance(k, slice):
+                start = k.start
+                stop = k.stop
+            self.execute(start, stop)
+
         if isinstance(k, slice) and k.start >= self.offset:
             k = slice(k.start - self.offset, k.stop - self.offset if k.stop
                       else None)
