@@ -72,8 +72,10 @@ class S(object):
         `result_transform` is a callable that transforms the results from
             ElasticSearch into a set of objects.
         """
-        if query:
+        if isinstance(query, basestring):
             self.query = dict(query_string=dict(query=query))
+        elif isinstance(query, dict):
+            self.query = query
         else:
             self.query = dict(match_all={})
         if filters:
@@ -86,6 +88,7 @@ class S(object):
         self.type = type
         self.total = None
         self.result_transform = result_transform
+        self.offset = 0
 
     def filter(self, f=None, **filters):
         """
