@@ -24,6 +24,7 @@ def get_es():
 def es_required(f):
     @wraps(f)
     def wrapper(*args, **kw):
+        import pdb; pdb.set_trace()
         if settings.ES_DISABLED:
             log.warning('Search not available for %s.' % f)
             return

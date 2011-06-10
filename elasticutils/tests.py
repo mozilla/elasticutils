@@ -5,6 +5,7 @@ from django.conf import settings
 
 import test_utils
 from elasticutils import get_es
+from nose import SkipTest
 
 
 class ESTestCase(test_utils.TestCase):
@@ -13,7 +14,7 @@ class ESTestCase(test_utils.TestCase):
     """
     @classmethod
     def setup_class(cls):
-        if not hasattr(settings, 'ES_HOSTS'):
+        if not (hasattr(settings, 'ES_HOSTS') and settings.ES_HOSTS):
             raise SkipTest
         cls.old_ES_DISABLED = settings.ES_DISABLED
         settings.__dict__['ES_DISABLED'] = False
