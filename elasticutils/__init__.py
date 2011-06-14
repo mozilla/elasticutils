@@ -24,7 +24,6 @@ def get_es():
 def es_required(f):
     @wraps(f)
     def wrapper(*args, **kw):
-        import pdb; pdb.set_trace()
         if settings.ES_DISABLED:
             log.warning('Search not available for %s.' % f)
             return
@@ -122,7 +121,7 @@ class S(object):
         if self.facets:
             query['facets'] = self.facets
         if stop:
-            query['size'] = stop-start
+            query['size'] = stop - start
         if start:
             query['from'] = start
         self.offset = query.get('from', 0)

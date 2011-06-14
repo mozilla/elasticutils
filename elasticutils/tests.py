@@ -14,6 +14,7 @@ class ESTestCase(test_utils.TestCase):
     """
     @classmethod
     def setup_class(cls):
+        super(ESTestCase, cls).setup_class()
         if not (hasattr(settings, 'ES_HOSTS') and settings.ES_HOSTS):
             raise SkipTest
         cls.old_ES_DISABLED = settings.ES_DISABLED
@@ -22,9 +23,8 @@ class ESTestCase(test_utils.TestCase):
         cls.es = get_es()
         cls.es.delete_index_if_exists(settings.ES_INDEX)
 
-    def tearDown(self):
-        self.es.delete_index_if_exists(settings.ES_INDEX)
-
     @classmethod
     def teardown_class(cls):
+        cls.es.delete_index_if_exists(settings.ES_INDEX)
         settings.__dict__['ES_DISABLED'] = cls.old_ES_DISABLED
+        super(ESTestCase, cls).teardown_class()
