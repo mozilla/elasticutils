@@ -25,7 +25,7 @@ def es_required(f):
     @wraps(f)
     def wrapper(*args, **kw):
         if settings.ES_DISABLED:
-            log.warning('Search not available for %s.' % f)
+            log.debug('Search disabled for %s.' % f)
             return
 
         return f(*args, es=get_es(), **kw)
