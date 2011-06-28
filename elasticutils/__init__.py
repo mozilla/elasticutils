@@ -17,7 +17,9 @@ log = logging.getLogger('elasticsearch')
 def get_es():
     """Return one es object."""
     if not hasattr(_local, 'es'):
-        _local.es = ES(settings.ES_HOSTS, default_indexes=[settings.ES_INDEX])
+        timeout = getattr(settings, 'ES_TIMEOUT', 1)
+        _local.es = ES(settings.ES_HOSTS, default_indexes=[settings.ES_INDEX],
+                       timeout=timeout)
     return _local.es
 
 
