@@ -84,13 +84,27 @@ class S(object):
             filter = _process_filters(filters)
             self.query = dict(filtered=dict(query=self.query, filter=filter))
         self.filter_ = None
-        self.results = None
+        self.results = []
         self.facets = {}
         self.objects = []
+        self.ordering = []
         self.type = type
         self.total = None
         self.result_transform = result_transform
         self.offset = 0
+
+    def _clone(self):
+        new = self.__class__(self.type)
+        new.filter_ = self.filter_
+        new.results = list(self.results)
+        new.facets = dict(self.facets)
+        new.objects = list(self.objects)
+        new.ordering = list(self.ordering)
+        new.type = self.type
+        new.total = self.total
+        new.result_transform = self.result_transform
+        new.offset = self.offset
+        return new
 
     def filter(self, f=None, **filters):
         """
@@ -115,6 +129,15 @@ class S(object):
         self.facets[field] = facet
         return self
 
+    def order_by(self, *fields):
+        new = self._clone()
+        for field in fields:
+            if field.startswith('-'):
+                new.ordering.append({field[1:]: 'desc'})
+            else:
+                new.ordering.append(field)
+        return new
+
     def execute(self, start=0, stop=None):
         es = get_es()
         query = dict(query=self.query)
@@ -126,6 +149,9 @@ class S(object):
             query['size'] = stop - start
         if start:
             query['from'] = start
+        if self.ordering:
+            query['sort'] = self.ordering
+
         self.offset = query.get('from', 0)
         self.results = es.search(query, settings.ES_INDEX, self.type)
 
