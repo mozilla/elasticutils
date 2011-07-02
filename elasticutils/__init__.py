@@ -88,6 +88,7 @@ class S(object):
         self.facets = {}
         self.objects = []
         self.ordering = []
+        self.score_ = None
         self.type = type
         self.total = None
         self.result_transform = result_transform
@@ -100,6 +101,7 @@ class S(object):
         new.facets = dict(self.facets)
         new.objects = list(self.objects)
         new.ordering = list(self.ordering)
+        new.score_ = self.score_
         new.type = self.type
         new.total = self.total
         new.result_transform = self.result_transform
@@ -129,6 +131,16 @@ class S(object):
         self.facets[field] = facet
         return self
 
+    def score(self, script, params=None):
+        """
+        Custom score queries allow you to use a script to calculate a score by
+        which your results will be ordered (higher scores before lower scores).
+        For more information:
+        http://www.elasticsearch.org/guide/reference/query-dsl/custom-score-query.html
+        """
+        self.score_ = dict(script=script, params=params)
+        return self
+
     def order_by(self, *fields):
         new = self._clone()
         for field in fields:
@@ -138,8 +150,7 @@ class S(object):
                 new.ordering.append(field)
         return new
 
-    def execute(self, start=0, stop=None):
-        es = get_es()
+    def _build_query(self, start=0, stop=None):
         query = dict(query=self.query)
         if self.filter_:
             query['filter'] = self.filter_
@@ -152,7 +163,18 @@ class S(object):
         if self.ordering:
             query['sort'] = self.ordering
 
-        self.offset = query.get('from', 0)
+        if self.score_:
+            query['query'] = dict(custom_score=dict(query=query['query'], script=self.score_['script']))
+            if (self.score_['params']):
+                query['query']['custom_score']['params'] = self.score_['params']
+
+        return query
+
+    def execute(self, start=0, stop=None):
+        es = get_es()
+        query = self._build_query(start, stop)
+        self.offset = query.get('from', 0);
+
         self.results = es.search(query, settings.ES_INDEX, self.type)
 
         if self.result_transform:
@@ -207,3 +229,7 @@ class S(object):
             k -= self.offset
 
         return self.objects.__getitem__(k)
+
+    def __str__(self):
+        query = self._build_query()
+        return str(query)

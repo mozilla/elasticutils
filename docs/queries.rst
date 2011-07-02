@@ -41,11 +41,11 @@ will do a query for "taco trucks" that are
 
 This is however equivalent to the more succinct::
 
-S('taco trucks', style='korean', price='FREE')
+    S('taco trucks', style='korean', price='FREE')
 
 
-Complicate Filtering
-~~~~~~~~~~~~~~~~~~~~
+Complicated Filtering
+~~~~~~~~~~~~~~~~~~~~~
 
 Sometimes you want something complicated.  For that we have the ``F`` (filter)
 object.
@@ -56,7 +56,7 @@ will find you "thai" or "korean" style taco trucks.
 Let's say you only want "korean" tacos if you can get it for "FREE" or "thai"
 tacos at any price::
 
-S('taco trucks').filter(F(style='korean', price='FREE')|F(style='thai'))
+    S('taco trucks').filter(F(style='korean', price='FREE')|F(style='thai'))
 
 
 Facets
@@ -70,6 +70,21 @@ Facets can also be scripted_::
     S('taco trucks').facet('style', script='term == korean ? true : false')
 
 .. _scripted: http://www.elasticsearch.org/guide/reference/api/search/facets/terms-facet.html
+
+Custom Scoring
+--------------
+
+You can affect the match score calculated for each result by applying a custom
+score script_ to a query, which allows you to specify explicitly how the score
+is derived from each item's values::
+
+    S('taco trucks').score('_score * doc["menu_options"].value')
+
+will do a query for "taco trucks" and rank them based on how many menu options
+they have.
+
+.. _script: http://www.elasticsearch.org/guide/reference/modules/scripting.html
+
 
 Results
 -------
