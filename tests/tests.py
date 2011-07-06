@@ -14,11 +14,11 @@ class QueryTest(TestCase):
     @classmethod
     def setup_class(cls):
         es = get_es()
-        data1 = dict(id=1, foo='bar', tag='awesome')
-        data2 = dict(id=2, foo='barf', tag='boring')
-        data3 = dict(id=3, foo='car', tag='awesome')
-        data4 = dict(id=4, foo='duck', tag='boat')
-        data5 = dict(id=5, foo='train car', tag='awesome')
+        data1 = dict(id=1, foo='bar', tag='awesome', width='2')
+        data2 = dict(id=2, foo='barf', tag='boring', width='7')
+        data3 = dict(id=3, foo='car', tag='awesome', width='5')
+        data4 = dict(id=4, foo='duck', tag='boat', width='11')
+        data5 = dict(id=5, foo='train car', tag='awesome', width='7')
 
         for data in (data1, data2, data3, data4, data5):
             es.index(data, 'test', 'boondongles', bulk=True)
@@ -52,6 +52,21 @@ class QueryTest(TestCase):
     def test_facet(self):
         eq_(S().facet('tag').get_facet('tag'),
             dict(awesome=3, boring=1, boat=1))
+
+    def test_custom_score(self):
+        """
+        This query selects all the boondongles with the tag 'awesome' and then
+        applies the custom score script to rank them based on their 'width'
+        parameter. Since the tag being queried for matches exactly, each starts
+        with a score of 1.0. The script then multiplies that by the width to
+        get their final scores; hence, the calculated scores will be equal to
+        the width. The results are ordered by highest score first, so we can
+        expect them to be id 5 with a score of 7.0, then id 3 with a score of
+        5.0, then id 1 with a score of 2.0.
+        """
+        res = S(tag='awesome')
+        res = res.score(script='_score * doc["width"].value').get_results()
+        eq_([d['_source']['id'] for d in res], [5, 3, 1])
 
     @classmethod
     def teardown_class(cls):
