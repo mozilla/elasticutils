@@ -11,6 +11,7 @@ except ImportError:
 
 
 _local = local()
+_local.disabled = {}
 log = logging.getLogger('elasticsearch')
 
 
@@ -28,7 +29,10 @@ def es_required(f):
     @wraps(f)
     def wrapper(*args, **kw):
         if settings.ES_DISABLED:
-            log.debug('Search disabled for %s.' % f)
+            # Log once.
+            if f.__name__ not in _local.disabled:
+                log.debug('Search disabled for %s.' % f)
+                _local.disabled[f.__name__] = 1
             return
 
         return f(*args, es=get_es(), **kw)
