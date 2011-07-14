@@ -2,7 +2,7 @@ import logging
 from functools import wraps
 from threading import local
 
-from pyes import ES
+from pyes import ES, exceptions
 
 try:
     from django.conf import settings
@@ -11,6 +11,7 @@ except ImportError:
 
 
 _local = local()
+_local.disabled = {}
 log = logging.getLogger('elasticsearch')
 
 
@@ -18,8 +19,9 @@ def get_es():
     """Return one es object."""
     if not hasattr(_local, 'es'):
         timeout = getattr(settings, 'ES_TIMEOUT', 1)
+        dump = getattr(settings, 'ES_DUMP_CURL', False)
         _local.es = ES(settings.ES_HOSTS, default_indexes=[settings.ES_INDEX],
-                       timeout=timeout)
+                       timeout=timeout, dump_curl=dump)
     return _local.es
 
 
@@ -27,11 +29,48 @@ def es_required(f):
     @wraps(f)
     def wrapper(*args, **kw):
         if settings.ES_DISABLED:
-            log.debug('Search disabled for %s.' % f)
+            # Log once.
+            if f.__name__ not in _local.disabled:
+                log.debug('Search disabled for %s.' % f)
+                _local.disabled[f.__name__] = 1
             return
 
         return f(*args, es=get_es(), **kw)
     return wrapper
+
+
+def es_required_or_50x(disabled_msg, error_msg):
+    """
+    This takes a Django view that requires ElasticSearch.
+
+    If `ES_DISABLED` is `True` then we raise a 501 Not Implemented and display
+    the disabled_msg.  If we try the view and an ElasticSearch exception is
+    raised we raise a 503 error with the error_msg.
+
+    We use user-supplied templates in elasticutils/501.html and
+    elasticutils/503.html.
+    """
+    def wrap(f):
+        @wraps(f)
+        def wrapper(request, *args, **kw):
+            from django.shortcuts import render
+            if settings.ES_DISABLED:
+                response = render(request, 'elasticutils/501.html',
+                                  {'msg': disabled_msg})
+                response.status_code = 501
+                return response
+            else:
+                try:
+                    return f(request, *args, **kw)
+                except exceptions.ElasticSearchException as error:
+                    response = render(request, 'elasticutils/503.html',
+                            {'msg': error_msg, 'error': error})
+                    response.status_code = 503
+                    return response
+
+        return wrapper
+
+    return wrap
 
 
 def _process_filters(filters):
@@ -96,6 +135,7 @@ class S(object):
 
     def _clone(self):
         new = self.__class__(self.type)
+        new.query = self.query
         new.filter_ = self.filter_
         new.results = list(self.results)
         new.facets = dict(self.facets)
