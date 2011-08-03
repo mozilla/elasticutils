@@ -87,11 +87,8 @@ def _split(string):
 
 def _process_filters(filters):
     rv = []
-    log.debug(filters)
     for f in filters:
-        log.debug(f)
         if isinstance(f, F):
-            log.debug('is an F()')
             rv.append(f.filters)
         else:
             key, val = f
@@ -115,6 +112,10 @@ class F(object):
                 else {}
 
     def _combine(self, other, conn='and'):
+        """
+        OR and AND will create a new F, with the filters from both F objects
+        combined with the connector `conn`.
+        """
         f = F()
         if conn in self.filters:
             f.filters = self.filters
@@ -139,6 +140,10 @@ class F(object):
 
 
 class S(object):
+    """
+    Represents a lazy ElasticSearch lookup, with a similar api to Django's
+    QuerySet.
+    """
 
     def __init__(self, type_):
         self.type = type_
@@ -158,24 +163,51 @@ class S(object):
         return new
 
     def values(self, *fields):
+        """
+        Returns a new S instance whose SearchResults will be of the class
+        ListSearchResults.
+        """
         return self._clone(next_step=('values', fields))
 
     def values_dict(self, *fields):
+        """
+        Returns a new S instance whose SearchResults will be of the class
+        DictSearchResults.
+        """
         return self._clone(next_step=('values_dict', fields))
 
     def order_by(self, *fields):
+        """
+        Returns a new S instance with the ordering changed.
+        """
         return self._clone(next_step=('order_by', fields))
 
     def query(self, **kw):
+        """
+        Returns a new S instance with the query args combined to the existing
+        set.
+        """
         return self._clone(next_step=('query', kw.items()))
 
     def filter(self, *filters, **kw):
+        """
+        Returns a new S instance with the filter args combined to the existing
+        set.
+        """
         return self._clone(next_step=('filter', list(filters) + kw.items()))
 
     def facet(self, **kw):
+        """
+        Returns a new S instance with the facet args combined to the existing
+        set.
+        """
         return self._clone(next_step=('facet', kw.items()))
 
     def extra(self, **kw):
+        """
+        Returns a new S instance with the extra args combined with the existing
+        set.
+        """
         new = self._clone()
         actions = 'values values_dict order_by query filter facet'.split()
         for key, vals in kw.items():
@@ -187,6 +219,10 @@ class S(object):
         return new
 
     def count(self):
+        """
+        Returns the number of hits for the current query and filters as an
+        integer.
+        """
         if self._results_cache:
             return self._results_cache.count
         else:
@@ -206,6 +242,10 @@ class S(object):
             return list(new)[0]
 
     def _build_query(self):
+        """
+        Loops self.steps to build the query format that will be sent to
+        ElasticSearch, and returns it as a dict.
+        """
         filters = []
         queries = []
         sort = []
@@ -287,6 +327,10 @@ class S(object):
         return rv
 
     def _do_search(self):
+        """
+        Performs the search, then converts that raw format into a
+        SearchResults instance and returns it.
+        """
         if not self._results_cache:
             hits = self.raw()
             if self.as_dict:
@@ -299,6 +343,10 @@ class S(object):
         return self._results_cache
 
     def raw(self):
+        """
+        Builds query and passes to ElasticSearch, then returns the raw format
+        returned.
+        """
         qs = self._build_query()
         es = get_es()
         try:
