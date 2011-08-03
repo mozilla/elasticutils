@@ -5,6 +5,11 @@ from threading import local
 from pyes import ES, exceptions
 
 try:
+    from statsd import statsd
+except ImportError:
+    statsd = None
+
+try:
     from django.conf import settings
 except ImportError:
     import es_settings as settings
@@ -73,203 +78,301 @@ def es_required_or_50x(disabled_msg, error_msg):
     return wrap
 
 
-def _process_filters(filters):
-    qfilters = []
-    for field, value in filters.iteritems():
-        qfilters.append(dict(term={field: value}))
-
-    if len(qfilters) > 1:
-        return {'and': qfilters}
+def _split(string):
+    if '__' in string:
+        return string.rsplit('__', 1)
     else:
-        return qfilters[0]
+        return string, None
 
+
+def _process_filters(filters):
+    rv = []
+    log.debug(filters)
+    for f in filters:
+        log.debug(f)
+        if isinstance(f, F):
+            log.debug('is an F()')
+            rv.append(f.filters)
+        else:
+            key, val = f
+            key, field_action = _split(key)
+            if key == 'or_':
+                rv.append({'or':_process_filters(val.items())})
+            elif field_action is None:
+                rv.append({'term': {key: val}})
+            elif field_action == 'in':
+                rv.append({'in': {key: val}})
+            elif field_action in ('gt', 'gte', 'lt', 'lte'):
+                rv.append({'range': {key: {field_action: val}}})
+    return rv
 
 class F(object):
     """
     Filter objects.
     """
     def __init__(self, **filters):
-        self.filters = _process_filters(filters) if filters else {}
+        self.filters = {'and': _process_filters(filters.items())} if filters \
+                else {}
+
+    def _combine(self, other, conn='and'):
+        f = F()
+        if conn in self.filters:
+            f.filters = self.filters
+            f.filters[conn].append(other.filters)
+        elif conn in other.filters:
+            f.filters = other.filters
+            f.filters[conn].append(self.filters)
+        else:
+            f.filters = {conn: [self.filters, other.filters]}
+        return f
 
     def __or__(self, other):
+        return self._combine(other, 'or')
+
+    def __and__(self, other):
+        return self._combine(other, 'and')
+
+    def __invert__(self):
         f = F()
-        if 'or' in self.filters:
-            f.filters = self.filters
-            f.filters['or'].append(other.filters)
-        elif 'or' in other.filters:
-            f.filters = other.filters
-            f.filters['or'].append(self.filters)
-        else:
-            f.filters = {'or': [self.filters, other.filters]}
+        f.filters = {'not': {'filter': self.filters}}
         return f
 
 
 class S(object):
-    def __init__(self, query=None, type=None, result_transform=None,
-                 **filters):
-        """
-        `query` is the string we are querying.
-        `type` is the object type we are querying
-        `result_transform` is a callable that transforms the results from
-            ElasticSearch into a set of objects.
-        """
-        if isinstance(query, basestring):
-            self.query = dict(query_string=dict(query=query))
-        elif isinstance(query, dict):
-            self.query = query
-        else:
-            self.query = dict(match_all={})
-        if filters:
-            filter = _process_filters(filters)
-            self.query = dict(filtered=dict(query=self.query, filter=filter))
-        self.filter_ = None
-        self.results = []
-        self.facets = {}
-        self.objects = []
-        self.ordering = []
-        self.score_ = None
-        self.type = type
-        self.total = None
-        self.result_transform = result_transform
-        self.offset = 0
 
-    def _clone(self):
+    def __init__(self, type_):
+        self.type = type_
+        self.steps = []
+        self.start = 0
+        self.stop = None
+        self.as_list = self.as_dict = False
+        self._results_cache = None
+
+    def _clone(self, next_step=None):
         new = self.__class__(self.type)
-        new.query = self.query
-        new.filter_ = self.filter_
-        new.results = list(self.results)
-        new.facets = dict(self.facets)
-        new.objects = list(self.objects)
-        new.ordering = list(self.ordering)
-        new.score_ = self.score_
-        new.type = self.type
-        new.total = self.total
-        new.result_transform = self.result_transform
-        new.offset = self.offset
+        new.steps = list(self.steps)
+        if next_step:
+            new.steps.append(next_step)
+        new.start = self.start
+        new.stop = self.stop
         return new
 
-    def filter(self, f=None, **filters):
-        """
-        Takes either a kwargs of ``and`` filters.  Or it takes an ``F`` object.
-        """
-        if f:
-            self.filter_ = f.filters
-        else:
-            self.filter_ = _process_filters(filters)
+    def values(self, *fields):
+        return self._clone(next_step=('values', fields))
 
-        return self
-
-    def facet(self, field, script=None, global_=False):
-        facetdetails = dict(field=field)
-        if script:
-            facetdetails['script'] = script
-
-        facet = dict(terms=facetdetails)
-
-        if global_:
-            facet['global'] = True
-        self.facets[field] = facet
-        return self
-
-    def score(self, script, params=None):
-        """
-        Custom score queries allow you to use a script to calculate a score by
-        which your results will be ordered (higher scores before lower scores).
-        For more information:
-        http://www.elasticsearch.org/guide/reference/query-dsl/custom-score-query.html
-        """
-        self.score_ = dict(script=script, params=params)
-        return self
+    def values_dict(self, *fields):
+        return self._clone(next_step=('values_dict', fields))
 
     def order_by(self, *fields):
+        return self._clone(next_step=('order_by', fields))
+
+    def query(self, **kw):
+        return self._clone(next_step=('query', kw.items()))
+
+    def filter(self, *filters, **kw):
+        return self._clone(next_step=('filter', list(filters) + kw.items()))
+
+    def facet(self, **kw):
+        return self._clone(next_step=('facet', kw.items()))
+
+    def extra(self, **kw):
         new = self._clone()
-        for field in fields:
-            if field.startswith('-'):
-                new.ordering.append({field[1:]: 'desc'})
+        actions = 'values values_dict order_by query filter facet'.split()
+        for key, vals in kw.items():
+            assert key in actions
+            if hasattr(vals, 'items'):
+                new.steps.append((key, vals.items()))
             else:
-                new.ordering.append(field)
+                new.steps.append((key, vals))
         return new
 
-    def _build_query(self, start=0, stop=None):
-        query = dict(query=self.query)
-        if self.filter_:
-            query['filter'] = self.filter_
-        if self.facets:
-            query['facets'] = self.facets
-        if stop:
-            query['size'] = stop - start
-        if start:
-            query['from'] = start
-        if self.ordering:
-            query['sort'] = self.ordering
-
-        if self.score_:
-            query['query'] = dict(custom_score=dict(query=query['query'], script=self.score_['script']))
-            if (self.score_['params']):
-                query['query']['custom_score']['params'] = self.score_['params']
-
-        return query
-
-    def execute(self, start=0, stop=None):
-        es = get_es()
-        query = self._build_query(start, stop)
-        self.offset = query.get('from', 0);
-
-        self.results = es.search(query, settings.ES_INDEX, self.type)
-
-        if self.result_transform:
-            self.objects = self.result_transform(self.results)
-        self.total = self.results['hits']['total']
-        return self
-
-    def get_results(self, **kw):
-        if not self.results:
-            self.execute(**kw)
-        return self.results['hits']['hits']
-
-    def get_facet(self, key):
-        if not self.results:
-            self.execute()
-
-        if 'facets' not in self.results:
-            return None
-
-        return dict((t['term'], t['count']) for t
-                     in self.results['facets'][key]['terms'])
+    def count(self):
+        if self._results_cache:
+            return self._results_cache.count
+        else:
+            return self[:0].raw()['hits']['total']
 
     def __len__(self):
-        if not self.results:
-            self.execute()
+        return len(self._do_search())
 
-        return self.results['hits']['total']
+    def __getitem__(self, k):
+        new = self._clone()
+        # TODO: validate numbers and ranges
+        if isinstance(k, slice):
+            new.start, new.stop = k.start or 0, k.stop
+            return new
+        else:
+            new.start, new.stop = k, k + 1
+            return list(new)[0]
+
+    def _build_query(self):
+        filters = []
+        queries = []
+        sort = []
+        fields = ['id']
+        facets = {}
+        as_list = as_dict = False
+        for action, value in self.steps:
+            if action == 'order_by':
+                for key in value:
+                    if key.startswith('-'):
+                        sort.append({key[1:]: 'desc'})
+                    else:
+                        sort.append(key)
+            elif action == 'values':
+                fields.extend(value)
+                as_list, as_dict = True, False
+            elif action == 'values_dict':
+                if not value:
+                    fields = []
+                else:
+                    fields.extend(value)
+                as_list, as_dict = False, True
+            elif action == 'query':
+                queries.extend(self._process_queries(value))
+            elif action == 'filter':
+                filters.extend(_process_filters(value))
+            elif action == 'facet':
+                facets.update(value)
+            else:
+                raise NotImplementedError(action)
+
+        qs = {}
+        if len(filters) > 1:
+            qs['filter'] = {'and': filters}
+        elif filters:
+            qs['filter'] = filters[0]
+
+        if len(queries) > 1:
+            qs['query'] = {'bool': {'must': queries}}
+        elif queries:
+            qs['query'] = queries[0]
+
+        if fields:
+            qs['fields'] = fields
+        if facets:
+            qs['facets'] = facets
+            # Copy filters into facets. You probably wanted this.
+            for facet in facets.values():
+                if 'facet_filter' not in facet and filters:
+                    facet['facet_filter'] = qs['filter']
+        if sort:
+            qs['sort'] = sort
+        if self.start:
+            qs['from'] = self.start
+        if self.stop is not None:
+            qs['size'] = self.stop - self.start
+
+        self.fields, self.as_list, self.as_dict = fields, as_list, as_dict
+        return qs
+
+    def _process_queries(self, value):
+        rv = []
+        value = dict(value)
+        or_ = value.pop('or_', [])
+        for key, val in value.items():
+            key, field_action = _split(key)
+            if field_action is None:
+                rv.append({'term': {key: val}})
+            elif field_action == 'text':
+                rv.append({'text': {key: val}})
+            elif field_action == 'startswith':
+                rv.append({'prefix': {key: val}})
+            elif field_action in ('gt', 'gte', 'lt', 'lte'):
+                rv.append({'range': {key: {field_action: val}}})
+            elif field_action == 'fuzzy':
+                rv.append({'fuzzy': {key: val}})
+        if or_:
+            rv.append({'bool': {'should': self._process_queries(or_.items())}})
+        return rv
+
+    def _do_search(self):
+        if not self._results_cache:
+            hits = self.raw()
+            if self.as_dict:
+                ResultClass = DictSearchResults
+            elif self.as_list:
+                ResultClass = ListSearchResults
+            else:
+                ResultClass = ObjectSearchResults
+            self._results_cache = ResultClass(self.type, hits, self.fields)
+        return self._results_cache
+
+    def raw(self):
+        qs = self._build_query()
+        es = get_es()
+        try:
+            hits = es.search(qs, settings.ES_INDEX, self.type._meta.db_table)
+        except Exception:
+            log.error(qs)
+            raise
+        if statsd:
+            statsd.timing('search', hits['took'])
+        log.debug('[%s] %s' % (hits['took'], qs))
+        return hits
+
+    def __iter__(self):
+        return iter(self._do_search())
+
+    def raw_facets(self):
+        return self._do_search().results.get('facets', {})
+
+    @property
+    def facets(self):
+        facets = {}
+        for key, val in self.raw_facets().items():
+            if val['_type'] == 'terms':
+                facets[key] = [v for v in val['terms']]
+            elif val['_type'] == 'range':
+                facets[key] = [v for v in val['ranges']]
+        return facets
+
+
+class SearchResults(object):
+
+    def __init__(self, type, results, fields):
+        self.type = type
+        self.took = results['took']
+        self.count = results['hits']['total']
+        self.results = results
+        self.fields = fields
+        self.set_objects(results['hits']['hits'])
+
+    def set_objects(self, hits):
+        raise NotImplementedError()
 
     def __iter__(self):
         return iter(self.objects)
 
-    def __getitem__(self, k):
-        """
-        ``__getitem__`` gets the elements specified by doing ``rs[k]`` where
-        ``k`` is a slice (e.g. ``1:2``) or an integer.
+    def __len__(self):
+        return len(self.objects)
 
-        ``objects`` doesn't contain all ``total`` items, just the items for
-        the current page, so we need to adjust ``k``
-        """
-        if self.objects:
-            start = 0
-            stop = None
-            if isinstance(k, slice):
-                start = k.start
-                stop = k.stop
-            self.execute(start, stop)
 
-        if isinstance(k, slice) and k.start >= self.offset:
-            k = slice(k.start - self.offset, k.stop - self.offset if k.stop
-                      else None)
-        elif isinstance(k, int):
-            k -= self.offset
+class DictSearchResults(SearchResults):
 
-        return self.objects.__getitem__(k)
+    def set_objects(self, hits):
+        key = 'fields' if self.fields else '_source'
+        self.objects = [r[key] for r in hits]
 
-    def __str__(self):
-        query = self._build_query()
-        return str(query)
+
+class ListSearchResults(SearchResults):
+
+    def set_objects(self, hits):
+        if self.fields:
+            getter = itemgetter(*self.fields)
+            objs = [getter(r['fields']) for r in hits]
+        else:
+            objs = [r['_source'].values() for r in hits]
+        self.objects = objs
+
+
+class ObjectSearchResults(SearchResults):
+
+    def set_objects(self, hits):
+        self.ids = [int(r['_id']) for r in hits]
+        self.objects = self.type.objects.filter(id__in=self.ids)
+
+    def __iter__(self):
+        objs = dict((obj.id, obj) for obj in self.objects)
+        return (objs[id] for id in self.ids if id in objs)
+
