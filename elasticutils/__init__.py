@@ -1,6 +1,7 @@
 import logging
 from functools import wraps
 from threading import local
+from operator import itemgetter
 
 from pyes import ES, exceptions
 
@@ -138,6 +139,7 @@ class F(object):
         f.filters = {'not': {'filter': self.filters}}
         return f
 
+REPR_OUTPUT_SIZE = 20
 
 class S(object):
     """
@@ -152,6 +154,12 @@ class S(object):
         self.stop = None
         self.as_list = self.as_dict = False
         self._results_cache = None
+
+    def __repr__(self):
+        data = list(self[:REPR_OUTPUT_SIZE + 1])
+        if len(data) > REPR_OUTPUT_SIZE:
+            data[-1] = "...(remaining elements truncated)..."
+        return repr(data)
 
     def _clone(self, next_step=None):
         new = self.__class__(self.type)
@@ -423,4 +431,6 @@ class ObjectSearchResults(SearchResults):
     def __iter__(self):
         objs = dict((obj.id, obj) for obj in self.objects)
         return (objs[id] for id in self.ids if id in objs)
+
+
 
