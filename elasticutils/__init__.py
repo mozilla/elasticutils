@@ -109,8 +109,14 @@ class F(object):
     Filter objects.
     """
     def __init__(self, **filters):
-        self.filters = {'and': _process_filters(filters.items())} if filters \
-                else {}
+        if filters:
+            items = _process_filters(filters.items())
+            if len(items) > 1:
+                self.filters = {'and': items }
+            else:
+                self.filters = items[0]
+        else:
+            self.filters = {}
 
     def _combine(self, other, conn='and'):
         """
