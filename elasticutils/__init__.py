@@ -104,6 +104,7 @@ def _process_filters(filters):
                 rv.append({'range': {key: {field_action: val}}})
     return rv
 
+
 class F(object):
     """
     Filter objects.
@@ -142,17 +143,23 @@ class F(object):
 
     def __invert__(self):
         f = F()
-        f.filters = {'not': {'filter': self.filters}}
+        if (len(self.filters) < 2 and
+           'not' in self.filters and 'filter' in self.filters['not']):
+            f.filters = self.filters['not']['filter']
+        else:
+            f.filters = {'not': {'filter': self.filters}}
         return f
 
+
+# Number of results to show before truncating when repr(S)
 REPR_OUTPUT_SIZE = 20
+
 
 class S(object):
     """
     Represents a lazy ElasticSearch lookup, with a similar api to Django's
     QuerySet.
     """
-
     def __init__(self, type_):
         self.type = type_
         self.steps = []
@@ -391,7 +398,6 @@ class S(object):
 
 
 class SearchResults(object):
-
     def __init__(self, type, results, fields):
         self.type = type
         self.took = results['took']
@@ -411,14 +417,12 @@ class SearchResults(object):
 
 
 class DictSearchResults(SearchResults):
-
     def set_objects(self, hits):
         key = 'fields' if self.fields else '_source'
         self.objects = [r[key] for r in hits]
 
 
 class ListSearchResults(SearchResults):
-
     def set_objects(self, hits):
         if self.fields:
             getter = itemgetter(*self.fields)
@@ -429,7 +433,6 @@ class ListSearchResults(SearchResults):
 
 
 class ObjectSearchResults(SearchResults):
-
     def set_objects(self, hits):
         self.ids = [int(r['_id']) for r in hits]
         self.objects = self.type.objects.filter(id__in=self.ids)
@@ -437,6 +440,4 @@ class ObjectSearchResults(SearchResults):
     def __iter__(self):
         objs = dict((obj.id, obj) for obj in self.objects)
         return (objs[id] for id in self.ids if id in objs)
-
-
 
