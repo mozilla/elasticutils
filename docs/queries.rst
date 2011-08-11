@@ -6,9 +6,18 @@ ElasticUtils makes querying and filtering and collecting facets from
 ElasticSearch simple ::
 
 
-    q = (S(product='firefox').filter(version='4.0', platform='all')
-                             .facet('product', global_=True).facet('version')
-                             .facet('platform').facet('type'))
+    q = (S(model).filter(product='firefox')
+                 .filter(version='4.0', platform='all')
+                 .facet('product', global_=True).facet('version')
+                 .facet('platform').facet('type'))
+
+
+Where ``model`` is a Django-model.
+
+.. note::
+
+    If you're not using Django,  you can create stub-models.  See the tests for
+    more details.
 
 Search All
 ----------

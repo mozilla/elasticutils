@@ -22,6 +22,14 @@ Installation
     so you don't have to
     have ElasticSearch running.
 
+.. data:: ES_DUMP_CURL
+
+    If set to a path all the requests that `ElasticUtils` makes will be dumped
+    into the designated file.
+
+    .. note:: Python does not write this file until the process is finished.
+
+
 .. data:: ES_HOSTS
 
     This is a list of hosts.  In development this will look like::
