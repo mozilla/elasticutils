@@ -144,7 +144,7 @@ list or dictionaries or tuples, if you'd rather::
     S(Model).query(type='taco trucks').values('title')
     > [(1, 'De La Tacos',), (2, 'Oriental Tacos',),]
 
-    S(Model).quey(type='taco trucks').values_dict('title')
+    S(Model).query(type='taco trucks').values_dict('title')
     > [{'id': 1, 'title': 'De La Tacos'}, {'id': 2, 'title': 'Oriental
         Tacos'}]
 
