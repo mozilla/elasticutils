@@ -21,10 +21,12 @@ class ESTestCase(test_utils.TestCase):
         settings.__dict__['ES_DISABLED'] = False
 
         cls.es = get_es()
-        cls.es.delete_index_if_exists(settings.ES_INDEX)
+        for index in settings.ES_INDEXES.values():
+            cls.es.delete_index_if_exists(index)
 
     @classmethod
     def teardown_class(cls):
-        cls.es.delete_index_if_exists(settings.ES_INDEX)
+        for index in settings.ES_INDEXES.values():
+            cls.es.delete_index_if_exists(index)
         settings.__dict__['ES_DISABLED'] = cls.old_ES_DISABLED
         super(ESTestCase, cls).teardown_class()

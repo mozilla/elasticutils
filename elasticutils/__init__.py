@@ -26,7 +26,8 @@ def get_es():
     if not hasattr(_local, 'es'):
         timeout = getattr(settings, 'ES_TIMEOUT', 1)
         dump = getattr(settings, 'ES_DUMP_CURL', False)
-        _local.es = ES(settings.ES_HOSTS, default_indexes=[settings.ES_INDEX],
+        _local.es = ES(settings.ES_HOSTS,
+                       default_indexes=[settings.ES_INDEXES['default']],
                        timeout=timeout, dump_curl=dump)
     return _local.es
 
@@ -370,8 +371,10 @@ class S(object):
         """
         qs = self._build_query()
         es = get_es()
+        index = (settings.ES_INDEXES.get(self.type)
+                 or settings.ES_INDEXES['default'])
         try:
-            hits = es.search(qs, settings.ES_INDEX, self.type._meta.db_table)
+            hits = es.search(qs, index, self.type._meta.db_table)
         except Exception:
             log.error(qs)
             raise

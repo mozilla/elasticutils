@@ -36,6 +36,10 @@ Installation
 
         ES_HOSTS = ['127.0.0.1:9200']
 
-.. data:: ES_INDEX
+.. data:: ES_INDEXES
 
-    This is the name of your primary ElasticSearch index.
+    This is a mapping of doctypes to indexes. A `default` mapping is required
+    for types that don't have a specific index.
+
+        ES_INDEXES = {'default': 'main_index',
+                      'splugs': 'splugs_index'}
