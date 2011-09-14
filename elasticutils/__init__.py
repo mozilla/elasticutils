@@ -276,6 +276,7 @@ class S(object):
         as_list = as_dict = False
         for action, value in self.steps:
             if action == 'order_by':
+                sort = []
                 for key in value:
                     if key.startswith('-'):
                         sort.append({key[1:]: 'desc'})
