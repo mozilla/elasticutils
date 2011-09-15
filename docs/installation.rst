@@ -4,23 +4,25 @@
 Installation
 ============
 
+Download
+--------
+
+Clone it from https://github.com/davedash/elasticutils .
+
+
+Configure
+---------
+
 `elasticutils` depends on the following settings:
 
 .. module:: django.conf.settings
 
 .. data:: ES_DISABLED
 
-    `ES_DISABLED` disabled
-    talking to ElasticSearch
-    from your app.
-    Any method
-    wrapped with `es_required`
-    will return and
-    log a warning.
-    This is useful
-    while developing,
-    so you don't have to
-    have ElasticSearch running.
+    Disables talking to ElasticSearch from your app.  Any method
+    wrapped with `es_required` will return and log a warning.  This is
+    useful while developing, so you don't have to have ElasticSearch
+    running.
 
 .. data:: ES_DUMP_CURL
 
@@ -39,7 +41,7 @@ Installation
 .. data:: ES_INDEXES
 
     This is a mapping of doctypes to indexes. A `default` mapping is required
-    for types that don't have a specific index.
+    for types that don't have a specific index::
 
         ES_INDEXES = {'default': 'main_index',
                       'splugs': 'splugs_index'}

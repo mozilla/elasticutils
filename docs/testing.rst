@@ -15,20 +15,16 @@ Testing Elasticutils
 --------------------
 
 Testing elasticutils requires pyes_ and nose_. The easiest way to test is
-to set up a new virtualenv with those packages installed:
-
-::
+to set up a new virtualenv with those packages installed::
 
     mkvirtualenv elasticutils
     workon elasticutils
     pip install pyes
     pip install nose
 
-Then, ``cd`` to the elasticutils base directory and run:
+Then, ``cd`` to the elasticutils base directory and run::
 
-::
-
-        nosetests -w tests/
+    nosetests -w tests/
 
 You may need to edit `es_settings.py` to change the value of ES_HOSTS to match
 the IP or port that elasticsearch is listening on.

@@ -44,11 +44,6 @@ query instead of a term query.
 * ``title__fuzzy``: a Fuzzy_ query
 * ``title``: or no query type, will do a Term_ query
 
-.. _Text: http://www.elasticsearch.org/guide/reference/query-dsl/text-query.html
-.. _Prefix: http://www.elasticsearch.org/guide/reference/query-dsl/prefix-query.html
-.. _Range: http://www.elasticsearch.org/guide/reference/query-dsl/range-query.html
-.. _Fuzzy: http://www.elasticsearch.org/guide/reference/query-dsl/fuzzy-query.html
-.. _Term: http://www.elasticsearch.org/guide/reference/query-dsl/term-query.html
 
 Filters
 -------
@@ -58,6 +53,7 @@ for "taco trucks" filtering on the attribute ``style``.  This is how we find
 Korean Taco Trucks.
 
 .. note:: 
+
     Each call to ``query``, ``filter``, ``facet``, or ``sort_by`` will
     create new S objects, with the results combined.
 
@@ -68,15 +64,13 @@ do.
 * ``style__gt``: a Range_ filter ((includes ``gt``, ``gte``, ``lt``, ``lte``)
 * ``style``: or no filter type, will do a Term_ filter
 
-.. _Terms: http://www.elasticsearch.org/guide/reference/query-dsl/terms-filter.html
-.. _Range: http://www.elasticsearch.org/guide/reference/query-dsl/range-filter.html
-.. _Term: http://www.elasticsearch.org/guide/reference/query-dsl/term-filter.html
-
 
 Multiple Filters
 ~~~~~~~~~~~~~~~~
+::
 
-``S(Model).query(title='taco trucks').filter(style='korean', price='FREE')``
+    S(Model).query(title='taco trucks').filter(style='korean', price='FREE')
+
 will do a query for "taco trucks" that are "korean" style and have a price of
 "FREE".
 
@@ -85,17 +79,20 @@ Complicated Filtering
 ~~~~~~~~~~~~~~~~~~~~~
 
 Sometimes you want something complicated.  For that we have the ``F`` (filter)
-object.
+object::
 
-``S(Model).query(title='taco trucks').filter(F(style='korean')|F(style='thai'))``
+    S(Model).query(title='taco trucks').filter(F(style='korean') | 
+                                               F(style='thai'))
+
 will find you "thai" or "korean" style taco trucks.
 
 Let's say you only want "korean" tacos if you can get it for "FREE" or "thai"
 tacos at any price::
 
-    S('taco trucks').filter(F(style='korean', price='FREE')|F(style='thai'))
+    S('taco trucks').filter(F(style='korean', price='FREE') | F(style='thai'))
 
 .. note::
+
     ``F`` objects support AND, OR, and NOT operators.
 
 
@@ -118,8 +115,6 @@ Facets can also be scripted_::
     Unless the ``facet_filter`` property is specified on each facet,
     all the filters will be used for the facet_filter by default.
 
-.. _scripted: http://www.elasticsearch.org/guide/reference/api/search/facets/terms-facet.html
-
 
 Results
 -------
@@ -135,7 +130,7 @@ Total hits can be found by doing::
     len(r)
 
 Results-types
-------------
+-------------
 
 By default, results will be returned as instances of the Model class
 provided in the constructor. However, you can get the results back as a
@@ -150,4 +145,13 @@ list or dictionaries or tuples, if you'd rather::
 
 Arguments passed to ``values`` or ``values_dict`` will select the fields
 that are returned, including the ``id``.
+
+
+.. _Text: http://www.elasticsearch.org/guide/reference/query-dsl/text-query.html
+.. _Prefix: http://www.elasticsearch.org/guide/reference/query-dsl/prefix-query.html
+.. _Range: http://www.elasticsearch.org/guide/reference/query-dsl/range-query.html
+.. _Fuzzy: http://www.elasticsearch.org/guide/reference/query-dsl/fuzzy-query.html
+.. _Term: http://www.elasticsearch.org/guide/reference/query-dsl/term-query.html
+.. _Terms: http://www.elasticsearch.org/guide/reference/query-dsl/terms-filter.html
+.. _scripted: http://www.elasticsearch.org/guide/reference/api/search/facets/terms-facet.html
 
