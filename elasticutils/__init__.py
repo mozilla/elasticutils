@@ -4,6 +4,7 @@ from threading import local
 from operator import itemgetter
 
 from pyes import ES, exceptions
+from pyes.es import thrift_enable
 
 try:
     from statsd import statsd
@@ -26,6 +27,11 @@ def get_es():
     if not hasattr(_local, 'es'):
         timeout = getattr(settings, 'ES_TIMEOUT', 1)
         dump = getattr(settings, 'ES_DUMP_CURL', False)
+        if (not thrift_enable and
+            not settings.ES_HOSTS[0].split(':')[1].startswith('92')):
+            raise ValueError('ES_HOSTS is not set to a valid port starting '
+                             'with 9200-9299 range. Other ports are valid '
+                             'if using pythrift.')
         _local.es = ES(settings.ES_HOSTS,
                        default_indexes=[settings.ES_INDEXES['default']],
                        timeout=timeout, dump_curl=dump)
