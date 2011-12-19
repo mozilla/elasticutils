@@ -16,3 +16,7 @@ automatically index all new items.
 .. automodule:: elasticutils.tasks
 
    .. autofunction:: index_objects(model, ids=[...])
+
+.. automodule:: elasticutils.cron
+
+   .. autofunction:: reindex_objects(model, chunk_size[=150])
