@@ -1,0 +1,4 @@
+# This includes extra items that you may not require.
+# These are necessary, however, to build the documentation
+
+django
