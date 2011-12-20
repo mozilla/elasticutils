@@ -8,3 +8,4 @@ django
 # needed if you want to use the async task
 -e git://github.com/mozilla/nuggets.git#egg=nuggets
 celery
+django-celery
