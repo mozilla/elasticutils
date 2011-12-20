@@ -6,6 +6,7 @@ def reindex_objects(model, chunk_size=150):
     """Creates methods that reindex all the objects in a model.
 
     For example in your ``myapp.cron.py`` you can do::
+
         index_all_mymodels = cronjobs.register(reindex_objects(mymodel))
 
     and it will create a commandline callable task for you (e.g.)::
