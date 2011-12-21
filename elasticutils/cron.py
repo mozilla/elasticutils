@@ -9,7 +9,7 @@ def reindex_objects(model, chunk_size=150):
 
         index_all_mymodels = cronjobs.register(reindex_objects(mymodel))
 
-    and it will create a commandline callable task for you (e.g.)::
+    and it will create a commandline callable task for you, e.g.::
 
         ./manage.py cron index_all_mymodels
 
