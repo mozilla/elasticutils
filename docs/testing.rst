@@ -24,7 +24,7 @@ to set up a new virtualenv with those packages installed::
 
 Then, ``cd`` to the elasticutils base directory and run::
 
-    nosetests -w tests/
+    DJANGO_SETTINGS_MODULE=es_settings nosetests -w tests
 
 You may need to edit `es_settings.py` to change the value of ES_HOSTS to match
 the IP or port that elasticsearch is listening on.
