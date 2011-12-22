@@ -20,7 +20,7 @@ def index_objects(model, ids, **kw):
     """
     es = elasticutils.get_es()
     log.info('Indexing objects %s-%s. [%s]' % (ids[0], ids[-1], len(ids)))
-    qs = model.filter(id__in=ids)
+    qs = model.objects.filter(id__in=ids)
     for item in qs:
         model.index(item.fields(), bulk=True, id=item.id)
     es.flush_bulk(forced=True)
