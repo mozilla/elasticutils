@@ -24,3 +24,10 @@ def index_objects(model, ids, **kw):
     for item in qs:
         model.index(item.fields(), bulk=True, id=item.id)
     es.flush_bulk(forced=True)
+
+
+@task
+def unindex_objects(model, ids, **kw):
+    for id in ids:
+        log.info('Removing object [%s.%d] from search index.' % (model, id))
+        elasticutils.get_es().delete(model._get_index(), model._meta.db_table, id)
