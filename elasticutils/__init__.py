@@ -33,7 +33,7 @@ def get_es():
                              'with 9200-9299 range. Other ports are valid '
                              'if using pythrift.')
         _local.es = ES(settings.ES_HOSTS,
-                       default_indices=[settings.ES_INDEXES['default']],
+                       default_indexes=[settings.ES_INDEXES['default']],
                        timeout=timeout, dump_curl=dump)
     return _local.es
 
