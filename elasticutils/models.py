@@ -2,6 +2,8 @@ from django.conf import settings
 
 from pyes import djangoutils
 
+import elasticutils
+
 
 class SearchMixin(object):
     """This mixin correlates a Django model to an ElasticSearch index."""
