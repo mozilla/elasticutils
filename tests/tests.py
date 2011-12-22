@@ -8,6 +8,7 @@ from unittest import TestCase
 from elasticutils import F, S, get_es
 from nose.tools import eq_
 
+import pyes.exceptions
 
 class Meta(object):
     def __init__(self, db_table):
@@ -36,7 +37,11 @@ class QueryTest(TestCase):
     @classmethod
     def setup_class(cls):
         es = get_es()
-        es.delete_index_if_exists('test')
+        try:
+            es.delete_index_if_exists('test')
+        except pyes.exceptions.IndexMissingException:
+            pass
+
         data1 = FakeModel(id=1, foo='bar', tag='awesome', width='2')
         data2 = FakeModel(id=2, foo='barf', tag='boring', width='7')
         data3 = FakeModel(id=3, foo='car', tag='awesome', width='5')
