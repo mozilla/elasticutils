@@ -31,6 +31,9 @@ class ESTestCase(test_utils.TestCase):
     @classmethod
     def tearDownClass(cls):
         for index in settings.ES_INDEXES.values():
-            cls.es.delete_index_if_exists(index)
+            try:
+                cls.es.delete_index_if_exists(index)
+            except pyes.exceptions.IndexMissingException:
+                pass
         settings.__dict__['ES_DISABLED'] = cls.old_ES_DISABLED
         super(ESTestCase, cls).tearDownClass()
