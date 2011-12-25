@@ -1,5 +1,7 @@
 import logging
 
+from django.conf import settings
+
 import elasticutils
 from celeryutils import task
 
@@ -18,6 +20,8 @@ def index_objects(model, ids, **kw):
             tasks.index_objects.delay(sender, [instance.id])
 
     """
+    if settings.ES_DISABLED:
+        return
     es = elasticutils.get_es()
     log.info('Indexing objects %s-%s. [%s]' % (ids[0], ids[-1], len(ids)))
     qs = model.objects.filter(id__in=ids)
@@ -28,6 +32,8 @@ def index_objects(model, ids, **kw):
 
 @task
 def unindex_objects(model, ids, **kw):
+    if settings.ES_DISABLED:
+        return
     for id in ids:
         log.info('Removing object [%s.%d] from search index.' % (model, id))
         elasticutils.get_es().delete(model._get_index(), model._meta.db_table, id)
