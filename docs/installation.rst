@@ -7,7 +7,7 @@ Installation
 Download
 --------
 
-Clone it from https://github.com/davedash/elasticutils .
+Clone it from https://github.com/mozilla/elasticutils .
 
 
 Configure

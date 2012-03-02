@@ -8,7 +8,7 @@ ElasticUtils provides tools to:
 * Maintain a single `pyes.ES` object
 * Test code that is dependent on ElasticSearch
 
-Source code repository is at https://github.com/davedash/elasticutils .
+Source code repository is at https://github.com/mozilla/elasticutils .
 
 
 Contents
