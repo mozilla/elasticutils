@@ -36,5 +36,6 @@ Contents
   django
   queries
   testing
+  debugging
 
 
