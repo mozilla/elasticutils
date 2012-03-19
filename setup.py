@@ -4,7 +4,7 @@ setup(
     name='elasticutils',
     version='0.2',
     description='Chainable interface to querying ElasticSearch',
-    long_description=open('README').read(),
+    long_description=open('README.rst').read(),
     author='Dave Dash',
     author_email='dd+pypi@davedash.com',
     license='BSD',
