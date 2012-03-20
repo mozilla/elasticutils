@@ -5,10 +5,10 @@ Also run elastic search on the default ports locally.
 """
 from unittest import TestCase
 
-from elasticutils import F, S, get_es
+from elasticutils import F, S, get_es, settings
 from nose.tools import eq_
-
 import pyes.exceptions
+
 
 class Meta(object):
     def __init__(self, db_table):
@@ -18,6 +18,7 @@ class Meta(object):
 class Manager(object):
     def filter(self, id__in=None):
         return [m for m in model_cache if m.id in id__in]
+
 
 model_cache = []
 
@@ -33,15 +34,19 @@ class FakeModel(object):
 
 
 class QueryTest(TestCase):
+    index_name = settings.ES_INDEXES['default']
 
     @classmethod
     def setup_class(cls):
         es = get_es()
         try:
-            es.delete_index_if_exists('test')
+            es.delete_index_if_exists(cls.index_name)
         except pyes.exceptions.IndexMissingException:
+            # TODO: No clue why this is throwing an IndexMissingException
+            # because I thought the whole point of delete_index_if_exists
+            # is that it _didn't_ throw an exception if the index was
+            # missing.
             pass
-
         data1 = FakeModel(id=1, foo='bar', tag='awesome', width='2')
         data2 = FakeModel(id=2, foo='barf', tag='boring', width='7')
         data3 = FakeModel(id=3, foo='car', tag='awesome', width='5')
@@ -49,9 +54,14 @@ class QueryTest(TestCase):
         data5 = FakeModel(id=5, foo='train car', tag='awesome', width='7')
 
         for data in (data1, data2, data3, data4, data5):
-            es.index(data.__dict__, 'test', FakeModel._meta.db_table,
+            es.index(data.__dict__, cls.index_name, FakeModel._meta.db_table,
                     bulk=True, id=data.id)
         es.refresh()
+
+    @classmethod
+    def teardown_class(cls):
+        es = get_es()
+        es.delete_index(cls.index_name)
 
     def test_q(self):
         eq_(len(S(FakeModel).query(foo='bar')), 1)
@@ -103,8 +113,3 @@ class QueryTest(TestCase):
         list_ = list(res)
 
         eq_(repr(list_), repr(res))
-
-    @classmethod
-    def teardown_class(cls):
-        es = get_es()
-        es.delete_index('test')
