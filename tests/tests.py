@@ -33,6 +33,31 @@ class FakeModel(object):
         model_cache.append(self)
 
 
+class ESTest(TestCase):
+    def test_get_es_defaults(self):
+        es = get_es()
+        eq_(es.timeout, settings.ES_TIMEOUT)
+        # dump_curl defaults to False, but if dump_curl is Falsey,
+        # then pyes.es.ES sets its dump_curl attribute to None.
+        eq_(es.dump_curl, None)
+        eq_(es.default_indexes, [settings.ES_INDEXES['default']])
+
+    def test_get_es(self):
+        class Dumper(object):
+            def write(self, val):
+                print val
+
+        d = Dumper()
+
+        es = get_es(
+            timeout=20,
+            dump_curl=d,
+            default_indexes=['joe'])
+        eq_(es.timeout, 20)
+        eq_(es.dump_curl, d)
+        eq_(es.default_indexes, ['joe'])
+
+
 class QueryTest(TestCase):
     index_name = settings.ES_INDEXES['default']
 

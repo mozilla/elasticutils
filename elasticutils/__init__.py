@@ -3,7 +3,7 @@ from functools import wraps
 from threading import local
 from operator import itemgetter
 
-from pyes import ES, exceptions
+from pyes import ES, exceptions, VERSION
 from pyes.es import thrift_enable
 
 try:
@@ -22,20 +22,69 @@ _local.disabled = {}
 log = logging.getLogger('elasticsearch')
 
 
-def get_es():
-    """Return one es object."""
-    if not hasattr(_local, 'es'):
-        timeout = getattr(settings, 'ES_TIMEOUT', 1)
-        dump = getattr(settings, 'ES_DUMP_CURL', False)
+DEFAULT_INDEXES = [settings.ES_INDEXES['default']]
+DEFAULT_TIMEOUT = getattr(settings, 'ES_TIMEOUT', 1)
+DEFAULT_DUMP_CURL = getattr(settings, 'ES_DUMP_CURL', False)
+
+
+def get_es(**overrides):
+    """Return one pyes.es.ES object
+
+    :arg overrides: Allows you to override defaults to create the ES.
+
+    Things you can override:
+
+    * default_indexes
+    * timeout
+    * dump_curl
+
+    Values for these correspond with the arguments to pyes.es.ES.
+
+    For example, if you wanted to create an ES for indexing with a timeout
+    of 30 seconds, you'd do:
+
+    >>> es = get_es(timeout=30)
+
+    If you wanted to create an ES for debugging that dumps curl
+    commands to stdout, you could do:
+
+    >>> class CurlDumper(object):
+    ...     def write(self, s):
+    ...         print s
+    ...
+    >>> es = get_es(dump_curl=CurlDumper())
+    """
+    if overrides or not hasattr(_local, 'es'):
+        defaults = {
+            'default_indexes': DEFAULT_INDEXES,
+            'timeout': DEFAULT_TIMEOUT,
+            'dump_curl': DEFAULT_DUMP_CURL,
+            }
+
+        defaults.update(overrides)
         if (not thrift_enable and
             not settings.ES_HOSTS[0].split(':')[1].startswith('92')):
             raise ValueError('ES_HOSTS is not set to a valid port starting '
                              'with 9200-9299 range. Other ports are valid '
                              'if using pythrift.')
-        _local.es = ES(settings.ES_HOSTS,
-                       default_indexes=[settings.ES_INDEXES['default']],
-                       timeout=timeout, dump_curl=dump)
-    return _local.es
+        es = ES(settings.ES_HOSTS, **defaults)
+
+        # pyes 0.15 does this lame thing where it ignores dump_curl in
+        # the ES constructor and always sets it to None. So what we do
+        # is set it manually after the ES has been created and
+        # defaults['dump_curl'] is truthy. This might not work for all
+        # values of dump_curl.
+        if VERSION[0:2] == (0, 15):
+            es.dump_curl = (defaults['dump_curl']
+                            if defaults['dump_curl'] else None)
+
+        # Cache the es if there weren't any overrides.
+        if not overrides:
+            _local.es = es
+    else:
+        es = _local.es
+
+    return es
 
 
 def es_required(f):
