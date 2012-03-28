@@ -23,7 +23,7 @@ log = logging.getLogger('elasticsearch')
 
 
 DEFAULT_INDEXES = [settings.ES_INDEXES['default']]
-DEFAULT_TIMEOUT = getattr(settings, 'ES_TIMEOUT', 1)
+DEFAULT_TIMEOUT = getattr(settings, 'ES_TIMEOUT', 5)
 DEFAULT_DUMP_CURL = getattr(settings, 'ES_DUMP_CURL', False)
 
 
