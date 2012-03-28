@@ -29,8 +29,8 @@ From Rob Hudson (with some minor editing):
     debugging an ES problem::
 
         class CurlDumper(object):
-            def write(self, str):
-                print str
+            def write(self, s):
+                print s
         ES_DUMP_CURL = CurlDumper()
 
     This is pretty great when running a test with output enabled, or
