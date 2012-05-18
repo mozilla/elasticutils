@@ -21,6 +21,9 @@ Documentation:
 Issue tracker:
     https://github.com/mozilla/elasticutils/issues
 
+IRC:
+    ``#elasticutils`` on irc.mozilla.org
+
 License:
     BSD 3-clause; see LICENSE file
 
