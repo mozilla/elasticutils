@@ -1,0 +1,13 @@
+===========
+ CHANGELOG
+===========
+
+Version 0.3: Released June 1st, 2012
+====================================
+
+* Add documentation for debugging, project details and other things.
+
+* Minor project cleanup to make it easier to maintain and use
+
+* Make ``get_es()`` more useful. It now takes overrides that allow you to
+  configure multiple kinds of ES objects for different purposes.

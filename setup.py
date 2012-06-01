@@ -1,25 +1,44 @@
-from setuptools import setup, find_packages
+import os
+import re
+from setuptools import find_packages, setup
+
+
+READMEFILE = "README.rst"
+VERSIONFILE = os.path.join("elasticutils", "_version.py")
+VSRE = r"^__version__ = ['\"]([^'\"]*)['\"]"
+
+
+def get_version():
+    verstrline = open(VERSIONFILE, "rt").read()
+    mo = re.search(VSRE, verstrline, re.M)
+    if mo:
+        return mo.group(1)
+    else:
+        raise RuntimeError(
+            "Unable to find version string in %s." % VERSIONFILE)
+
 
 setup(
     name='elasticutils',
-    version='0.2',
+    version=get_version(),
     description='Chainable interface to querying ElasticSearch',
-    long_description=open('README.rst').read(),
-    author='Dave Dash',
-    author_email='dd+pypi@davedash.com',
+    long_description=open(READMEFILE).read(),
+    url='https://github.com/mozilla/elasticutils',
+    # Current "project maintainer"
+    author='Will Kahn-Greene',
+    author_email='willkg@mozilla.com',
     license='BSD',
     packages=find_packages(),
-    install_requires=['Nose', 'pyes'],
+    install_requires=['Nose', 'pyes>=0.15,<0.17'],
     include_package_data=True,
-    classifiers = [
-            'Development Status :: 4 - Beta',
-            'Environment :: Web Environment',
-            'Intended Audience :: Developers',
-            'License :: OSI Approved :: BSD License',
-            'Operating System :: OS Independent',
-            'Programming Language :: Python',
-            'Topic :: Software Development :: Libraries :: Python Modules',
-            'Natural Language :: English',
-        ]
+    classifiers=[
+        'Development Status :: 4 - Beta',
+        'Environment :: Web Environment',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: BSD License',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python',
+        'Topic :: Software Development :: Libraries :: Python Modules',
+        'Natural Language :: English',
+        ],
 )
-
