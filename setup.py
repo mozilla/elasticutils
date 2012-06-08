@@ -25,8 +25,7 @@ setup(
     long_description=open(READMEFILE).read(),
     url='https://github.com/mozilla/elasticutils',
     # Current "project maintainer"
-    author='Will Kahn-Greene',
-    author_email='willkg@mozilla.com',
+    author='Mozilla Foundation and contributors',
     license='BSD',
     packages=find_packages(),
     install_requires=['Nose', 'pyes>=0.15,<0.17'],
