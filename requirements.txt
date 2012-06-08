@@ -1,3 +1,2 @@
-nose
 # pyes 0.15, other versions... not so great.
 -e git://github.com/aparo/pyes.git@27d00eac9030cc9c4dfce9231ad1094f1470a3ca#egg=pyes

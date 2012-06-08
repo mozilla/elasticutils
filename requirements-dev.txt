@@ -1,0 +1,8 @@
+-r requirements-extra.txt
+# This includes everything you need to develop on ElasticUtils.
+
+# nose for tests
+nose
+
+# Sphinx for documentation
+Sphinx

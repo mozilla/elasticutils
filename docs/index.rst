@@ -2,43 +2,49 @@
 ElasticUtils
 ============
 
-ElasticUtils provides tools to:
+.. _project-details:
 
-* Query ElasticSearch within python
-* Maintain a single `pyes.ES` object
-* Test code that is dependent on ElasticSearch
+About ElasticUtils
+==================
 
+ElasticUtils is a Python library that gives you a Django queryset-like
+API for `elasticsearch <http://elasticsearch.org/>`_ as well as some
+other tools for making it easier to integrate elasticsearch into your
+application.
 
-Project details
-===============
-
-Code:
-    http://github.com/mozilla/elasticutils
-
-Documentation:
-    http://elasticutils.rtfd.org
-
-Issue tracker:
-    https://github.com/mozilla/elasticutils/issues
-
-IRC:
-    ``#elasticutils`` on irc.mozilla.org
-
-License:
-    BSD 3-clause; see LICENSE file
+:Code:          https://github.com/mozilla/elasticutils
+:License:       BSD; see LICENSE file
+:Issues:        https://github.com/mozilla/elasticutils/issues
+:Documentation: http://elasticutils.readthedocs.org/
+:IRC:           #elasticutils on irc.mozilla.org
 
 
-Contents
-========
+.. _users-guide:
+
+User's Guide
+============
 
 .. toctree::
-  :maxdepth: 2
+   :maxdepth: 1
 
-  installation
-  es
-  django
-  queries
-  testing
-  debugging
+   installation
+   configuration
+   es
+   queries
+   django
+   testing
+   debugging
 
+
+Contributor's Guide
+===================
+
+.. toctree::
+   :maxdepth: 1
+
+   join
+   hacking_howto
+   dev_conventions
+   dev_documentation
+   dev_testing
 
