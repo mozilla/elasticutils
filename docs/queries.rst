@@ -2,6 +2,13 @@
 Querying with ElasticUtils
 ==========================
 
+.. contents::
+   :local:
+
+
+Overview
+========
+
 ElasticUtils makes querying and filtering and collecting facets from
 ElasticSearch simple.
 
@@ -18,15 +25,92 @@ For example:
                 .facet(types={'field': 'type'}))
 
 
-Where ``model`` is a Django ORM model class.
+Assume that `model` here dictated that we're looking in the
+`addon_index` for `addon` document type. Then the elasticsearch REST
+API curl for that looks like::
 
-Each call to ``query``, ``filter``, ``facet``, ``sort_by``, etc will
-create a new S object with the accumulated search criteria.
+    $ curl -XGET 'http://localhost:9200/addon_index/addon/_search' -d '{
+    'query': {'term': {'title': 'Example'}},
+    'filter': {'and': [{'term': {'product': 'firefox'}},
+                       {'term': {'platform': 'all'}},
+                       {'term': {'version': '4.0'}}]},
+    'facets': {
+       'platforms': {
+           'facet_filter': {
+               'and': [
+                   {'term': {'product': 'firefox'}},
+                   {'term': {'platform': 'all'}},
+                   {'term': {'version': '4.0'}}]},
+           'field': 'platform'},
+       'products': {
+           'facet_filter': {
+               'and': [
+                   {'term': {'product': 'firefox'}},
+                   {'term': {'platform': 'all'}},
+                   {'term': {'version': '4.0'}}]},
+           'field': 'product',
+           'global': True},
+       'types': {
+           'facet_filter': {
+               'and': [
+                   {'term': {'product': 'firefox'}},
+                   {'term': {'platform': 'all'}},
+                   {'term': {'version': '4.0'}}]},
+           'field': 'type'},
+       'versions': {
+           'facet_filter': {
+               'and': [
+                   {'term': {'product': 'firefox'}},
+                   {'term': {'platform': 'all'}},
+                   {'term': {'version': '4.0'}}]},
+           'field': 'version'}},
+    'fields': ['id']
+    }
+    '
+
+That's it!
+
+For the rest of this chapter, when we translate ElasticUtils queries
+to their equivalent elasticsearch REST API, we're going to use a
+shorthand and only talk about the body of the request which we'll call
+the `elasticsearch JSON`.
+
+
+All about S
+===========
+
+`S` is the class that you instantiate to create a search. You pass in
+a `Model` class when constructing it.
+
+For example:
+
+.. code-block:: python
+
+   S(Model)
+
+
+`Model` here is a Django ORM model class.
 
 .. Note::
 
    If you're not using Django, you can create stub-models. See the
    tests for more details.
+
+`S` has a bunch of methods that all return a new `S` with additional
+accumulated search criteria.
+
+For example:
+
+.. code-block:: python
+
+   s1 = S(Model)
+
+   s2 = s1.query(content__text='tabs')
+
+   s3 = s2.filter(awesome=True)
+
+`s1`, `s2`, and `s3` are all different `S` objects. `s3` has both a
+query and a filter in it.
 
 
 Match All
@@ -101,8 +185,8 @@ See the `elasticsearch docs on queries and filters
 <http://www.elasticsearch.org/guide/reference/query-dsl/>`_.
 
 
-Advanced filters
-================
+Advanced filters and F
+======================
 
 Calling filter multiple times is equivalent to an "and"ing of the
 filters.
