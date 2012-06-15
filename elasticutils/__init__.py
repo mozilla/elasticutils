@@ -174,6 +174,11 @@ class F(object):
     Filter objects.
     """
     def __init__(self, **filters):
+        """Creates an F
+
+        :raises InvalidFieldActionError: if the field action is not valid
+
+        """
         if filters:
             items = _process_filters(filters.items())
             if len(items) > 1:
