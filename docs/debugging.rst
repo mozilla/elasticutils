@@ -40,3 +40,12 @@ From Rob Hudson (with some minor editing):
 
 .. [1] https://github.com/aparo/pyes/blob/master/pyes/es.py#L496
 .. [2] https://github.com/mozilla/elasticutils/blob/master/elasticutils/__init__.py#L29
+
+
+elasticsearch-paramedic
+=======================
+
+https://github.com/karmi/elasticsearch-paramedic
+
+elasticsearch-paramedic allows you to see the state and real-time statistics
+of your ES cluster.
