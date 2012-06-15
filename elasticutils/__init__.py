@@ -142,6 +142,11 @@ def _split(string):
         return string, None
 
 
+class InvalidFieldActionError(Exception):
+    """Raise this when the field action doesn't exist"""
+    pass
+
+
 def _process_filters(filters):
     rv = []
     for f in filters:
@@ -158,6 +163,9 @@ def _process_filters(filters):
                 rv.append({'in': {key: val}})
             elif field_action in ('gt', 'gte', 'lt', 'lte'):
                 rv.append({'range': {key: {field_action: val}}})
+            else:
+                raise InvalidFieldActionError(
+                    '%s is not a valid field action' % field_action)
     return rv
 
 

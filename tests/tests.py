@@ -5,7 +5,7 @@ Also run elastic search on the default ports locally.
 """
 from unittest import TestCase
 
-from elasticutils import F, S, get_es, settings
+from elasticutils import F, S, get_es, settings, InvalidFieldActionError
 from nose.tools import eq_
 import pyes.exceptions
 
@@ -122,6 +122,10 @@ class QueryTest(TestCase):
         eq_(len(S(FakeModel).filter(~(F(tag='boring') | F(tag='boat')))), 3)
         eq_(len(S(FakeModel).filter(~F(tag='boat')).filter(~F(foo='bar'))), 3)
         eq_(len(S(FakeModel).filter(~F(tag='boat', foo='barf'))), 5)
+
+    def test_filter_bad_field_action(self):
+        with self.assertRaises(InvalidFieldActionError):
+            len(S(FakeModel).filter(F(tag__faux='awesome')))
 
     def test_facet(self):
         qs = S(FakeModel).facet(tags={'terms': {'field': 'tag'}})
