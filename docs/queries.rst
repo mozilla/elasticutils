@@ -312,7 +312,26 @@ That translates to:
     'fields': ['id']}
 
 
-``F`` supports AND, OR, and NOT operators.
+``F`` supports AND, OR, and NOT operators which are ``&``, ``|`` and
+``~`` respectively.
+
+Additionally, you can create an empty ``F`` and build it
+incrementally:
+
+.. code-block:: python
+
+    qs = S()
+    f = F()
+    if some_crazy_thing:
+        f &= F(price='FREE')
+    if some_other_crazy_thing:
+        f |= F(style='mexican')
+
+    qs = qs.filter(f)
+
+If neither `some_crazy_thing` or `some_other_crazy_thing` are
+``True``, then ``F`` will be empty. That's ok because empty filters
+are ignored.
 
 
 Facets

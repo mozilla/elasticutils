@@ -151,7 +151,8 @@ def _process_filters(filters):
     rv = []
     for f in filters:
         if isinstance(f, F):
-            rv.append(f.filters)
+            if f.filters:
+                rv.append(f.filters)
         else:
             key, val = f
             key, field_action = _split(key)
@@ -182,7 +183,7 @@ class F(object):
         if filters:
             items = _process_filters(filters.items())
             if len(items) > 1:
-                self.filters = {'and': items }
+                self.filters = {'and': items}
             else:
                 self.filters = items[0]
         else:
@@ -194,7 +195,11 @@ class F(object):
         combined with the connector `conn`.
         """
         f = F()
-        if conn in self.filters:
+        if not self.filters:
+            f.filters = other.filters
+        elif not other.filters:
+            f.filters = self.filters
+        elif conn in self.filters:
             f.filters = self.filters
             f.filters[conn].append(other.filters)
         elif conn in other.filters:

@@ -1,8 +1,8 @@
+.. _project-details:
+
 ============
 ElasticUtils
 ============
-
-.. _project-details:
 
 ElasticUtils is a Python library that gives you a Django queryset-like
 API for `elasticsearch <http://elasticsearch.org/>`_ as well as some
