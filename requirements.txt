@@ -1,2 +1,2 @@
-# pyes 0.15, other versions... not so great.
--e git://github.com/aparo/pyes.git@27d00eac9030cc9c4dfce9231ad1094f1470a3ca#egg=pyes
+# pyes 0.15 or 0.16--0.17 has API breaking things
+pyes>=0.15,<0.17
