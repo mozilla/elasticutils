@@ -7,7 +7,7 @@ Running the tests
 
 To run the tests, do::
 
-    DJANGO_SETTINGS_MODULE=es_settings nosetests -w tests
+    DJANGO_SETTINGS_MODULE=es_settings nosetests
 
 
 .. Note::
@@ -23,7 +23,19 @@ To run the tests, do::
 Writing tests
 =============
 
-Tests are located in `tests/`.
+Tests are located in `elasticutils/tests/`.
 
 We use `nose <https://github.com/nose-devs/nose>`_ for test utilities
 and running tests.
+
+
+ElasticTestCase
+===============
+
+If you're testing things that require hitting an ElasticSearch
+instance, then you should subclass
+`elasticutils.tests.ElasticTestCase` which has code in it for making
+things easier.
+
+.. autoclass:: elasticutils.tests.ElasticTestCase
+   :members:

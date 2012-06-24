@@ -1,68 +1,17 @@
-"""
-Run me using nose!
-
-Also run elastic search on the default ports locally.
-"""
-from unittest import TestCase
-
-from elasticutils import F, S, get_es, settings, InvalidFieldActionError
 from nose.tools import eq_
 import pyes.exceptions
 
-
-class Meta(object):
-    def __init__(self, db_table):
-        self.db_table = db_table
+from elasticutils import F, S, get_es, InvalidFieldActionError
+from elasticutils.tests import FakeModel, ElasticTestCase
 
 
-class Manager(object):
-    def filter(self, id__in=None):
-        return [m for m in model_cache if m.id in id__in]
-
-
-model_cache = []
-
-
-class FakeModel(object):
-    _meta = Meta('fake')
-    objects = Manager()
-
-    def __init__(self, **kw):
-        for key in kw:
-            setattr(self, key, kw[key])
-        model_cache.append(self)
-
-
-class ESTest(TestCase):
-    def test_get_es_defaults(self):
-        es = get_es()
-        eq_(es.timeout, settings.ES_TIMEOUT)
-        # dump_curl defaults to False, but if dump_curl is Falsey,
-        # then pyes.es.ES sets its dump_curl attribute to None.
-        eq_(es.dump_curl, None)
-        eq_(es.default_indexes, [settings.ES_INDEXES['default']])
-
-    def test_get_es(self):
-        class Dumper(object):
-            def write(self, val):
-                print val
-
-        d = Dumper()
-
-        es = get_es(
-            timeout=20,
-            dump_curl=d,
-            default_indexes=['joe'])
-        eq_(es.timeout, 20)
-        eq_(es.dump_curl, d)
-        eq_(es.default_indexes, ['joe'])
-
-
-class QueryTest(TestCase):
-    index_name = settings.ES_INDEXES['default']
-
+class QueryTest(ElasticTestCase):
     @classmethod
     def setup_class(cls):
+        super(QueryTest, cls).setup_class()
+        if cls.skip_tests:
+            return
+
         es = get_es()
         try:
             es.delete_index_if_exists(cls.index_name)
@@ -85,6 +34,10 @@ class QueryTest(TestCase):
 
     @classmethod
     def teardown_class(cls):
+        super(QueryTest, cls).teardown_class()
+        if cls.skip_tests:
+            return
+
         es = get_es()
         es.delete_index(cls.index_name)
 

@@ -29,7 +29,6 @@ User's Guide
    es
    queries
    django
-   testing
    debugging
 
 
