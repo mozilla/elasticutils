@@ -1,9 +1,29 @@
-===========
- CHANGELOG
-===========
+==========================
+What's new in ElasticUtils
+==========================
+
+
+Version 0.4: Released xxx
+=========================
+
+**API-breaking changes:**
+
+* Moved `ESTestCase` from ``elasticutils.tests`` to
+  ``elasticutils.djangolib``
+
+
+**Changes:**
+
+* Overhauled and cleaned up ElasticUtils tests. Running tests can be done
+  with::
+
+      DJANGO_SETTINGS_MODULE=es_settings nosetests
+
 
 Version 0.3: Released June 1st, 2012
 ====================================
+
+**Changes:**
 
 * Add documentation for debugging, project details and other things.
 
