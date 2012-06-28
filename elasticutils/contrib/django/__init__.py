@@ -11,7 +11,7 @@ from elasticutils import F, InvalidFieldActionError
 try:
     from django.conf import settings
 except ImportError:
-    import es_settings as settings
+    pass
 
 try:
     from statsd import statsd

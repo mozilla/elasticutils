@@ -1,5 +1,4 @@
 from nose.tools import eq_
-import pyes.exceptions
 
 from elasticutils import F, S, InvalidFieldActionError
 from elasticutils.tests import FakeModel, ElasticTestCase
