@@ -24,11 +24,10 @@ setup(
     description='Chainable interface to querying ElasticSearch',
     long_description=open(READMEFILE).read(),
     url='https://github.com/mozilla/elasticutils',
-    # Current "project maintainer"
     author='Mozilla Foundation and contributors',
     license='BSD',
     packages=find_packages(),
-    install_requires=['Nose', 'pyes>=0.15,<0.17'],
+    install_requires=['pyes>=0.15,<0.17'],
     include_package_data=True,
     classifiers=[
         'Development Status :: 4 - Beta',

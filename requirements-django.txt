@@ -1,0 +1,4 @@
+django
+
+celery
+django-celery
