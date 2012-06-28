@@ -165,7 +165,7 @@ class S(object):
     Represents a lazy ElasticSearch lookup, with a similar api to
     Django's QuerySet.
     """
-    def __init__(self, type_):
+    def __init__(self, type_=None):
         """Creates and returns an S
 
         :arg type_: class; the model that this S is based on
@@ -252,12 +252,12 @@ class S(object):
         """
         return self._clone(next_step=('doctypes', doctypes))
 
-    def values(self, *fields):
+    def values_list(self, *fields):
         """
         Returns a new S instance whose SearchResults will be of the class
         ListSearchResults.
         """
-        return self._clone(next_step=('values', fields))
+        return self._clone(next_step=('values_list', fields))
 
     def values_dict(self, *fields):
         """
@@ -299,7 +299,7 @@ class S(object):
         set.
         """
         new = self._clone()
-        actions = 'values values_dict order_by query filter facet'.split()
+        actions = 'values_list values_dict order_by query filter facet'.split()
         for key, vals in kw.items():
             assert key in actions
             if hasattr(vals, 'items'):
@@ -339,7 +339,7 @@ class S(object):
         filters = []
         queries = []
         sort = []
-        fields = ['id']
+        fields = set(['id'])
         facets = {}
         as_list = as_dict = False
         for action, value in self.steps:
@@ -350,14 +350,14 @@ class S(object):
                         sort.append({key[1:]: 'desc'})
                     else:
                         sort.append(key)
-            elif action == 'values':
-                fields.extend(value)
+            elif action == 'values_list':
+                fields |= set(value)
                 as_list, as_dict = True, False
             elif action == 'values_dict':
                 if not value:
-                    fields = []
+                    fields = set()
                 else:
-                    fields.extend(value)
+                    fields |= set(value)
                 as_list, as_dict = False, True
             elif action == 'query':
                 queries.extend(self._process_queries(value))
@@ -385,7 +385,7 @@ class S(object):
             qs['query'] = queries[0]
 
         if fields:
-            qs['fields'] = fields
+            qs['fields'] = list(fields)
         if facets:
             qs['facets'] = facets
             # Copy filters into facets. You probably wanted this.
@@ -429,10 +429,10 @@ class S(object):
         """
         if not self._results_cache:
             hits = self.raw()
-            if self.as_dict:
-                ResultClass = DictSearchResults
-            elif self.as_list:
+            if self.as_list:
                 ResultClass = ListSearchResults
+            elif self.as_dict or self.type is None:
+                ResultClass = DictSearchResults
             else:
                 ResultClass = ObjectSearchResults
             self._results_cache = ResultClass(self.type, hits, self.fields)
@@ -523,6 +523,11 @@ class ListSearchResults(SearchResults):
     def set_objects(self, hits):
         if self.fields:
             getter = itemgetter(*self.fields)
+            # Note: If there's only one field specified, this returns
+            # a flat list of that field. e.g. [1, 2, 3, 4, 5]
+            #
+            # But if there are multiple fields specified, then this
+            # returns a list of tuples. e,g, [(1, 'foo'), (2, 'bar')]
             objs = [getter(r['fields']) for r in hits]
         else:
             objs = [r['_source'].values() for r in hits]

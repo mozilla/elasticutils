@@ -25,6 +25,15 @@ def requires_django(fun):
     return _requires_django
 
 
+class STest(TestCase):
+    @requires_django
+    def test_require_type_(self):
+        """The Django S requires a type_."""
+        from elasticutils.contrib.django import S
+        with self.assertRaises(TypeError):
+            S()
+
+
 class ESTest(TestCase):
     @requires_django
     def test_get_es_defaults(self):

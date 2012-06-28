@@ -127,7 +127,7 @@ def es_required_or_50x(disabled_msg, error_msg):
     return wrap
 
 
-class DjangoS(elasticutils.S):
+class S(elasticutils.S):
     """S that's more Django-focused
 
     * uses an ES that's based on settings
@@ -135,15 +135,26 @@ class DjangoS(elasticutils.S):
       it took to do the query
 
     """
+    def __init__(self, type_):
+        """Create and return an S.
+
+        :arg type_: class; the model that this S is based on
+
+        .. Note::
+
+           The :class: `elasticutils.S` doesn't require the `type_`
+           argument, but the :class:`elasticutils.contrib.django.S`
+           does.
+
+        """
+        return super(S, self).__init__(type_)
+
     def raw(self):
-        hits = super(DjangoS, self).raw()
+        hits = super(S, self).raw()
         if statsd:
             statsd.timing('search', hits['took'])
         return hits
 
-
-class S(elasticutils.S):
-    """S that uses Django settings"""
     def get_es(self, default_builder=None):
         # Override the default_builder with the Django one
         return super(S, self).get_es(default_builder=get_es)
