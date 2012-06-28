@@ -16,15 +16,15 @@ For example:
 
 .. code-block:: python
 
-   q = (S(MyModel).filter(product='firefox')
-                  .filter(version='4.0', platform='all')
-                  .facet(products={'field':'product', 'global': True})
-                  .facet(versions={'field': 'version'})
-                  .facet(platforms={'field': 'platform'})
-                  .facet(types={'field': 'type'})
-                  .doctypes('addon')
-                  .indexes('addon_index')
-                  .query(title='Example'))
+   q = (S().filter(product='firefox')
+           .filter(version='4.0', platform='all')
+           .facet(products={'field': 'product', 'global': True})
+           .facet(versions={'field': 'version'})
+           .facet(platforms={'field': 'platform'})
+           .facet(types={'field': 'type'})
+           .doctypes('addon')
+           .indexes('addon_index')
+           .query(title='Example'))
 
 
 The ElasticSearch REST API curl would look like this::
@@ -79,44 +79,69 @@ the `elasticsearch JSON`.
 All about S
 ===========
 
-`S` is the class that you instantiate to create a search. You pass in
-a `Model` class when constructing it.
+`S` is the class that you instantiate to create a search. For example::
 
-For example:
+    searcher = S()
 
-.. code-block:: python
-
-   S(Model)
-
-
-`Model` here is a Django ORM model class.
-
-.. Note::
-
-   If you're not using Django, you can create stub-models. See the
-   tests for more details.
 
 `S` has a bunch of methods that all return a new `S` with additional
 accumulated search criteria.
 
-For example:
+For example::
 
-.. code-block:: python
-
-   s1 = S(Model)
+   s1 = S()
 
    s2 = s1.query(content__text='tabs')
 
    s3 = s2.filter(awesome=True)
 
-`s1`, `s2`, and `s3` are all different `S` objects. `s3` has both a
-query and a filter in it.
+   s4 = s2.filter(awesome=False)
+
+`s1`, `s2`, and `s3` are all different `S` objects. `s1` is a match
+all.
+
+`s2` has a query.
+
+`s3` has everything in `s2` plus a ``awesome=True`` filter.
+
+`s4` has everything in `s2` with a ``awesome=False`` filter.
+
+
+
+You can also construct a `typed S` which is an `S` with a model
+class. For example::
+
+   S(Model)
+
+
+The model class needs to follow Django's ORM model system, but you can
+stub out the required bits even if you're not using Django.
+
+1. The model class needs a class-level attribute ``objects``.
+2. The ``objects`` attribute needs a method ``filter``.
+3. The ``filter`` method has a ``id__in`` argument which takes an
+   iterable of ids.
+
+For example::
+
+    class FakeModelManager(object):
+        def filter(self, id__in):
+            # returns list of FakeModel objects with those ids
+
+    class FakeModel(object):
+        objects = FakeModelManager()
+
+
+Then you can create an `S`::
+
+    searcher = S(FakeModel)
 
 
 Match All
 =========
 
-By default ``S(Model)`` will do a ``match_all`` query in ElasticSearch.
+By default ``S()`` with no filters or queries specified will do a
+``match_all`` query in ElasticSearch.
 
 
 Search Query
@@ -127,20 +152,16 @@ method. The key of the keyword argument is parsed splitting on ``__``
 (that's two underscores) with the first part as the "field" and the
 second part as the "field action".
 
-For example:
+For example::
 
-.. code-block:: python
-
-   q = S(Model).query(title='taco trucks')
+   q = S().query(title='taco trucks')
 
 
 will do an elasticsearch term query for "taco trucks" in the title field.
 
-And:
+And::
 
-.. code-block:: python
-
-   q = S(Model).query(title__text='taco trucks')
+   q = S().query(title__text='taco trucks')
 
 
 will do a text query instead of a term query.
@@ -161,10 +182,10 @@ fuzzy             Fuzzy_ query
 Filters
 =======
 
-.. code-block:: python
+::
 
-   q = (S(Model).query(title='taco trucks')
-                .filter(style='korean'))
+   q = (S().query(title='taco trucks')
+           .filter(style='korean'))
 
 
 will do a query for "taco trucks" in the title field and filter on the
@@ -191,20 +212,16 @@ Advanced filters and F
 Calling filter multiple times is equivalent to an "and"ing of the
 filters.
 
-For example:
+For example::
 
-.. code-block:: python
-
-   q = (S(Model).filter(style='korean')
-                .filter(price='FREE'))
+   q = (S().filter(style='korean')
+           .filter(price='FREE'))
 
 will do a query for style 'korean' AND price 'FREE'. Anything that has
 a style other than 'korean' or a price other than 'FREE' is removed
 from the result set.
 
-This translates to:
-
-.. code-block:: javascript
+This translates to::
 
    {'filter': {
        'and': [
@@ -219,16 +236,12 @@ in elasticutils JSON.
 You can do the same thing by putting both filters in the same
 ``.filter()`` call.
 
-For example:
+For example::
 
-.. code-block:: python
-
-   q = S(Model).filter(style='korean', price='FREE')
+   q = S().filter(style='korean', price='FREE')
 
 
-that also translates to:
-
-.. code-block:: javascript
+that also translates to::
 
    {'filter': {
        'and': [
@@ -243,16 +256,12 @@ in elasticutils JSON.
 Suppose you want either Korean or Mexican food. For that, you need an
 "or".
 
-You can do something like this:
+You can do something like this::
 
-.. code-block:: python
-
-   q = S(Model).filter(or_={'style': 'korean', 'style'='mexican'})
+   q = S().filter(or_={'style': 'korean', 'style'='mexican'})
 
 
-That translates to:
-
-.. code-block:: javascript
+That translates to::
 
    {'filter': {
        'or': [
@@ -267,19 +276,15 @@ But, that's kind of icky looking.
 So, we've also got an ``F`` class that makes this sort of thing
 easier.
 
-You can do the previous example with ``F`` like this:
+You can do the previous example with ``F`` like this::
 
-.. code-block:: python
-
-   q = S(Model).filter(F(style='korean') | F(style='mexican'))
+   q = S().filter(F(style='korean') | F(style='mexican'))
 
 
 will get you all the search results that are either "korean" or
 "mexican" style.
 
-That translates to:
-
-.. code-block:: javascript
+That translates to::
 
    {'filter': {
        'or': [
@@ -290,16 +295,12 @@ That translates to:
 
 
 What if you want Mexican food, but only if it's FREE, otherwise you
-want Korean?
+want Korean?::
 
-.. code-block:: python
-
-   q = S(Model).filter(F(style='mexican', price='FREE') | F(style='korean'))
+   q = S().filter(F(style='mexican', price='FREE') | F(style='korean'))
 
 
-That translates to:
-
-.. code-block:: javascript
+That translates to::
    
    {'filter': {
        'or': [
@@ -316,9 +317,7 @@ That translates to:
 ``~`` respectively.
 
 Additionally, you can create an empty ``F`` and build it
-incrementally:
-
-.. code-block:: python
+incrementally::
 
     qs = S()
     f = F()
@@ -337,52 +336,95 @@ are ignored.
 Facets
 ======
 
-.. code-block:: python
+::
 
-   q = (S(Model).query(title='taco trucks')
-                .facet(styles={'field': 'style'},
-                       locations={'field':'location'}))
+   q = (S().query(title='taco trucks')
+           .facet(styles={'terms': {'field': 'style'}},
+                  locations={'terms': {'field':'location'}}))
 
 
 will do a query for "taco trucks" and return facets for the ``style``
-and ``location`` fields. The facets are available from the ``facets``
-properties.
+and ``location`` fields.
 
-That translates to:
+That translates to::
 
-.. code-block:: javascript
-
-   {'query': {
-       'term': {'title': 'taco trucks'}},
-       'facets': {
-           'styles': {'field': 'style'},
-           'locations': {'field': 'location'}
-       },
-    'fields': ['id']}
+    {'query': {'term': {'title': 'taco trucks'}},
+     'facets': {
+         'styles': {'terms': {'field': 'style'}},
+         'locations': {'terms': {'field': 'location'}}
+     },
+     'fields': ['id']}
 
 
-Facets can also be scripted_::
+If you use filters in your search, then ElasticUtils helpfully
+adds `facet_filter` bits to the filters. This causes the facets to
+apply to the scope of the search results rather than the scope of all
+the documents in the index.
 
-    S(Model).query(title='taco trucks').facet(styles={
-        'field': 'style', 
-        'script': 'term == korean ? true : false'
-    })
+For example::
+
+    q = (S().query(title='taco trucks')
+            .filter(style='korean')
+            .facet(styles={'terms': {'field': 'style'}},
+                   locations={'terms': {'field':'location'}}))
+
+Translates to this::
+
+    {'query': {'term': {'title': 'taco trucks'}},
+     'filter': {'term': {'style': 'korean'}},
+     'facets': {
+         'styles': {
+             'facet_filter': {'term': {'style': 'korean'}},
+             'terms': {'field': 'style'}
+         },
+         'locations': {
+             'facet_filter': {'term': {'style': 'korean'}},
+             'terms': {'field': 'location'}
+         }
+     },
+     'fields': ['id']}
+
+If you specify the ``facet_filter`` property for a facet, then
+ElasticUtils will leave it alone.
+
+Once you've executed a search, the facets are available from the
+``raw_facets`` method::
+
+    facets = q.raw_facets()
 
 
 .. Note::
 
-   Unless the ``facet_filter`` property is specified on each facet,
-   all the filters will be used for the facet_filter by default.
+   Calling ``raw_facets`` will execute the search if it hasn't already
+   been executed.
+
+
+Facets can also be scripted_::
+
+    S().query(title='taco trucks').facet(styles={
+        'field': 'style', 
+        'script': 'term == korean ? true : false'
+    })
+
+That translates to::
+
+    {'query': {'term': {'title': 'taco trucks'}},
+     'facets': {
+         'styles': {
+             'field': 'style',
+             'script': 'term == korean ? true : false'
+         }
+     },
+     'fields': ['id']}
+
 
 
 Counts
 ======
 
-Total hits can be found by doing:
+Total hits can be found by doing::
 
-.. code-block:: python
-
-    r = S(Model).query(title='taco trucks')
+    r = S().query(title='taco trucks')
     r.count()
     len(r)
 
@@ -393,18 +435,34 @@ Results
 Results are lazy-loaded, so the query will not be made until you try
 to access an item or some other attribute requiring the data.
 
-By default, results will be returned as instances of the Model class
-provided in the constructor. However, you can get the results back as
-a list or dictionaries or tuples, if you'd rather:
+If you have a typed `S` (e.g. ``S(Model)``), then by default, results
+will be instances of that type.
 
->>> S(Model).query(type='taco trucks').values('title')
-[(1, 'De La Tacos',), (2, 'Oriental Tacos',),]
->>> S(Model).query(type='taco trucks').values_dict('title')
-[{'id': 1, 'title': 'De La Tacos'}, {'id': 2, 'title': 'Oriental Tacos'}]
+If you have an untyped `S` (e.g. ``S()``), then by default, results
+will be dicts.
+
+`values_list` with no arguments returns a list of ids. With arguments,
+it'll return a list of tuples of values of the fields specified in the
+order the fields were specified.
+
+For example:
+
+>>> list(S().values_list())
+[1, 2, 3]
+>>> list(S().values_list('id', 'name'))
+[(1, 'fred'), (2, 'brian'), (3, 'james')]
 
 
-Arguments passed to ``values`` or ``values_dict`` will select the
-fields that are returned, including the ``id``.
+`values_dict` returns a list of dicts. With no arguments, it returns a
+list of dicts with a single ``id`` field. With arguments, it returns a
+list of dicts with specified fields.
+
+For example:
+
+>>> list(S().values_dict())
+[{'id': 1}, {'id': 2}]
+>>> list(S().values_dict('id', 'name')
+[{'id': 1, 'name': 'fred'}, {'id': 2, 'name': 'brian'}]
 
 
 .. _Text: http://www.elasticsearch.org/guide/reference/query-dsl/text-query.html

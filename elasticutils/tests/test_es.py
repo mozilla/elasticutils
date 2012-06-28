@@ -7,7 +7,7 @@ from elasticutils import get_es, DEFAULT_TIMEOUT, DEFAULT_INDEXES
 
 class ESTest(TestCase):
     def test_get_es_defaults(self):
-        """Test that the ES has the correct defaults"""
+        """Test that the ES has the correct defaults."""
         es = get_es()
         eq_(es.timeout, DEFAULT_TIMEOUT)
         # dump_curl defaults to False, but if dump_curl is Falsey,
@@ -16,7 +16,7 @@ class ESTest(TestCase):
         eq_(es.default_indexes, [DEFAULT_INDEXES])
 
     def test_get_es_overriding_defaults(self):
-        """Test that overriding defaults works"""
+        """Test that overriding defaults works."""
         class Dumper(object):
             def write(self, val):
                 print val

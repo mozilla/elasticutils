@@ -26,10 +26,10 @@ User's Guide
 
    changelog
    installation
-   es
    queries
-   django
+   es
    debugging
+   django
 
 
 Contributor's Guide

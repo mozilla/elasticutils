@@ -1,6 +1,6 @@
-=================
-Using with Django
-=================
+==============================================
+elasticutils.contrib.django: Using with Django
+==============================================
 
 .. contents::
    :local:
@@ -94,30 +94,40 @@ It is built with the settings from your `django.conf.settings`.
 Using with Django ORM models
 ============================
 
-Django models and ElasticSearch indices make a natural fit. It would
-be terribly useful if a Django model knew how to add and remove itself
-from ElasticSearch. This is where the
-:class:`elasticutils.contrib.django.models.SearchMixin` comes in.
+:Requirements: Django
+
+The `elasticutils.contrib.django.S` class takes a model in the
+constructor. That model is a Django ORM Models derivative. For example::
+
+    from elasticutils.contrib.django import S
+    from myapp.models import MyModel
+
+    searcher = S(MyModel)
+
+Further, you can have your model extend
+:class:`elasticutils.contrib.django.models.SearchMixin` and get a
+bunch of functionality that makes indexing data easier.
 
 Two things to know:
 
-1. The doctype for the model is `cls._meta.db_table`.
+1. The doctype for the model is ``cls._meta.db_table``.
 
 2. The index that's searched is ``settings.ES_INDEXES[doctype]`` and
    if that doesn't exist, it defaults to
    ``settings.ES_INDEXES['default']``
 
+.. autoclass:: elasticutils.contrib.django.models.SearchMixin
+   :members:
 
 
 Other helpers
 =============
 
+:Requirements: Django, Celery
+
 You can then utilize things such as
 :func:`~elasticutils.contrib.django.tasks.index_objects` to
 automatically index all new items.
-
-.. autoclass:: elasticutils.contrib.django.models.SearchMixin
-   :members:
 
 .. automodule:: elasticutils.contrib.django.tasks
 
@@ -131,10 +141,7 @@ automatically index all new items.
 Writing tests
 =============
 
-Requires:
-
-* `test_utils <https://github.com/jbalogh/test-utils>`_
-* `nose <http://nose.readthedocs.org/en/latest/>`_
+:Requirements: Django, test_utils, nose
 
 In `elasticutils.contrib.django.estestcase`, is `ESTestCase` which can
 be subclassed in your app's test cases.
@@ -156,3 +163,34 @@ Example::
 
         def test_locked_filters(self):
             ...
+
+
+Debugging
+=========
+
+From Rob Hudson (with some minor editing):
+
+    I recently discovered a nice tool for helping solve ElasticSearch
+    problems that I thought I'd share...
+
+    While scanning the code of pyes I discovered that it has an option
+    to dump the commands it is sending to the ES backend to whatever
+    you give it that has a ``write()`` method [1]_.  I also discovered
+    that elasticutils will pass this through to pyes based on the
+    ``settings.ES_DUMP_CURL`` [2]_.
+
+    I threw together a quick and ugly class just to dump output while
+    debugging an ES problem::
+
+        class CurlDumper(object):
+            def write(self, s):
+                print s
+        ES_DUMP_CURL = CurlDumper()
+
+    This is pretty great when running a test with output enabled, or
+    even in the runserver output. But to my surprise, when running
+    tests with output not enabled I see the curl dump for only tests
+    that fail, which has turned out to be very useful information.
+
+.. [1] https://github.com/aparo/pyes/blob/master/pyes/es.py#L496
+.. [2] https://github.com/mozilla/elasticutils/blob/master/elasticutils/__init__.py#L29

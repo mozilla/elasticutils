@@ -1,9 +1,11 @@
-==
-ES
-==
+=============
+Getting an ES
+=============
 
-`pyes` comes with a handy `ES` object. `elasticutils` has a `get_es()`
-function which builds an `ES`.
+ElasticUtils uses `pyes` which comes with a handy `ES` object. This
+lets you work with ElasticSearch outside of what ElasticUtils can do.
+
+To access this, you use `get_es()` which builds an `ES`.
 
 .. autofunction:: elasticutils.get_es
 

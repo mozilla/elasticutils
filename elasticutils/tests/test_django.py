@@ -11,7 +11,9 @@ from elasticutils.tests import FakeModel, ElasticTestCase
 # TODO: To run this file or import it requires Django be installed.
 # If Django isn't installed, we want to skip each test individually.
 # However, those requirements create a lot of tangled stuff in here.
-# It'd be nice if we could do this in a less tangled way and also
+# It'd be nice if we could do this in a less tangled way and also skip
+# the tests individually (so it's easy to see which tests got skipped
+# and why) if Django isn't installed.
 
 
 def requires_django(fun):
@@ -37,7 +39,7 @@ class STest(TestCase):
 class ESTest(TestCase):
     @requires_django
     def test_get_es_defaults(self):
-        """Test that the ES has the correct defaults"""
+        """Test that the ES has the correct defaults."""
         from django.conf import settings
         from elasticutils.contrib.django import get_es
 
@@ -50,7 +52,7 @@ class ESTest(TestCase):
 
     @requires_django
     def test_get_es_overriding_defaults(self):
-        """Test that overriding defaults works"""
+        """Test that overriding defaults works."""
         from elasticutils.contrib.django import get_es
 
         class Dumper(object):

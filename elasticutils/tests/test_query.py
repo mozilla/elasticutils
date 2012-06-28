@@ -106,40 +106,40 @@ class QueryTest(HasDataTestCase):
 
 class ResultsTests(HasDataTestCase):
     def test_default_results_are_dicts(self):
-        """With untyped S, return dicts"""
+        """With untyped S, return dicts."""
         searcher = list(S().indexes(self.index_name).query(foo='bar'))
         assert isinstance(searcher[0], dict)
 
     def test_typed_s_returns_type(self):
-        """With typed S, return objects of type"""
+        """With typed S, return objects of type."""
         searcher = list(S(FakeModel).indexes(self.index_name).query(foo='bar'))
         assert isinstance(searcher[0], FakeModel)
 
-    def test_dict_results(self):
-        """With values_dict, return list of dicts"""
+    def test_values_dict_results(self):
+        """With values_dict, return list of dicts."""
         searcher = list(self.get_s().query(foo='bar').values_dict())
         assert isinstance(searcher[0], dict)
 
-    def test_list_results_no_fields(self):
-        """No values_list fields, this returns a flat list of ids"""
+    def test_values_list_results_no_fields(self):
+        """No values_list fields, this returns a flat list of ids."""
         searcher = list(self.get_s().query(foo='bar').values_list())
         eq_(searcher[0], 1)
 
-    def test_list_results(self):
-        """With valuse_list fields, returns list of tuples"""
+    def test_values_list_results(self):
+        """With values_list fields, returns list of tuples."""
         searcher = list(self.get_s().query(foo='bar')
                                     .values_list('foo', 'width'))
         assert isinstance(searcher[0], tuple)
 
     def test_values_dict_no_args(self):
-        """Calling values_dict() with no args fetches all fields"""
+        """Calling values_dict() with no args fetches all fields."""
         eq_(S().query(fld1=2)
                .values_dict()
                ._build_query(),
             {"query": {"term": {"fld1": 2}}})
 
-    def test_values_no_args(self):
-        """Calling values() with no args fetches only id"""
+    def test_values_list_no_args(self):
+        """Calling values() with no args fetches only id."""
         eq_(S(FakeModel).query(fld1=2)
                         .values_list()
                         ._build_query(),
@@ -148,7 +148,7 @@ class ResultsTests(HasDataTestCase):
              'fields': ['id']})
 
     def test_values_dict_id(self):
-        """Calling values_dict('id') shouldn't return the ID field twice"""
+        """Calling values_dict('id') shouldn't return the ID field twice."""
         eq_(S(FakeModel).query(fld1=2)
                         .values_dict('id')
                         ._build_query(),
@@ -156,8 +156,8 @@ class ResultsTests(HasDataTestCase):
                  {"term": {"fld1": 2}},
              'fields': ['id']})
 
-    def test_values_id(self):
-        """Calling values('id') shouldn't return the ID field twice"""
+    def test_values_list_id(self):
+        """Calling values('id') shouldn't return the ID field twice."""
         eq_(S(FakeModel).query(fld1=2)
                         .values_list('id')
                         ._build_query(),
@@ -166,7 +166,7 @@ class ResultsTests(HasDataTestCase):
              'fields': ['id']})
 
     def test_values_dict_implicit_id(self):
-        """Calling values_dict() always fetches ID"""
+        """Calling values_dict() always fetches ID."""
         eq_(S(FakeModel).query(fld1=2)
                         .values_dict('thing')
                         ._build_query(),
@@ -174,8 +174,8 @@ class ResultsTests(HasDataTestCase):
                  {"term": {"fld1": 2}},
              'fields': ['thing', 'id']})
 
-    def test_values_implicit_id(self):
-        """Calling values() always fetches ID"""
+    def test_values_list_implicit_id(self):
+        """Calling values() always fetches ID."""
         eq_(S(FakeModel).query(fld1=2)
                         .values_list('thing')
                         ._build_query(),

@@ -32,7 +32,7 @@ class FakeModel(object):
 
 
 class ElasticTestCase(TestCase):
-    """Superclass for ElasticSearch-using test cases
+    """Superclass for ElasticSearch-using test cases.
 
     :cvar index_name: string; name of the index to use
     :cvar skip_tests: bool; if ElasticSearch isn't available, then
@@ -47,7 +47,7 @@ class ElasticTestCase(TestCase):
 
     @classmethod
     def setup_class(cls):
-        """Class setup for tests
+        """Class setup for tests.
 
         Checks to see if ES is running and if not, sets ``skip_test``
         to True on the class.
@@ -60,11 +60,11 @@ class ElasticTestCase(TestCase):
 
     @classmethod
     def teardown_class(cls):
-        """Class tear down for tests"""
+        """Class tear down for tests."""
         reset_model_cache()
 
     def setUp(self):
-        """Sets up a single test
+        """Set up a single test.
 
         :raises SkipTest: if ``skip_tests`` is True for this
             class/instance
@@ -79,7 +79,7 @@ class ElasticTestCase(TestCase):
         return get_es(default_indexes=[cls.index_name])
 
     def refresh(self, timesleep=0):
-        """Refresh index after indexing
+        """Refresh index after indexing.
 
         This refreshes the index specified by `self.index_name`.
 

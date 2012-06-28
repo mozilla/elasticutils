@@ -22,13 +22,13 @@ def _split(s):
 
 def get_es(hosts=None, default_indexes=None, timeout=None, dump_curl=None,
            **settings):
-    """Creates an ES object and returns it
+    """Create an ES object and return it.
 
     :arg hosts: list of uris; ES hosts to connect to, defaults to
         ``['localhost:9200']``
     :arg default_indexes: list of strings; the default indexes to use,
         defaults to 'default'
-    :arg timeout: imt; the timeout in seconds, defaults to 5
+    :arg timeout: int; the timeout in seconds, defaults to 5
     :arg dump_curl: function or None; function that dumps curl output,
         see docs, defaults to None
     :arg settings: other settings to pass into `pyes.es.ES`
@@ -166,7 +166,7 @@ class S(object):
     Django's QuerySet.
     """
     def __init__(self, type_=None):
-        """Creates and returns an S
+        """Create and return an S.
 
         :arg type_: class; the model that this S is based on
 
@@ -194,7 +194,7 @@ class S(object):
         return new
 
     def es(self, **settings):
-        """Returns a new S with specified ES settings
+        """Return a new S with specified ES settings.
 
         This allows you to configure the ES that gets used to execute
         the search.
@@ -206,7 +206,7 @@ class S(object):
         return self._clone(next_step=('es', settings))
 
     def es_builder(self, builder_function):
-        """Returns a new S with specified ES builder
+        """Return a new S with specified ES builder.
 
         When you do something with an S that causes it to execute a
         search, then it will call the specified builder function with
@@ -237,13 +237,13 @@ class S(object):
 
     def indexes(self, *indexes):
         """
-        Returns a new S instance that will search specified indexes.
+        Return a new S instance that will search specified indexes.
         """
         return self._clone(next_step=('indexes', indexes))
 
     def doctypes(self, *doctypes):
         """
-        Returns a new S instance that will search specified doctypes.
+        Return a new S instance that will search specified doctypes.
 
         .. Note::
 
@@ -254,48 +254,46 @@ class S(object):
 
     def values_list(self, *fields):
         """
-        Returns a new S instance whose SearchResults will be of the class
-        ListSearchResults.
+        Return a new S instance that returns ListSearchResults.
         """
         return self._clone(next_step=('values_list', fields))
 
     def values_dict(self, *fields):
         """
-        Returns a new S instance whose SearchResults will be of the class
-        DictSearchResults.
+        Return a new S instance that returns DictSearchResults.
         """
         return self._clone(next_step=('values_dict', fields))
 
     def order_by(self, *fields):
         """
-        Returns a new S instance with the ordering changed.
+        Return a new S instance with the ordering changed.
         """
         return self._clone(next_step=('order_by', fields))
 
     def query(self, **kw):
         """
-        Returns a new S instance with the query args combined to the existing
+        Return a new S instance with query args combined with existing
         set.
         """
         return self._clone(next_step=('query', kw.items()))
 
     def filter(self, *filters, **kw):
         """
-        Returns a new S instance with the filter args combined to the existing
-        set.
+        Return a new S instance with filter args combined with
+        existing set.
         """
         return self._clone(next_step=('filter', list(filters) + kw.items()))
 
     def facet(self, **kw):
         """
-        Returns a new S instance with the facet args combined to the existing
+        Return a new S instance with facet args combined with existing
         set.
         """
         return self._clone(next_step=('facet', kw.items()))
 
     def extra(self, **kw):
         """
-        Returns a new S instance with the extra args combined with the existing
+        Return a new S instance with extra args combined with existing
         set.
         """
         new = self._clone()
@@ -310,8 +308,7 @@ class S(object):
 
     def count(self):
         """
-        Returns the number of hits for the current query and filters as an
-        integer.
+        Return the number of hits for the search as an integer.
         """
         if self._results_cache:
             return self._results_cache.count
@@ -333,8 +330,8 @@ class S(object):
 
     def _build_query(self):
         """
-        Loops self.steps to build the query format that will be sent to
-        ElasticSearch, and returns it as a dict.
+        Loop self.steps to build the query format that will be sent to
+        ElasticSearch, and return it as a dict.
         """
         filters = []
         queries = []
@@ -424,8 +421,8 @@ class S(object):
 
     def _do_search(self):
         """
-        Performs the search, then converts that raw format into a
-        SearchResults instance and returns it.
+        Perform the search, then convert that raw format into a
+        SearchResults instance and return it.
         """
         if not self._results_cache:
             hits = self.raw()
@@ -464,8 +461,8 @@ class S(object):
 
     def raw(self):
         """
-        Builds query and passes to ElasticSearch, then returns the raw format
-        returned.
+        Build query and passes to ElasticSearch, then returns the raw
+        format returned.
         """
         qs = self._build_query()
         es = self.get_es()

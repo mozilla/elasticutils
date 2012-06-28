@@ -25,6 +25,12 @@ Version 0.4: Released xxx
 
   If you don't use Django, ElasticUtils is easier to use!
 
+* If you're not using Django, `S` no longer requires a type. If you
+  don't specify a type, then ElasticUtils will return results as
+  dicts.
+
+* ``values()`` was renamed to ``values_list()``.
+
 
 **Changes:**
 
@@ -48,7 +54,7 @@ Version 0.4: Released xxx
 * Added ``doctypes`` transform: it allows you to specify the doctypes
   to use for the search.
 
-* Removed requirement for nuggits.
+* Removed requirement for nuggets.
 
 * Continued to improve documentation.
 
