@@ -1,5 +1,27 @@
+from itertools import islice
+
 from celery.task.sets import TaskSet
-from celeryutils import chunked
+
+
+def chunked(iterable, n):
+    """Returns chunks of n length of iterable
+
+    If len(iterable) % n != 0, then the last chunk will have length
+    less than n.
+
+    Example:
+
+    >>> chunked([1, 2, 3, 4, 5], 2)
+    [(1, 2), (3, 4), (5,)]
+
+    """
+    iterable = iter(iterable)
+    while 1:
+        t = tuple(islice(iterable, n))
+        if t:
+            yield t
+        else:
+            return
 
 
 def reindex_objects(model, chunk_size=150):
@@ -17,9 +39,9 @@ def reindex_objects(model, chunk_size=150):
     def job():
         from elasticutils import tasks
 
-        ids = (model.objects.values_list('id', flat=True))
+        ids = list(model.objects.values_list('id', flat=True))
         ts = [tasks.index_objects.subtask(args=[chunk])
-              for chunk in chunked(sorted(list(ids)), chunk_size)]
+              for chunk in chunked(sorted(ids), chunk_size)]
         TaskSet(ts).apply_async()
 
     return job

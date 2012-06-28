@@ -1,9 +1,10 @@
 import logging
 
 from django.conf import settings
+from celery.decorators import task
 
-import elasticutils
-from celeryutils import task
+from elasticutils.contrib.django import get_es
+
 
 log = logging.getLogger('elasticutils')
 
@@ -22,7 +23,7 @@ def index_objects(model, ids, **kw):
     """
     if settings.ES_DISABLED:
         return
-    es = elasticutils.get_es()
+    es = get_es()
     log.info('Indexing objects %s-%s. [%s]' % (ids[0], ids[-1], len(ids)))
     qs = model.objects.filter(id__in=ids)
     for item in qs:

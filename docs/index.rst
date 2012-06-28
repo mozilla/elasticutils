@@ -26,7 +26,6 @@ User's Guide
 
    changelog
    installation
-   configuration
    es
    queries
    django

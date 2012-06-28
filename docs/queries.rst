@@ -16,18 +16,18 @@ For example:
 
 .. code-block:: python
 
-   q = (S(model).query(title='Example')
-                .filter(product='firefox')
-                .filter(version='4.0', platform='all')
-                .facet(products={'field':'product', 'global': True})
-                .facet(versions={'field': 'version'})
-                .facet(platforms={'field': 'platform'})
-                .facet(types={'field': 'type'}))
+   q = (S(MyModel).filter(product='firefox')
+                  .filter(version='4.0', platform='all')
+                  .facet(products={'field':'product', 'global': True})
+                  .facet(versions={'field': 'version'})
+                  .facet(platforms={'field': 'platform'})
+                  .facet(types={'field': 'type'})
+                  .doctypes('addon')
+                  .indexes('addon_index')
+                  .query(title='Example'))
 
 
-Assume that `model` here dictated that we're looking in the
-`addon_index` for `addon` document type. Then the elasticsearch REST
-API curl for that looks like::
+The ElasticSearch REST API curl would look like this::
 
     $ curl -XGET 'http://localhost:9200/addon_index/addon/_search' -d '{
     'query': {'term': {'title': 'Example'}},

@@ -3,11 +3,13 @@ from unittest import TestCase
 from nose import SkipTest
 import pyes
 
-from elasticutils import get_es, settings
+from elasticutils import get_es
 
 
 model_cache = []
 
+def reset_model_cache():
+    del model_cache[0:]
 
 class Meta(object):
     def __init__(self, db_table):
@@ -40,7 +42,7 @@ class ElasticTestCase(TestCase):
     For examples of usage, see the other ``test_*.py`` files.
 
     """
-    index_name = settings.ES_INDEXES['default']
+    index_name = 'elasticutilstest'
     skip_tests = False
 
     @classmethod
@@ -59,7 +61,7 @@ class ElasticTestCase(TestCase):
     @classmethod
     def teardown_class(cls):
         """Class tear down for tests"""
-        pass
+        reset_model_cache()
 
     def setUp(self):
         """Sets up a single test
@@ -72,6 +74,10 @@ class ElasticTestCase(TestCase):
 
         super(ElasticTestCase, self).setUp()
 
+    @classmethod
+    def get_es(cls):
+        return get_es(default_indexes=[cls.index_name])
+
     def refresh(self, timesleep=0):
         """Refresh index after indexing
 
@@ -82,4 +88,3 @@ class ElasticTestCase(TestCase):
 
         """
         get_es().refresh(self.index_name, timesleep=timesleep)
-

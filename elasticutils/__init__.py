@@ -1,145 +1,75 @@
 import logging
-from functools import wraps
-from threading import local
 from operator import itemgetter
 
-from pyes import ES, exceptions, VERSION
-from pyes.es import thrift_enable
-
-try:
-    from statsd import statsd
-except ImportError:
-    statsd = None
-
-try:
-    from django.conf import settings
-except ImportError:
-    import es_settings as settings
+from pyes import ES, VERSION
 
 
-_local = local()
-_local.disabled = {}
-log = logging.getLogger('elasticsearch')
+log = logging.getLogger('elasticutils')
 
 
-DEFAULT_INDEXES = [settings.ES_INDEXES['default']]
-DEFAULT_TIMEOUT = getattr(settings, 'ES_TIMEOUT', 5)
-DEFAULT_DUMP_CURL = getattr(settings, 'ES_DUMP_CURL', False)
+DEFAULT_HOSTS = ['localhost:9200']
+DEFAULT_TIMEOUT = 5
+DEFAULT_DOCTYPES = None
+DEFAULT_INDEXES = 'default'
+DEFAULT_DUMP_CURL = None
 
 
-def get_es(**overrides):
-    """Return one pyes.es.ES object
+def _split(s):
+    if '__' in s:
+        return s.rsplit('__', 1)
+    return s, None
 
-    :arg overrides: Allows you to override defaults to create the ES.
 
-    Things you can override:
+def get_es(hosts=None, default_indexes=None, timeout=None, dump_curl=None,
+           **settings):
+    """Creates an ES object and returns it
 
-    * default_indexes
-    * timeout
-    * dump_curl
+    :arg hosts: list of uris; ES hosts to connect to, defaults to
+        ``['localhost:9200']``
+    :arg default_indexes: list of strings; the default indexes to use,
+        defaults to 'default'
+    :arg timeout: imt; the timeout in seconds, defaults to 5
+    :arg dump_curl: function or None; function that dumps curl output,
+        see docs, defaults to None
+    :arg settings: other settings to pass into `pyes.es.ES`
 
-    Values for these correspond with the arguments to pyes.es.ES.
+    Examples:
 
-    For example, if you wanted to create an ES for indexing with a timeout
-    of 30 seconds, you'd do:
-
-    >>> es = get_es(timeout=30)
-
-    If you wanted to create an ES for debugging that dumps curl
-    commands to stdout, you could do:
-
+    >>> get_es()
+    >>> get_es(hosts=['localhost:9200'])
+    >>> get_es(timeout=30)  # good for indexing
+    >>> get_es(default_indexes=['sumo_prod_20120627']
     >>> class CurlDumper(object):
-    ...     def write(self, s):
-    ...         print s
+    ...     def write(self, text):
+    ...         print text
     ...
-    >>> es = get_es(dump_curl=CurlDumper())
+    >>> get_es(dump_curl=CurlDumper())
+
     """
-    if overrides or not hasattr(_local, 'es'):
-        defaults = {
-            'default_indexes': DEFAULT_INDEXES,
-            'timeout': DEFAULT_TIMEOUT,
-            'dump_curl': DEFAULT_DUMP_CURL,
-            }
+    # Cheap way of de-None-ifying things
+    hosts = hosts or DEFAULT_HOSTS
+    default_indexes = default_indexes or DEFAULT_INDEXES
+    timeout = timeout if timeout is not None else DEFAULT_TIMEOUT
+    dump_curl = dump_curl or DEFAULT_DUMP_CURL
 
-        defaults.update(overrides)
-        if (not thrift_enable and
-            not settings.ES_HOSTS[0].split(':')[1].startswith('92')):
-            raise ValueError('ES_HOSTS is not set to a valid port starting '
-                             'with 9200-9299 range. Other ports are valid '
-                             'if using pythrift.')
-        es = ES(settings.ES_HOSTS, **defaults)
+    if not isinstance(default_indexes, list):
+        default_indexes = [default_indexes]
 
-        # pyes 0.15 does this lame thing where it ignores dump_curl in
-        # the ES constructor and always sets it to None. So what we do
-        # is set it manually after the ES has been created and
-        # defaults['dump_curl'] is truthy. This might not work for all
-        # values of dump_curl.
-        if VERSION[0:2] == (0, 15):
-            es.dump_curl = (defaults['dump_curl']
-                            if defaults['dump_curl'] else None)
+    es = ES(hosts,
+            default_indexes=default_indexes,
+            timeout=timeout,
+            dump_curl=dump_curl,
+            **settings)
 
-        # Cache the es if there weren't any overrides.
-        if not overrides:
-            _local.es = es
-    else:
-        es = _local.es
+    # pyes 0.15 does this lame thing where it ignores dump_curl in
+    # the ES constructor and always sets it to None. So what we do
+    # is set it manually after the ES has been created and
+    # defaults['dump_curl'] is truthy. This might not work for all
+    # values of dump_curl.
+    if VERSION[0:2] == (0, 15) and dump_curl is not None:
+        es.dump_curl = dump_curl
 
     return es
-
-
-def es_required(f):
-    @wraps(f)
-    def wrapper(*args, **kw):
-        if settings.ES_DISABLED:
-            # Log once.
-            if f.__name__ not in _local.disabled:
-                log.debug('Search disabled for %s.' % f)
-                _local.disabled[f.__name__] = 1
-            return
-
-        return f(*args, es=get_es(), **kw)
-    return wrapper
-
-
-def es_required_or_50x(disabled_msg, error_msg):
-    """
-    This takes a Django view that requires ElasticSearch.
-
-    If `ES_DISABLED` is `True` then we raise a 501 Not Implemented and display
-    the disabled_msg.  If we try the view and an ElasticSearch exception is
-    raised we raise a 503 error with the error_msg.
-
-    We use user-supplied templates in elasticutils/501.html and
-    elasticutils/503.html.
-    """
-    def wrap(f):
-        @wraps(f)
-        def wrapper(request, *args, **kw):
-            from django.shortcuts import render
-            if settings.ES_DISABLED:
-                response = render(request, 'elasticutils/501.html',
-                                  {'msg': disabled_msg})
-                response.status_code = 501
-                return response
-            else:
-                try:
-                    return f(request, *args, **kw)
-                except exceptions.ElasticSearchException as error:
-                    response = render(request, 'elasticutils/503.html',
-                            {'msg': error_msg, 'error': error})
-                    response.status_code = 503
-                    return response
-
-        return wrapper
-
-    return wrap
-
-
-def _split(string):
-    if '__' in string:
-        return string.rsplit('__', 1)
-    else:
-        return string, None
 
 
 class InvalidFieldActionError(Exception):
@@ -177,7 +107,8 @@ class F(object):
     def __init__(self, **filters):
         """Creates an F
 
-        :raises InvalidFieldActionError: if the field action is not valid
+        :raises InvalidFieldActionError: if the field action is not
+            valid
 
         """
         if filters:
@@ -191,8 +122,8 @@ class F(object):
 
     def _combine(self, other, conn='and'):
         """
-        OR and AND will create a new F, with the filters from both F objects
-        combined with the connector `conn`.
+        OR and AND will create a new F, with the filters from both F
+        objects combined with the connector `conn`.
         """
         f = F()
         if not self.filters:
@@ -231,10 +162,15 @@ REPR_OUTPUT_SIZE = 20
 
 class S(object):
     """
-    Represents a lazy ElasticSearch lookup, with a similar api to Django's
-    QuerySet.
+    Represents a lazy ElasticSearch lookup, with a similar api to
+    Django's QuerySet.
     """
     def __init__(self, type_):
+        """Creates and returns an S
+
+        :arg type_: class; the model that this S is based on
+
+        """
         self.type = type_
         self.steps = []
         self.start = 0
@@ -256,6 +192,65 @@ class S(object):
         new.start = self.start
         new.stop = self.stop
         return new
+
+    def es(self, **settings):
+        """Returns a new S with specified ES settings
+
+        This allows you to configure the ES that gets used to execute
+        the search.
+
+        :arg settings: the settings you'd use to build the ES---same
+            as what you'd pass to :fun:`get_es`.
+
+        """
+        return self._clone(next_step=('es', settings))
+
+    def es_builder(self, builder_function):
+        """Returns a new S with specified ES builder
+
+        When you do something with an S that causes it to execute a
+        search, then it will call the specified builder function with
+        the S instance. The builder function will return an ES object
+        that the S will use to execute the search with.
+
+        :arg builder_function: function; takes an S instance and returns
+            an ES
+
+        This is handy for caching ES instances. For example, you could
+        create a builder that caches ES instances thread-local::
+
+            from threading import local
+            _local = local()
+
+            def thread_local_builder(searcher):
+                if not hasattr(_local, 'es'):
+                    _local.es = get_es()
+                return _local.es
+
+            searcher = S.es_builder(thread_local_builder)
+
+        This is also handy for building ES instances with
+        configuration defined in a config file.
+
+        """
+        return self._clone(next_step=('es_builder', builder_function))
+
+    def indexes(self, *indexes):
+        """
+        Returns a new S instance that will search specified indexes.
+        """
+        return self._clone(next_step=('indexes', indexes))
+
+    def doctypes(self, *doctypes):
+        """
+        Returns a new S instance that will search specified doctypes.
+
+        .. Note::
+
+           ElasticSearch calls these "mapping types". It's the name
+           associated with a mapping.
+        """
+        return self._clone(next_step=('doctypes', doctypes))
 
     def values(self, *fields):
         """
@@ -370,6 +365,11 @@ class S(object):
                 filters.extend(_process_filters(value))
             elif action == 'facet':
                 facets.update(value)
+            elif action in ('es_builder', 'es', 'indexes', 'doctypes'):
+                # Ignore these--we use these elsewhere, but want to
+                # make sure lack of handling it here doesn't throw an
+                # error.
+                pass
             else:
                 raise NotImplementedError(action)
 
@@ -438,22 +438,42 @@ class S(object):
             self._results_cache = ResultClass(self.type, hits, self.fields)
         return self._results_cache
 
+    def get_es(self, default_builder=get_es):
+        # The last one overrides earlier ones.
+        for action, value in reversed(self.steps):
+            if action == 'es_builder':
+                # es_builder overrides es
+                return value(self)
+            elif action == 'es':
+                return get_es(**value)
+
+        return default_builder()
+
+    def get_indexes(self, default_indexes=DEFAULT_INDEXES):
+        for action, value in reversed(self.steps):
+            if action == 'indexes':
+                return value
+
+        return default_indexes
+
+    def get_doctypes(self, default_doctypes=DEFAULT_DOCTYPES):
+        for action, value in reversed(self.steps):
+            if action == 'doctypes':
+                return value
+        return default_doctypes
+
     def raw(self):
         """
         Builds query and passes to ElasticSearch, then returns the raw format
         returned.
         """
         qs = self._build_query()
-        es = get_es()
-        index = (settings.ES_INDEXES.get(self.type)
-                 or settings.ES_INDEXES['default'])
+        es = self.get_es()
         try:
-            hits = es.search(qs, index, self.type._meta.db_table)
+            hits = es.search(qs, self.get_indexes(), self.get_doctypes())
         except Exception:
             log.error(qs)
             raise
-        if statsd:
-            statsd.timing('search', hits['took'])
         log.debug('[%s] %s' % (hits['took'], qs))
         return hits
 
