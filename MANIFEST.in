@@ -1,4 +1,4 @@
 include README.rst CHANGELOG LICENSE CONTRIBUTORS
-include requirements.txt requirements-extra.txt
+include requirements*.txt
 include docs/Makefile docs/conf.py
 recursive-include docs *.rst *.py
