@@ -31,6 +31,20 @@ Version 0.4: Released xxx
 
 * ``values()`` was renamed to ``values_list()``.
 
+* ``values_list()`` (was ``values()``) now always returns a list of
+  tuples even if you only requested a single field. Previously, doing
+  something like::
+
+      searcher = S().values_list('id')
+
+  would return something like::
+
+      [1, 2, 3, 4, 5]
+
+  Now it returns::
+
+      [(1,), (2,), (3,), (4,), (5,)]
+
 
 **Changes:**
 
