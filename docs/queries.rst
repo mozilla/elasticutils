@@ -441,14 +441,14 @@ will be instances of that type.
 If you have an untyped `S` (e.g. ``S()``), then by default, results
 will be dicts.
 
-`values_list` with no arguments returns a list of ids. With arguments,
-it'll return a list of tuples of values of the fields specified in the
-order the fields were specified.
+`values_list` with no arguments returns a list of tuples each with an
+id. With arguments, it'll return a list of tuples of values of the
+fields specified in the order the fields were specified.
 
 For example:
 
 >>> list(S().values_list())
-[1, 2, 3]
+[(1,), (2,), (3,)]
 >>> list(S().values_list('id', 'name'))
 [(1, 'fred'), (2, 'brian'), (3, 'james')]
 

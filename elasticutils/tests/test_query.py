@@ -121,9 +121,9 @@ class ResultsTests(HasDataTestCase):
         assert isinstance(searcher[0], dict)
 
     def test_values_list_results_no_fields(self):
-        """No values_list fields, this returns a flat list of ids."""
+        """No values_list fields, this returns a list of tuples."""
         searcher = list(self.get_s().query(foo='bar').values_list())
-        eq_(searcher[0], 1)
+        eq_(searcher[0], (1,))
 
     def test_values_list_results(self):
         """With values_list fields, returns list of tuples."""

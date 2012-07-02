@@ -520,12 +520,14 @@ class ListSearchResults(SearchResults):
     def set_objects(self, hits):
         if self.fields:
             getter = itemgetter(*self.fields)
-            # Note: If there's only one field specified, this returns
-            # a flat list of that field. e.g. [1, 2, 3, 4, 5]
-            #
-            # But if there are multiple fields specified, then this
-            # returns a list of tuples. e,g, [(1, 'foo'), (2, 'bar')]
             objs = [getter(r['fields']) for r in hits]
+
+            # itemgetter returns an item--not a tuple of one item--if
+            # there is only one thing in self.fields. Since we want
+            # this to always return a list of tuples, we need to fix
+            # that case here.
+            if len(self.fields) == 1:
+                objs = [(obj,) for obj in objs]
         else:
             objs = [r['_source'].values() for r in hits]
         self.objects = objs
