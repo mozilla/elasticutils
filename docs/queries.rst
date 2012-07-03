@@ -599,11 +599,35 @@ That translates to::
 Counts
 ======
 
-Total hits can be found by doing::
+Total hits can be found by using ``.count()``. For example::
 
-    r = S().query(title='taco trucks')
-    r.count()
-    len(r)
+    q = S().query(title='taco trucks')
+    count = q.count()
+
+
+.. Note::
+
+   Don't use Python's ``len`` built-in on the `S` instance if you want
+   the number of documents in your index that matches your search.
+
+   This::
+
+       q = S()
+       ...
+       q.count()
+
+   asks ElasticSearch how many documents in the index match your
+   search.
+
+   This::
+
+       q = S()
+       ...
+       len(q)
+
+   performs the search, gets back as many documents as specified by
+   the limits of your search, and returns the length of that list of
+   documents.
 
 
 Results
