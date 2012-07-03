@@ -8,8 +8,10 @@ Version 0.4: Released xxx
 
 **API-breaking changes:**
 
-* **ElasticUtils no longer requires Django.** If you're using Django,
-  you should change your import statements from things like::
+* **ElasticUtils no longer requires Django.**
+
+  If you're using Django, you should change your import statements
+  from things like::
 
       from elasticutils import get_es, S, F
 
@@ -25,13 +27,17 @@ Version 0.4: Released xxx
 
   If you don't use Django, ElasticUtils is easier to use!
 
-* If you're not using Django, `S` no longer requires a type. If you
+* **S no longer requires a type.**
+
+  If you're not using Django, `S` no longer requires a type. If you
   don't specify a type, then ElasticUtils will return results as
   dicts.
 
-* ``values()`` was renamed to ``values_list()``.
+* **Values and values_list changed.**
 
-* ``values_list()`` (was ``values()``) now always returns a list of
+  ``values()`` was renamed to ``values_list()``.
+
+  ``values_list()`` (was ``values()``) now always returns a list of
   tuples even if you only requested a single field. Previously, doing
   something like::
 
@@ -45,6 +51,17 @@ Version 0.4: Released xxx
 
       [(1,), (2,), (3,), (4,), (5,)]
 
+* **Facet functionality was rewritten.**
+
+  Changed ``.facet()`` to be arg-driven and allow for `filtered` and
+  `global_` flags.
+
+  Changed ``.facets()`` to ``.facet_counts()`` to match Django
+  Haystack.
+
+  Added ``.facet_raw()`` which allows you to do more complicated
+  facets including scripting. This is similar to the original
+  ``.facet()`` implementation.
 
 **Changes:**
 

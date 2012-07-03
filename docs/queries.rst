@@ -79,6 +79,9 @@ the `elasticsearch JSON`.
 All about S
 ===========
 
+Basic untyped S
+---------------
+
 `S` is the class that you instantiate to create a search. For example::
 
     searcher = S()
@@ -107,6 +110,8 @@ all.
 `s4` has everything in `s2` with a ``awesome=False`` filter.
 
 
+Typed S and creating types
+--------------------------
 
 You can also construct a `typed S` which is an `S` with a model
 class. For example::
@@ -144,8 +149,8 @@ By default ``S()`` with no filters or queries specified will do a
 ``match_all`` query in ElasticSearch.
 
 
-Search Query
-============
+Queries
+=======
 
 The query is specified by keyword arguments to the ``query()``
 method. The key of the keyword argument is parsed splitting on ``__``
@@ -301,7 +306,7 @@ want Korean?::
 
 
 That translates to::
-   
+
    {'filter': {
        'or': [
            {'and': [
@@ -336,39 +341,75 @@ are ignored.
 Facets
 ======
 
+Basic facets
+------------
+
 ::
 
    q = (S().query(title='taco trucks')
-           .facet(styles={'terms': {'field': 'style'}},
-                  locations={'terms': {'field':'location'}}))
+           .facet('style', 'location'))
 
 
-will do a query for "taco trucks" and return facets for the ``style``
-and ``location`` fields.
+will do a query for "taco trucks" and return terms facets for the
+``style`` and ``location`` fields.
 
 That translates to::
 
     {'query': {'term': {'title': 'taco trucks'}},
      'facets': {
-         'styles': {'terms': {'field': 'style'}},
-         'locations': {'terms': {'field': 'location'}}
+         'style': {'terms': {'field': 'style'}},
+         'location': {'terms': {'field': 'location'}}
+     },
+     'fields': ['id']}
+
+Note that the fieldname you provide in the ``.facet()`` call becomes
+the facet name as well.
+
+To get the facet counts, you call ``.facet_counts()`` on the `S`
+instance::
+
+    counts = q.facet_counts()
+
+
+Facets and scope (filters and global)
+-------------------------------------
+
+What happens if your search includes filters?
+
+Here's an example::
+
+    q = (S().query(title='taco trucks')
+            .filter(style='korean')
+            .facet('style', 'location'))
+
+
+That translates to this::
+
+    {'query': {'term': {'title': 'taco trucks'}},
+     'filter': {'term': {'style': 'korean'}},
+     'facets': {
+         'style': {
+             'terms': {'field': 'style'}
+         },
+         'location': {
+             'terms': {'field': 'location'}
+         }
      },
      'fields': ['id']}
 
 
-If you use filters in your search, then ElasticUtils helpfully
-adds `facet_filter` bits to the filters. This causes the facets to
-apply to the scope of the search results rather than the scope of all
-the documents in the index.
+The "style" and "location" facets here ONLY apply to the results of
+the query and are not affected at all by the filters.
 
-For example::
+If you want your filters to apply to your facets as well, pass in the
+filtered flag::
 
     q = (S().query(title='taco trucks')
             .filter(style='korean')
-            .facet(styles={'terms': {'field': 'style'}},
-                   locations={'terms': {'field':'location'}}))
+            .facet('style', 'location', filtered=True))
 
-Translates to this::
+
+That translates to this::
 
     {'query': {'term': {'title': 'taco trucks'}},
      'filter': {'term': {'style': 'korean'}},
@@ -384,27 +425,83 @@ Translates to this::
      },
      'fields': ['id']}
 
-If you specify the ``facet_filter`` property for a facet, then
-ElasticUtils will leave it alone.
 
-Once you've executed a search, the facets are available from the
-``raw_facets`` method::
+Notice how there's an additional `facet_filter` component to the
+facets and it contains the contents of the original `filter`
+component.
 
-    facets = q.raw_facets()
+What if you want the filters to apply just to one of the facets and
+not the other? You need to add them incrementally::
 
+    q = (S().query(title='taco trucks')
+            .filter(style='korean')
+            .facet('style', filtered=True)
+            .facet('location'))
+
+That translates to this::
+
+    {'query': {'term': {'title': 'taco trucks'}},
+     'filter': {'term': {'style': 'korean'}},
+     'facets': {
+         'style': {
+             'facet_filter': {'term': {'style': 'korean'}},
+             'terms': {'field': 'style'}
+         },
+         'location': {
+             'terms': {'field': 'location'}
+         }
+     },
+     'fields': ['id']}
+
+
+What if you want the facets to apply to the entire corpus and not just
+the results from the query? Use the `global_` flag::
+
+    q = (S().query(title='taco trucks')
+            .filter(style='korean')
+            .facet('style', 'location', global_=True))
+
+
+That translates to this::
+
+    {'query': {'term': {'title': 'taco trucks'}},
+     'filter': {'term': {'style': 'korean'}},
+     'facets': {
+         'style': {
+             'global': True,
+             'terms': {'field': 'style'}},
+         'location': {
+             'global': True,
+             'terms': {'field': 'location'}
+         }
+     },
+     'fields': ['id']}
 
 .. Note::
 
-   Calling ``raw_facets`` will execute the search if it hasn't already
-   been executed.
+   The flag name is `global_` with an underscore at the end. Why?
+   Because `global` with no underscore is a Python keyword.
 
 
-Facets can also be scripted_::
+Facets... RAW!
+--------------
 
-    S().query(title='taco trucks').facet(styles={
-        'field': 'style', 
-        'script': 'term == korean ? true : false'
-    })
+ElasticSearch facets can do a lot of other things. Because of this,
+there exists ``.facet_raw()`` which will do whatever you need it to.
+Specify key/value args by facet name.
+
+For example, you can do the first facet example by::
+
+    q = (S().query(title='taco trucks')
+            .facet_raw(style={'terms': {'field': 'style'}}))
+
+One of the things this lets you do is scripted facets. For example::
+
+    q = (S().query(title='taco trucks')
+            .facet_raw(styles={
+                'field': 'style',
+                'script': 'term == korean ? true : false'
+            }))
 
 That translates to::
 
@@ -417,6 +514,12 @@ That translates to::
      },
      'fields': ['id']}
 
+
+.. Warning::
+
+   If for some reason you have specified a facet with the same name
+   using both ``.facet()`` and ``.facet_raw()``, the ``.facet_raw()``
+   one will override the ``.facet()`` one.
 
 
 Counts
@@ -432,6 +535,9 @@ Total hits can be found by doing::
 Results
 =======
 
+By default
+----------
+
 Results are lazy-loaded, so the query will not be made until you try
 to access an item or some other attribute requiring the data.
 
@@ -440,6 +546,10 @@ will be instances of that type.
 
 If you have an untyped `S` (e.g. ``S()``), then by default, results
 will be dicts.
+
+
+Results as a list of tuples
+---------------------------
 
 `values_list` with no arguments returns a list of tuples each with an
 id. With arguments, it'll return a list of tuples of values of the
@@ -451,7 +561,12 @@ For example:
 [(1,), (2,), (3,)]
 >>> list(S().values_list('id', 'name'))
 [(1, 'fred'), (2, 'brian'), (3, 'james')]
+>>> list(S().values_list('name', 'id')
+[('fred', 1), ('brian', 2), ('james', 3)]
 
+
+Results as a list of dicts
+--------------------------
 
 `values_dict` returns a list of dicts. With no arguments, it returns a
 list of dicts with a single ``id`` field. With arguments, it returns a

@@ -5,7 +5,7 @@ from nose import SkipTest
 from nose.tools import eq_
 import pyes.exceptions
 
-from elasticutils.tests import FakeModel, ElasticTestCase
+from elasticutils.tests import FakeModel, ElasticTestCase, facet_counts_dict
 
 
 # TODO: To run this file or import it requires Django be installed.
@@ -198,10 +198,62 @@ class QueryTest(ElasticTestCase):
     def test_facet(self):
         from elasticutils.contrib.django import S
 
-        qs = S(FakeModel).facet(tags={'terms': {'field': 'tag'}})
-        tag_counts = dict((t['term'], t['count']) for t in qs.facets['tags'])
+        qs = S(FakeModel).facet('tag')
+        eq_(facet_counts_dict(qs, 'tag'), dict(awesome=3, boring=1, boat=1))
 
-        eq_(tag_counts, dict(awesome=3, boring=1, boat=1))
+    @requires_django
+    def test_filtered_facet(self):
+        from elasticutils.contrib.django import S
+
+        qs = S(FakeModel).query(foo='car').filter(width=5)
+
+        # filter doesn't apply to facets
+        eq_(facet_counts_dict(qs.facet('tag'), 'tag'),
+            {'awesome': 2})
+
+        # filter does apply to facets
+        eq_(facet_counts_dict(qs.facet('tag', filtered=True), 'tag'),
+            {'awesome': 1})
+
+    @requires_django
+    def test_global_facet(self):
+        from elasticutils.contrib.django import S
+
+        qs = S(FakeModel).query(foo='car').filter(width=5)
+
+        # facet restricted to query
+        eq_(facet_counts_dict(qs.facet('tag'), 'tag'),
+            {'awesome': 2})
+
+        # facet applies to all of corpus
+        eq_(facet_counts_dict(qs.facet('tag', global_=True), 'tag'),
+            dict(awesome=3, boring=1, boat=1))
+
+    @requires_django
+    def test_facet_raw(self):
+        from elasticutils.contrib.django import S
+
+        qs = S(FakeModel).facet_raw(tags={'terms': {'field': 'tag'}})
+        eq_(facet_counts_dict(qs, 'tags'),
+            dict(awesome=3, boring=1, boat=1))
+
+        qs = (S(FakeModel)
+              .query(foo='car')
+              .facet_raw(tags={'terms': {'field': 'tag'}}))
+        eq_(facet_counts_dict(qs, 'tags'),
+            {'awesome': 2})
+
+    @requires_django
+    def test_facet_raw_overrides_facet(self):
+        """facet_raw overrides facet with the same facet name."""
+        from elasticutils.contrib.django import S
+
+        qs = (S(FakeModel)
+              .query(foo='car')
+              .facet('tag')
+              .facet_raw(tag={'terms': {'field': 'tag'}, 'global': True}))
+        eq_(facet_counts_dict(qs, 'tag'),
+            dict(awesome=3, boring=1, boat=1))
 
     @requires_django
     def test_order_by(self):

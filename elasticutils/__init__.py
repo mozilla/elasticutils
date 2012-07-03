@@ -100,6 +100,21 @@ def _process_filters(filters):
     return rv
 
 
+def _process_facets(facets, flags):
+    rv = {}
+    for fieldname in facets:
+        facet_type = {'terms': {'field': fieldname}}
+        if flags.get('global_'):
+            facet_type['global'] = flags['global_']
+        elif flags.get('filtered'):
+            # Note: This is an indicator that the facet_filter should
+            # get filled in later when we know all the filters.
+            facet_type['facet_filter'] = None
+
+        rv[fieldname] = facet_type
+    return rv
+
+
 class F(object):
     """
     Filter objects.
@@ -284,12 +299,19 @@ class S(object):
         """
         return self._clone(next_step=('filter', list(filters) + kw.items()))
 
-    def facet(self, **kw):
+    def facet(self, *args, **kw):
         """
         Return a new S instance with facet args combined with existing
         set.
         """
-        return self._clone(next_step=('facet', kw.items()))
+        return self._clone(next_step=('facet', (list(args), dict(kw))))
+
+    def facet_raw(self, **kw):
+        """
+        Return a new S instance with raw facet args combined with
+        existing set.
+        """
+        return self._clone(next_step=('facet_raw', kw.items()))
 
     def extra(self, **kw):
         """
@@ -338,6 +360,7 @@ class S(object):
         sort = []
         fields = set(['id'])
         facets = {}
+        facets_raw = {}
         as_list = as_dict = False
         for action, value in self.steps:
             if action == 'order_by':
@@ -361,7 +384,10 @@ class S(object):
             elif action == 'filter':
                 filters.extend(_process_filters(value))
             elif action == 'facet':
-                facets.update(value)
+                # value here is a (args, kwargs) tuple
+                facets.update(_process_facets(*value))
+            elif action == 'facet_raw':
+                facets_raw.update(dict(value))
             elif action in ('es_builder', 'es', 'indexes', 'doctypes'):
                 # Ignore these--we use these elsewhere, but want to
                 # make sure lack of handling it here doesn't throw an
@@ -383,12 +409,19 @@ class S(object):
 
         if fields:
             qs['fields'] = list(fields)
+
         if facets:
             qs['facets'] = facets
-            # Copy filters into facets. You probably wanted this.
+            # Hunt for `facet_filter` shells and update those. We use
+            # None as a shell, so if it's explicitly set to None, then
+            # we update it.
             for facet in facets.values():
-                if 'facet_filter' not in facet and filters:
+                if facet.get('facet_filter', 1) is None:
                     facet['facet_filter'] = qs['filter']
+
+        if facets_raw:
+            qs.setdefault('facets', {}).update(facets_raw)
+
         if sort:
             qs['sort'] = sort
         if self.start:
@@ -477,13 +510,13 @@ class S(object):
     def __iter__(self):
         return iter(self._do_search())
 
-    def raw_facets(self):
+    def _raw_facets(self):
         return self._do_search().results.get('facets', {})
 
     @property
-    def facets(self):
+    def facet_counts(self):
         facets = {}
-        for key, val in self.raw_facets().items():
+        for key, val in self._raw_facets().items():
             if val['_type'] == 'terms':
                 facets[key] = [v for v in val['terms']]
             elif val['_type'] == 'range':

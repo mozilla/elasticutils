@@ -1,7 +1,7 @@
 from nose.tools import eq_
 
 from elasticutils import F, S, InvalidFieldActionError
-from elasticutils.tests import FakeModel, ElasticTestCase
+from elasticutils.tests import FakeModel, ElasticTestCase, facet_counts_dict
 
 
 class HasDataTestCase(ElasticTestCase):
@@ -88,10 +88,50 @@ class QueryTest(HasDataTestCase):
             len(self.get_s().filter(F(tag__faux='awesome')))
 
     def test_facet(self):
-        qs = self.get_s().facet(tags={'terms': {'field': 'tag'}})
-        tag_counts = dict((t['term'], t['count']) for t in qs.facets['tags'])
+        qs = self.get_s().facet('tag')
+        eq_(facet_counts_dict(qs, 'tag'), dict(awesome=3, boring=1, boat=1))
 
-        eq_(tag_counts, dict(awesome=3, boring=1, boat=1))
+    def test_filtered_facet(self):
+        qs = self.get_s().query(foo='car').filter(width=5)
+
+        # filter doesn't apply to facets
+        eq_(facet_counts_dict(qs.facet('tag'), 'tag'),
+            {'awesome': 2})
+
+        # filter does apply to facets
+        eq_(facet_counts_dict(qs.facet('tag', filtered=True), 'tag'),
+            {'awesome': 1})
+
+    def test_global_facet(self):
+        qs = self.get_s().query(foo='car').filter(width=5)
+
+        # facet restricted to query
+        eq_(facet_counts_dict(qs.facet('tag'), 'tag'),
+            {'awesome': 2})
+
+        # facet applies to all of corpus
+        eq_(facet_counts_dict(qs.facet('tag', global_=True), 'tag'),
+            dict(awesome=3, boring=1, boat=1))
+
+    def test_facet_raw(self):
+        qs = self.get_s().facet_raw(tags={'terms': {'field': 'tag'}})
+        eq_(facet_counts_dict(qs, 'tags'),
+            dict(awesome=3, boring=1, boat=1))
+
+        qs = (self.get_s()
+              .query(foo='car')
+              .facet_raw(tags={'terms': {'field': 'tag'}}))
+        eq_(facet_counts_dict(qs, 'tags'),
+            {'awesome': 2})
+
+    def test_facet_raw_overrides_facet(self):
+        """facet_raw overrides facet with the same facet name."""
+        qs = (self.get_s()
+              .query(foo='car')
+              .facet('tag')
+              .facet_raw(tag={'terms': {'field': 'tag'}, 'global': True}))
+        eq_(facet_counts_dict(qs, 'tag'),
+            dict(awesome=3, boring=1, boat=1))
 
     def test_order_by(self):
         res = self.get_s().filter(tag='awesome').order_by('-width')

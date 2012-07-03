@@ -88,3 +88,7 @@ class ElasticTestCase(TestCase):
 
         """
         get_es().refresh(self.index_name, timesleep=timesleep)
+
+
+def facet_counts_dict(qs, field):
+    return dict((t['term'], t['count']) for t in qs.facet_counts[field])
