@@ -143,6 +143,27 @@ class QueryTest(HasDataTestCase):
 
         eq_(repr(list_), repr(res))
 
+    def test_explain(self):
+        qs = self.get_s().query(foo='car')
+
+        assert 'explain' not in qs._build_query()
+
+        qs = qs.explain(True)
+
+        # You put the explain in...
+        assert qs._build_query()['explain'] == True
+
+        qs = qs.explain(False)
+
+        # You take the explain out...
+        assert 'explain' not in qs._build_query()
+
+        # Shake it all about...
+        qs = qs.explain(True)
+
+        res = list(qs)
+        assert res[0]._explanation
+
 
 class ResultsTests(HasDataTestCase):
     def test_default_results_are_dicts(self):
@@ -170,6 +191,21 @@ class ResultsTests(HasDataTestCase):
         searcher = list(self.get_s().query(foo='bar')
                                     .values_list('foo', 'width'))
         assert isinstance(searcher[0], tuple)
+
+    def test_default_results_form_has_score(self):
+        """Test default results form has _score."""
+        searcher = list(self.get_s().query(foo='bar'))
+        assert hasattr(searcher[0], '_score')
+
+    def test_values_list_form_has_score(self):
+        """Test default results form has _score."""
+        searcher = list(self.get_s().query(foo='bar').values_list())
+        assert hasattr(searcher[0], '_score')
+
+    def test_values_dict_form_has_score(self):
+        """Test default results form has _score."""
+        searcher = list(self.get_s().query(foo='bar').values_dict())
+        assert hasattr(searcher[0], '_score')
 
     def test_values_dict_no_args(self):
         """Calling values_dict() with no args fetches all fields."""

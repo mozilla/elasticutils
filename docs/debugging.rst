@@ -5,6 +5,13 @@ Debugging
 Here are a few helpful utilities for debugging your ElasticUtils work.
 
 
+Score explanations
+==================
+
+Want to see how a score for a search result was calculated? See
+:ref:`scores-and-explanations`.
+
+
 get_es dump_curl
 ================
 

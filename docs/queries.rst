@@ -630,6 +630,7 @@ Total hits can be found by using ``.count()``. For example::
    documents.
 
 
+
 Results
 =======
 
@@ -676,3 +677,54 @@ For example:
 [{'id': 1}, {'id': 2}]
 >>> list(S().values_dict('id', 'name')
 [{'id': 1, 'name': 'fred'}, {'id': 2, 'name': 'brian'}]
+
+
+.. _scores-and-explanations:
+
+Scores and explanations
+=======================
+
+Seeing the score
+----------------
+
+Wondering what the score for a document was? ElasticUtils puts that in
+the ``_score`` on the search result. For example, let's search an
+index that holds knowledge base articles for ones with the word
+"crash" in them and print out the scores::
+
+    q = S().query(title__text='crash', content__text='crash')
+
+    for result in q:
+        print result._score
+
+This works regardless of what form the search results are in.
+
+
+Getting an explanation
+----------------------
+
+Wondering why one document shows up higher in the results than another
+that should have shown up higher? Wonder how that score was computed?
+You can set the search to pass the ``explain`` flag to ElasticSearch
+with the ``.explain()`` transform.
+
+This returns data that will be in every item in the search results
+list as ``_explanation``.
+
+For example, let's do a query on a search corpus of knowledge base
+articles for articles with the word "crash" in them::
+
+    q = (S().query(title__text='crash', content__text='crash')
+            .explain())
+
+    for result in q:
+        print result._explanation
+
+
+This works regardless of what form the search results are in.
+
+.. seealso::
+
+   http://www.elasticsearch.org/guide/reference/api/search/explain.html
+     ElasticSearch docs on explain (which are pretty bereft of
+     details).

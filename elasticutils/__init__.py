@@ -1,4 +1,5 @@
 import logging
+from itertools import izip
 from operator import itemgetter
 
 from pyes import ES, VERSION
@@ -267,6 +268,12 @@ class S(object):
         """
         return self._clone(next_step=('doctypes', doctypes))
 
+    def explain(self, value=True):
+        """
+        Return a new S instance with explain set.
+        """
+        return self._clone(next_step=('explain', value))
+
     def values_list(self, *fields):
         """
         Return a new S instance that returns ListSearchResults.
@@ -361,6 +368,7 @@ class S(object):
         fields = set(['id'])
         facets = {}
         facets_raw = {}
+        explain = False
         as_list = as_dict = False
         for action, value in self.steps:
             if action == 'order_by':
@@ -379,6 +387,8 @@ class S(object):
                 else:
                     fields |= set(value)
                 as_list, as_dict = False, True
+            elif action == 'explain':
+                explain = value
             elif action == 'query':
                 queries.extend(self._process_queries(value))
             elif action == 'filter':
@@ -428,6 +438,9 @@ class S(object):
             qs['from'] = self.start
         if self.stop is not None:
             qs['size'] = self.stop - self.start
+
+        if explain:
+            qs['explain'] = True
 
         self.fields, self.as_list, self.as_dict = fields, as_list, as_dict
         return qs
@@ -543,27 +556,37 @@ class SearchResults(object):
         return len(self.objects)
 
 
+class DictResult(dict):
+    pass
+
+
+class TupleResult(tuple):
+    pass
+
+
 class DictSearchResults(SearchResults):
     def set_objects(self, hits):
         key = 'fields' if self.fields else '_source'
-        self.objects = [r[key] for r in hits]
+        self.objects = [_decorate_with_metadata(DictResult(r[key]), r)
+                        for r in hits]
 
 
 class ListSearchResults(SearchResults):
     def set_objects(self, hits):
         if self.fields:
             getter = itemgetter(*self.fields)
-            objs = [getter(r['fields']) for r in hits]
+            objs = [(getter(r['fields']), r) for r in hits]
 
             # itemgetter returns an item--not a tuple of one item--if
             # there is only one thing in self.fields. Since we want
             # this to always return a list of tuples, we need to fix
             # that case here.
             if len(self.fields) == 1:
-                objs = [(obj,) for obj in objs]
+                objs = [((obj,), r) for obj, r in objs]
         else:
-            objs = [r['_source'].values() for r in hits]
-        self.objects = objs
+            objs = [(r['_source'].values(), r) for r in hits]
+        self.objects = [_decorate_with_metadata(TupleResult(obj), r)
+                        for obj, r in objs]
 
 
 class ObjectSearchResults(SearchResults):
@@ -573,5 +596,18 @@ class ObjectSearchResults(SearchResults):
 
     def __iter__(self):
         objs = dict((obj.id, obj) for obj in self.objects)
-        return (objs[id] for id in self.ids if id in objs)
+        return (_decorate_with_metadata(objs[id], r)
+                for id, r in
+                izip(self.ids, self.results['hits']['hits'])
+                if id in objs)
 
+
+def _decorate_with_metadata(obj, hit):
+    """Return obj decorated with hit-scope metadata."""
+    # The search result score
+    obj._score = hit.get('_score')
+    # The document type
+    obj._type = hit.get('_type')
+    # Explanation structure
+    obj._explanation = hit.get('_explanation', {})
+    return obj
