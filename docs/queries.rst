@@ -76,6 +76,18 @@ shorthand and only talk about the body of the request which we'll call
 the `elasticsearch JSON`.
 
 
+.. seealso::
+
+   http://www.elasticsearch.org/guide/reference/api/
+     ElasticSearch docs on api
+
+   http://www.elasticsearch.org/guide/reference/api/search/
+     ElasticSearch docs on search api
+
+   http://curl.haxx.se/
+     Documentation on curl
+
+
 All about S
 ===========
 
@@ -148,6 +160,10 @@ Match All
 By default ``S()`` with no filters or queries specified will do a
 ``match_all`` query in ElasticSearch.
 
+.. seealso::
+
+   http://www.elasticsearch.org/guide/reference/query-dsl/match-all-query.html
+     ElasticSearch match_all documentation
 
 Queries
 =======
@@ -176,12 +192,32 @@ There are many different field actions to choose from:
 ================  ===================
 field action      elasticsearch query
 ================  ===================
-text              Text_ query
-startswith        Prefix_ query
-gt, gte, lt, lte  Range_ query
-fuzzy             Fuzzy_ query
-(no action)       Term_ query
+text              Text query
+startswith        Prefix query
+gt, gte, lt, lte  Range query
+fuzzy             Fuzzy query
+(no action)       Term query
 ================  ===================
+
+.. seealso::
+
+   http://www.elasticsearch.org/guide/reference/query-dsl/
+     ElasticSearch docs for query dsl
+
+   http://www.elasticsearch.org/guide/reference/query-dsl/text-query.html
+     ElasticSearch docs on text queries
+
+   http://www.elasticsearch.org/guide/reference/query-dsl/prefix-query.html
+     ElasticSearch docs on prefix queries
+
+   http://www.elasticsearch.org/guide/reference/query-dsl/range-query.html
+     ElasticSearch docs on range queries
+
+   http://www.elasticsearch.org/guide/reference/query-dsl/fuzzy-query.html
+     ElasticSearch docs on fuzzy queries
+
+   http://www.elasticsearch.org/guide/reference/query-dsl/term-query.html
+     ElasticSearch docs on term queries
 
 
 Filters
@@ -202,13 +238,25 @@ actions for the filters:
 ================  ====================
 field action      elasticsearch filter
 ================  ====================
-in                Terms_ filter
-gt, gte, lt, lte  Range_ filter
-(no action)       Term_ filter
+in                Terms filter
+gt, gte, lt, lte  Range filter
+(no action)       Term filter
 ================  ====================
 
-See the `elasticsearch docs on queries and filters
-<http://www.elasticsearch.org/guide/reference/query-dsl/>`_.
+
+.. seealso::
+
+   http://www.elasticsearch.org/guide/reference/query-dsl/
+     ElasticSearch docs for query dsl
+
+   http://www.elasticsearch.org/guide/reference/query-dsl/terms-filter.html
+     ElasticSearch docs for terms filter
+
+   http://www.elasticsearch.org/guide/reference/query-dsl/range-filter.html
+     ElasticSearch docs for range filter
+
+   http://www.elasticsearch.org/guide/reference/query-dsl/term-filter.html
+     ElasticSearch docs for term filter
 
 
 Advanced filters and F
@@ -371,6 +419,16 @@ instance::
     counts = q.facet_counts()
 
 
+.. seealso::
+
+   http://www.elasticsearch.org/guide/reference/api/search/facets/
+     ElasticSearch docs on facets
+
+   http://www.elasticsearch.org/guide/reference/api/search/facets/terms-facet.html
+     ElasticSearch docs on terms facet
+
+
+
 Facets and scope (filters and global)
 -------------------------------------
 
@@ -483,6 +541,16 @@ That translates to this::
    Because `global` with no underscore is a Python keyword.
 
 
+.. seealso::
+
+   http://www.elasticsearch.org/guide/reference/api/search/facets/
+     ElasticSearch docs on facets, facet_filter, and global
+
+   http://www.elasticsearch.org/guide/reference/api/search/facets/terms-facet.html
+     ElasticSearch docs on terms facet
+
+
+
 Facets... RAW!
 --------------
 
@@ -520,6 +588,12 @@ That translates to::
    If for some reason you have specified a facet with the same name
    using both ``.facet()`` and ``.facet_raw()``, the ``.facet_raw()``
    one will override the ``.facet()`` one.
+
+
+.. seealso::
+
+   http://www.elasticsearch.org/guide/reference/modules/scripting.html
+     ElasticSearch docs on scripting
 
 
 Counts
@@ -578,13 +652,3 @@ For example:
 [{'id': 1}, {'id': 2}]
 >>> list(S().values_dict('id', 'name')
 [{'id': 1, 'name': 'fred'}, {'id': 2, 'name': 'brian'}]
-
-
-.. _Text: http://www.elasticsearch.org/guide/reference/query-dsl/text-query.html
-.. _Prefix: http://www.elasticsearch.org/guide/reference/query-dsl/prefix-query.html
-.. _Range: http://www.elasticsearch.org/guide/reference/query-dsl/range-query.html
-.. _Fuzzy: http://www.elasticsearch.org/guide/reference/query-dsl/fuzzy-query.html
-.. _Term: http://www.elasticsearch.org/guide/reference/query-dsl/term-query.html
-.. _Terms: http://www.elasticsearch.org/guide/reference/query-dsl/terms-filter.html
-.. _scripted: http://www.elasticsearch.org/guide/reference/api/search/facets/terms-facet.html
-
