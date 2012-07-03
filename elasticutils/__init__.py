@@ -304,7 +304,7 @@ class S(object):
         Return a new S instance with facet args combined with existing
         set.
         """
-        return self._clone(next_step=('facet', (list(args), dict(kw))))
+        return self._clone(next_step=('facet', (args, kw)))
 
     def facet_raw(self, **kw):
         """
