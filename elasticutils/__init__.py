@@ -176,6 +176,28 @@ class F(object):
 REPR_OUTPUT_SIZE = 20
 
 
+def _boosted_value(name, action, key, value, boost):
+    """Boost a value if we should in _process_queries"""
+    if boost is not None:
+        # Note: Most queries use 'value' for the key name except Text
+        # queries which use 'query'. So we have to do some switcheroo
+        # for that.
+        return {
+            name: {
+                'boost': boost,
+                'query' if action == 'text' else 'value': value}}
+    return {name: value}
+
+
+# Maps ElasticUtils field actions to their ElasticSearch query names.
+ACTION_MAP = {
+    None: 'term',
+    'startswith': 'prefix',
+    'prefix': 'prefix',
+    'text': 'text',
+    'fuzzy': 'fuzzy'}
+
+
 class S(object):
     """
     Represents a lazy ElasticSearch lookup, with a similar api to
@@ -192,6 +214,7 @@ class S(object):
         self.start = 0
         self.stop = None
         self.as_list = self.as_dict = False
+        self.field_boosts = {}
         self._results_cache = None
 
     def __repr__(self):
@@ -207,6 +230,7 @@ class S(object):
             new.steps.append(next_step)
         new.start = self.start
         new.stop = self.stop
+        new.field_boosts = self.field_boosts.copy()
         return new
 
     def es(self, **settings):
@@ -306,6 +330,14 @@ class S(object):
         """
         return self._clone(next_step=('filter', list(filters) + kw.items()))
 
+    def boost(self, **kw):
+        """
+        Return a new S instance with field boosts.
+        """
+        new = self._clone()
+        new.field_boosts.update(kw)
+        return new
+
     def facet(self, *args, **kw):
         """
         Return a new S instance with facet args combined with existing
@@ -398,7 +430,7 @@ class S(object):
                 facets.update(_process_facets(*value))
             elif action == 'facet_raw':
                 facets_raw.update(dict(value))
-            elif action in ('es_builder', 'es', 'indexes', 'doctypes'):
+            elif action in ('es_builder', 'es', 'indexes', 'doctypes', 'boost'):
                 # Ignore these--we use these elsewhere, but want to
                 # make sure lack of handling it here doesn't throw an
                 # error.
@@ -450,17 +482,25 @@ class S(object):
         value = dict(value)
         or_ = value.pop('or_', [])
         for key, val in value.items():
-            key, field_action = _split(key)
-            if field_action is None:
-                rv.append({'term': {key: val}})
-            elif field_action == 'text':
-                rv.append({'text': {key: val}})
-            elif field_action == 'startswith':
-                rv.append({'prefix': {key: val}})
+            field_name, field_action = _split(key)
+
+            # Boost by name__action overrides boost by name.
+            boost = self.field_boosts.get(key)
+            if boost is None:
+                boost = self.field_boosts.get(field_name)
+
+            if field_action in ACTION_MAP:
+                rv.append(
+                    {ACTION_MAP[field_action]: _boosted_value(
+                            field_name, field_action, key, val, boost)})
+
             elif field_action in ('gt', 'gte', 'lt', 'lte'):
-                rv.append({'range': {key: {field_action: val}}})
-            elif field_action == 'fuzzy':
-                rv.append({'fuzzy': {key: val}})
+                # Ranges are special and have a different syntax, so
+                # we handle them separately.
+                rv.append(
+                    {'range': {field_name: _boosted_value(
+                                field_name, field_action, key, val, boost)}})
+
         if or_:
             rv.append({'bool': {'should': self._process_queries(or_.items())}})
         return rv

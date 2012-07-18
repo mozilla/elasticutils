@@ -35,7 +35,7 @@ class HasDataTestCase(ElasticTestCase):
         es.delete_index(cls.index_name)
 
     def get_s(self):
-        return S(FakeModel).indexes(self.index_name)
+        return S().indexes(self.index_name)
 
 
 class QueryTest(HasDataTestCase):
@@ -87,6 +87,39 @@ class QueryTest(HasDataTestCase):
         with self.assertRaises(InvalidFieldActionError):
             len(self.get_s().filter(F(tag__faux='awesome')))
 
+    def test_boost(self):
+        def _get_queries(search):
+            # The stuff we want is buried in the search and it's in
+            # the 'must' list where each item in the list is a dict
+            # with a single key. So we extract that and put it in a
+            # dict so we don't have to deal with the order of things
+            # in the 'must' list.
+            return dict([clause.items()[0]
+                         for clause in search['query']['bool']['must']])
+
+        q1 = self.get_s().boost(foo=4.0).query(foo='car', foo__prefix='car')
+        eq_(_get_queries(q1._build_query())['term']['foo']['boost'], 4.0)
+        eq_(_get_queries(q1._build_query())['prefix']['foo']['boost'], 4.0)
+
+        q1 = q1.boost(foo=2.0)
+        eq_(_get_queries(q1._build_query())['term']['foo']['boost'], 2.0)
+        eq_(_get_queries(q1._build_query())['prefix']['foo']['boost'], 2.0)
+
+        q1 = q1.boost(foo__prefix=4.0)
+        eq_(_get_queries(q1._build_query())['term']['foo']['boost'], 2.0)
+        eq_(_get_queries(q1._build_query())['prefix']['foo']['boost'], 4.0)
+
+        # Note: We don't actually want to test whether the score for
+        # an item goes up by adding a boost to the search because
+        # boosting doesn't actually work like that. There's a
+        # queryNorm factor which is 1/sqrt(boosts) which normalizes
+        # the results from a query allowing you to compare
+        # queries. Thus, doing a query, adding a boost and doing it
+        # again doesn't increase the score for the item.
+        #
+        # Figured I'd mention that in case someone was looking at the
+        # tests and was like, "Hey--this is missing!"
+
     def test_facet(self):
         qs = self.get_s().facet('tag')
         eq_(facet_counts_dict(qs, 'tag'), dict(awesome=3, boring=1, boat=1))
@@ -135,7 +168,7 @@ class QueryTest(HasDataTestCase):
 
     def test_order_by(self):
         res = self.get_s().filter(tag='awesome').order_by('-width')
-        eq_([d.id for d in res], [5, 3, 1])
+        eq_([d['id'] for d in res], [5, 3, 1])
 
     def test_repr(self):
         res = self.get_s()[:2]

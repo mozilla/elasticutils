@@ -386,6 +386,44 @@ If neither `some_crazy_thing` or `some_other_crazy_thing` are
 are ignored.
 
 
+Query-time field boosting
+=========================
+
+ElasticSearch allows you to boost scores for fields specified in the
+search query at query-time.
+
+ElasticUtils allows you to specify query-time field boosts with
+``.boost()``. It takes a set of arguments where the keys are either
+field names or field name + '__' + field action.
+
+Here's an example::
+
+    q = (S().query(title='taco trucks',
+                   description__text='awesome')
+            .boost(title=4.0, description__text=2.0))
+
+If the key is a field name, then the boost will apply to all query
+bits that have that field name. For example::
+
+    q = (S().query(title='trucks',
+                   title__prefix='trucks',
+                   title__fuzzy='trucks')
+            .boost(title=4.0))
+
+applies a 4.0 boost to all three query bits because all three query
+bits are for the ``title`` field name.
+
+If the key is a field name and field action, then the boost will apply
+only to that field name and field action. For example::
+
+    q = (S().query(title='trucks',
+                   title__prefix='trucks',
+                   title__fuzzy='trucks')
+            .boost(title__prefix=4.0))
+
+will only apply the 4.0 boost to ``title__prefix``.
+
+
 Facets
 ======
 
