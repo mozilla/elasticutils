@@ -85,6 +85,20 @@ Version 0.4: Released xxx
 * Added ``doctypes`` transform: it allows you to specify the doctypes
   to use for the search.
 
+* Added ``explain`` transform: it allows you to set the "explain" flag
+  which gives you an explanation of how the score was calculated.
+
+  I also added ``elasticutils.utils.format_text`` which formats the
+  resulting explanation text into something slightly more
+  readable. But it's likely this will change in the future.
+
+* Added ``boost`` transform: it allows you to do query-time field
+  boosting.
+
+* Made ``prefix`` a synonym for ``startswith``. At some point, I'm
+  going to deprecate ``startswith``---there's no good reason to not be
+  using the same terms that ElasticSearch uses.
+
 * Removed requirement for nuggets.
 
 * Continued to improve documentation.
