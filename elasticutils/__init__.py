@@ -352,6 +352,33 @@ class S(object):
         """
         return self._clone(next_step=('facet_raw', kw.items()))
 
+    def highlight(self, *fields, **kwargs):
+        """Set highlight/excerpting with specified options.
+
+        This highlight will override previous highlights.
+
+        This won't let you clear it--we'd need to write a
+        ``clear_highlight()``.
+
+        :arg fields: The list of fields to highlight. If the field is
+            None, then the highlight is cleared.
+
+        Additional keyword options:
+
+        * ``pre_tags`` -- List of tags before highlighted portion
+        * ``post_tags`` -- List of tags after highlighted portion
+
+        See ElasticSearch highlight:
+
+        http://www.elasticsearch.org/guide/reference/api/search/highlighting.html
+
+        """
+        # TODO: Implement `limit` kwarg if useful.
+        # TODO: Once oedipus is no longer needed in SUMO, support ranked lists
+        # of before_match and after_match tags. ES can highlight more
+        # significant stuff brighter.
+        return self._clone(next_step=('highlight', (fields, kwargs)))
+
     def extra(self, **kw):
         """
         Return a new S instance with extra args combined with existing
@@ -400,6 +427,8 @@ class S(object):
         fields = set(['id'])
         facets = {}
         facets_raw = {}
+        highlight_fields = set()
+        highlight_options = {}
         explain = False
         as_list = as_dict = False
         for action, value in self.steps:
@@ -430,6 +459,12 @@ class S(object):
                 facets.update(_process_facets(*value))
             elif action == 'facet_raw':
                 facets_raw.update(dict(value))
+            elif action == 'highlight':
+                if value[0] == (None,):
+                    highlight_fields = set()
+                else:
+                    highlight_fields |= set(value[0])
+                highlight_options.update(value[1])
             elif action in ('es_builder', 'es', 'indexes', 'doctypes', 'boost'):
                 # Ignore these--we use these elsewhere, but want to
                 # make sure lack of handling it here doesn't throw an
@@ -471,11 +506,22 @@ class S(object):
         if self.stop is not None:
             qs['size'] = self.stop - self.start
 
+        if highlight_fields:
+            qs['highlight'] = self._build_highlight(
+                highlight_fields, highlight_options)
+
         if explain:
             qs['explain'] = True
 
         self.fields, self.as_list, self.as_dict = fields, as_list, as_dict
         return qs
+
+    def _build_highlight(self, fields, options):
+        """Return the portion of the query that controls highlighting."""
+        ret = {'fields': dict((f, {}) for f in fields),
+               'order': 'score'}
+        ret.update(options)
+        return ret
 
     def _process_queries(self, value):
         rv = []
@@ -650,4 +696,6 @@ def _decorate_with_metadata(obj, hit):
     obj._type = hit.get('_type')
     # Explanation structure
     obj._explanation = hit.get('_explanation', {})
+    # Highlight bits
+    obj._highlight = hit.get('highlight', {})
     return obj

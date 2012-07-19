@@ -424,6 +424,75 @@ only to that field name and field action. For example::
 will only apply the 4.0 boost to ``title__prefix``.
 
 
+Highlighting
+============
+
+ElasticUtils allows you to highlight excerpts that match the query
+using the ``.highlight()`` transform. This returns data that will be
+in every item in the search results list as ``_highlight``.
+
+For example, let's do a query on a search corpus of knowledge base
+articles for articles with the word "crash" in them::
+
+    q = (S().query(title__text='crash', content__text='crash')
+            .highlight('title', 'content'))
+
+    for result in q:
+        print result._highlight['title']
+        print result._highlight['content']
+
+This will print two lists. The first is highlighted fragments from the
+title field. The second is highlighted fragments from the content
+field.
+
+Highlighting is done in ElasticSearch and covers all the query
+bits. So if you had a document like this::
+
+    {
+        "title": "How not to be seen",
+        "content": "The first rule of how not to be seen: don't stand up."
+    }
+
+And did this query::
+
+    q = (S().query(title__text="rule seen", content__text="rule seen")
+            .highlight('title', 'content'))
+
+Then the highlights you'd get back would be:
+
+* title: ``to be <em>seen</em>``
+* content: ``first <em>rule</em> of how not to be <em>seen</em>: don't
+  stand up.``
+
+The "highlight" default is to wrap the matched text with ``<em>`` and
+``</em>``. You can change this by passing in ``pre_tags`` and
+``post_tags`` options::
+
+    q = (S().query(title__text='crash', content__text='crash')
+            .highlight('title', 'content',
+                       pre_tags=['<b>'],
+                       post_tags=['</b>']))
+
+If you need to clear the highlight, call ``.highlight()`` with
+``None``. For example, this search won't highlight anything::
+
+    q = (S().query(title__text='crash')
+            .highlight('title')          # highlights 'title' field
+            .highlight(None))            # clears highlight
+
+
+.. Note::
+
+   Make sure the fields you're highlighting are indexed correctly.
+   Check the ElasticSearch documentation for details.
+
+
+.. seealso::
+
+   http://www.elasticsearch.org/guide/reference/api/search/highlighting.html
+     ElasticSearch docs for highlight
+
+
 Facets
 ======
 

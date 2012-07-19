@@ -197,6 +197,74 @@ class QueryTest(HasDataTestCase):
         res = list(qs)
         assert res[0]._explanation
 
+    def test_highlight_with_dict_results(self):
+        """Make sure highlighting with dict-style results works.
+
+        Highlighting should work on all fields specified in the ``highlight()``
+        call, not just the ones mentioned in the query or in ``values_dict()``.
+
+        """
+        s = (self.get_s().query(foo__text='car')
+                         .filter(id=5)
+                         .highlight('tag', 'foo'))
+        result = list(s)[0]
+        # The highlit text from the foo field should be in index 1 of the
+        # excerpts.
+        eq_(result._highlight['foo'], [u'train <em>car</em>'])
+
+        s = (self.get_s().query(foo__text='car')
+                         .filter(id=5)
+                         .highlight('tag', 'foo')
+                         .values_dict('tag', 'foo'))
+        result = list(s)[0]
+        # The highlit text from the foo field should be in index 1 of the
+        # excerpts.
+        eq_(result._highlight['foo'], [u'train <em>car</em>'])
+
+    def test_highlight_on_list_results(self):
+        """Make sure highlighting with list-style results works.
+
+        Highlighting should work on all fields specified in the ``highlight()``
+        call, not just the ones mentioned in the query or in ``values_list()``.
+
+        """
+        s = (self.get_s().query(foo__text='car')
+                         .filter(id=5)
+                         .highlight('tag', 'foo')
+                         .values_list('tag', 'foo'))
+        result = list(s)[0]
+        # The highlit text from the foo field should be in index 1 of the
+        # excerpts.
+        eq_(result._highlight['foo'], [u'train <em>car</em>'])
+
+    def test_highlight_options(self):
+        """Make sure highlighting with options works."""
+        s = (self.get_s().query(foo__text='car')
+                         .filter(id=5)
+                         .highlight('tag', 'foo',
+                                    pre_tags=['<b>'],
+                                    post_tags=['</b>']))
+        result = list(s)[0]
+        # The highlit text from the foo field should be in index 1 of the
+        # excerpts.
+        eq_(result._highlight['foo'], [u'train <b>car</b>'])
+
+    def test_highlight_cumulative(self):
+        """Make sure highlighting fields are cumulative and none clears them."""
+        # No highlighted fields means no highlights.
+        s = (self.get_s().query(foo__text='car')
+                         .filter(id=5)
+                         .highlight())
+        eq_(list(s)[0]._highlight, {})
+
+        # Add a field and that gets highlighted.
+        s = s.highlight('foo')
+        eq_(list(s)[0]._highlight['foo'], [u'train <em>car</em>'])
+
+        # Set it back to no fields and no highlight.
+        s = s.highlight(None)
+        eq_(list(s)[0]._highlight, {})
+
 
 class ResultsTests(HasDataTestCase):
     def test_default_results_are_dicts(self):
