@@ -99,6 +99,9 @@ Version 0.4: Released xxx
   going to deprecate ``startswith``---there's no good reason to not be
   using the same terms that ElasticSearch uses.
 
+* Added ``highlight`` transform: generates highlighted fragments of
+  content that matched the query.
+
 * Removed requirement for nuggets.
 
 * Continued to improve documentation.
