@@ -501,8 +501,8 @@ Basic facets
 
 ::
 
-   q = (S().query(title='taco trucks')
-           .facet('style', 'location'))
+    q = (S().query(title='taco trucks')
+            .facet('style', 'location'))
 
 
 will do a query for "taco trucks" and return terms facets for the
@@ -520,9 +520,11 @@ That translates to::
 Note that the fieldname you provide in the ``.facet()`` call becomes
 the facet name as well.
 
-To get the facet counts, you call ``.facet_counts()`` on the `S`
-instance::
+The facet counts are available through ``.facet_counts()`` on the `S`
+instance. For example::
 
+    q = (S().query(title='taco trucks')
+            .facet('style', 'location'))
     counts = q.facet_counts()
 
 
