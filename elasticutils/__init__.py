@@ -612,7 +612,6 @@ class S(object):
     def _raw_facets(self):
         return self._do_search().results.get('facets', {})
 
-    @property
     def facet_counts(self):
         facets = {}
         for key, val in self._raw_facets().items():

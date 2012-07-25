@@ -91,4 +91,4 @@ class ElasticTestCase(TestCase):
 
 
 def facet_counts_dict(qs, field):
-    return dict((t['term'], t['count']) for t in qs.facet_counts[field])
+    return dict((t['term'], t['count']) for t in qs.facet_counts()[field])
