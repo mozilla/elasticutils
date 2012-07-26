@@ -44,3 +44,11 @@ Contributor's Guide
    dev_documentation
    dev_testing
 
+
+Sample programs
+===============
+
+.. toctree::
+   :maxdepth: 1
+
+   sampleprogram1
