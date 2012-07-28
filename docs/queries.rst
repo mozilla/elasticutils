@@ -165,6 +165,26 @@ By default ``S()`` with no filters or queries specified will do a
    http://www.elasticsearch.org/guide/reference/query-dsl/match-all-query.html
      ElasticSearch match_all documentation
 
+
+Queries vs. Filters
+===================
+
+A search can contain multiple queries and multiple filters. The two
+things are very different.
+
+A filter determines whether a document is in the results set or
+not. If you do a term filter on whether field `foo` has value `bar`,
+then the result set ONLY has documents where `foo` has value `bar`.
+
+A query affects the score for a document. If you do a term query on
+whether field `foo` has value `bar`, then the result set will score
+documents where the query holds true higher than documents where the
+query does not hold true.
+
+The other place where this affects things is when you specify
+facets. See :ref:`queries-chapter-facets-section` for details.
+
+
 Queries
 =======
 
@@ -189,23 +209,36 @@ will do a text query instead of a term query.
 
 There are many different field actions to choose from:
 
-================  ===================
-field action      elasticsearch query
-================  ===================
-text              Text query
-startswith        Prefix query
-gt, gte, lt, lte  Range query
-fuzzy             Fuzzy query
-(no action)       Term query
-================  ===================
+======================  ===================
+field action            elasticsearch query
+======================  ===================
+(no action specified)   term query
+term                    term query
+text                    text query
+prefix                  prefix query [1]_
+gt, gte, lt, lte        range query
+fuzzy                   fuzzy query
+text_phrase             text_phrase query
+query_string            query_string query [2]_
+======================  ===================
+
+
+.. [1] You can also use ``startswith``, but that's deprecated.
+
+.. [2] When doing ``query_string`` queries, if the query text is malformed
+   it'll raise a `SearchPhaseExecutionException:` exception.
+
 
 .. seealso::
 
    http://www.elasticsearch.org/guide/reference/query-dsl/
      ElasticSearch docs for query dsl
 
+   http://www.elasticsearch.org/guide/reference/query-dsl/term-query.html
+     ElasticSearch docs on term queries
+
    http://www.elasticsearch.org/guide/reference/query-dsl/text-query.html
-     ElasticSearch docs on text queries
+     ElasticSearch docs on text and text_phrase queries
 
    http://www.elasticsearch.org/guide/reference/query-dsl/prefix-query.html
      ElasticSearch docs on prefix queries
@@ -216,8 +249,8 @@ fuzzy             Fuzzy query
    http://www.elasticsearch.org/guide/reference/query-dsl/fuzzy-query.html
      ElasticSearch docs on fuzzy queries
 
-   http://www.elasticsearch.org/guide/reference/query-dsl/term-query.html
-     ElasticSearch docs on term queries
+   http://www.elasticsearch.org/guide/reference/query-dsl/query-string-query.html
+     ElasticSearch docs on query_string queries
 
 
 Filters
@@ -492,6 +525,8 @@ If you need to clear the highlight, call ``.highlight()`` with
    http://www.elasticsearch.org/guide/reference/api/search/highlighting.html
      ElasticSearch docs for highlight
 
+
+.. _queries-chapter-facets-section:
 
 Facets
 ======

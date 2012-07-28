@@ -46,6 +46,45 @@ class QueryTest(HasDataTestCase):
     def test_q_all(self):
         eq_(len(self.get_s()), 5)
 
+    def test_q_term(self):
+        eq_(len(self.get_s().query(foo='car')), 2)
+        eq_(len(self.get_s().query(foo__term='car')), 2)
+
+    def test_q_text(self):
+        eq_(len(self.get_s().query(foo__text='car')), 2)
+
+    def test_q_prefix(self):
+        eq_(len(self.get_s().query(foo__prefix='ca')), 2)
+        eq_(len(self.get_s().query(foo__startswith='ca')), 2)
+
+    def test_q_text_phrase(self):
+        # Doing a text query for the two words in either order kicks up
+        # two results.
+        eq_(len(self.get_s().query(foo__text='train car')), 2)
+        eq_(len(self.get_s().query(foo__text='car train')), 2)
+
+        # Doing a text_phrase query for the two words in the right order
+        # kicks up one result.
+        eq_(len(self.get_s().query(foo__text_phrase='train car')), 1)
+
+        # Doing a text_phrase query for the two words in the wrong order
+        # kicks up no results.
+        eq_(len(self.get_s().query(foo__text_phrase='car train')), 0)
+
+    def test_q_fuzzy(self):
+        # Mispelled word gets no results with text query.
+        eq_(len(self.get_s().query(foo__text='tran')), 0)
+
+        # Mispelled word gets one result with fuzzy query.
+        eq_(len(self.get_s().query(foo__fuzzy='tran')), 1)
+
+    def test_q_query_string(self):
+        eq_(len(self.get_s().query(foo__query_string='car AND train')), 1)
+        eq_(len(self.get_s().query(foo__query_string='car OR duck')), 3)
+
+        # You can query against different fields with the query_string.
+        eq_(len(self.get_s().query(foo__query_string='tag:boat OR car')), 3)
+
     def test_filter_empty_f(self):
         eq_(len(self.get_s().filter(F() | F(tag='awesome'))), 3)
         eq_(len(self.get_s().filter(F() & F(tag='awesome'))), 3)

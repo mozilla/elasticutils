@@ -191,10 +191,12 @@ def _boosted_value(name, action, key, value, boost):
 
 # Maps ElasticUtils field actions to their ElasticSearch query names.
 ACTION_MAP = {
-    None: 'term',
-    'startswith': 'prefix',
+    None: 'term',  # Default to term
+    'term': 'term',
+    'startswith': 'prefix',  # Backwards compatability
     'prefix': 'prefix',
     'text': 'text',
+    'text_phrase': 'text_phrase',
     'fuzzy': 'fuzzy'}
 
 
@@ -539,6 +541,17 @@ class S(object):
                 rv.append(
                     {ACTION_MAP[field_action]: _boosted_value(
                             field_name, field_action, key, val, boost)})
+
+            elif field_action == 'query_string':
+                # query_string has different syntax, so it's handled
+                # differently.
+                #
+                # Note: query_string queries are not boosted with
+                # .boost()---they're boosted in the query text itself.
+                rv.append(
+                    {'query_string':
+                         {'default_field': field_name,
+                          'query': val}})
 
             elif field_action in ('gt', 'gte', 'lt', 'lte'):
                 # Ranges are special and have a different syntax, so
