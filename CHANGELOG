@@ -63,6 +63,7 @@ Version 0.4: Released xxx
   facets including scripting. This is similar to the original
   ``.facet()`` implementation.
 
+
 **Changes:**
 
 * Overhauled and cleaned up ElasticUtils tests. Running tests can be done
@@ -95,9 +96,11 @@ Version 0.4: Released xxx
 * Added ``boost`` transform: it allows you to do query-time field
   boosting.
 
-* Made ``prefix`` a synonym for ``startswith``. At some point, I'm
-  going to deprecate ``startswith``---there's no good reason to not be
-  using the same terms that ElasticSearch uses.
+* Added support for ``prefix``. It's the same as ``startswith``, but
+  it uses the same word that ElasticSearch uses. At some point, we'll
+  remove support for ``startswith``.
+
+* Added support for ``text_phrase`` and ``query_string`` queries.
 
 * Added ``highlight`` transform: generates highlighted fragments of
   content that matched the query.
