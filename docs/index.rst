@@ -9,6 +9,7 @@ API for `elasticsearch <http://elasticsearch.org/>`_ as well as some
 other tools for making it easier to integrate elasticsearch into your
 application.
 
+:Version:       |release|
 :Code:          https://github.com/mozilla/elasticutils
 :License:       BSD; see LICENSE file
 :Issues:        https://github.com/mozilla/elasticutils/issues
