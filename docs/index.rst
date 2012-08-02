@@ -44,7 +44,7 @@ Contributor's Guide
    dev_conventions
    dev_documentation
    dev_testing
-
+   dev_releaseprocess
 
 Sample programs
 ===============
