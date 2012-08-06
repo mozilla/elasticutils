@@ -340,6 +340,12 @@ class S(object):
         new.field_boosts.update(kw)
         return new
 
+    def demote(self, amount_, **kw):
+        """
+        Returns a new S instance with boosting query and demotion.
+        """
+        return self._clone(next_step=('demote', (amount_, kw)))
+
     def facet(self, *args, **kw):
         """
         Return a new S instance with facet args combined with existing
@@ -429,6 +435,7 @@ class S(object):
         fields = set(['id'])
         facets = {}
         facets_raw = {}
+        demote = None
         highlight_fields = set()
         highlight_options = {}
         explain = False
@@ -454,6 +461,8 @@ class S(object):
                 explain = value
             elif action == 'query':
                 queries.extend(self._process_queries(value))
+            elif action == 'demote':
+                demote = (value[0], self._process_queries(value[1]))
             elif action == 'filter':
                 filters.extend(_process_filters(value))
             elif action == 'facet':
@@ -485,6 +494,15 @@ class S(object):
             qs['query'] = {'bool': {'must': queries}}
         elif queries:
             qs['query'] = queries[0]
+
+        if demote is not None:
+            qs['query'] = {
+                'boosting': {
+                    'positive': qs['query'],
+                    'negative': demote[1],
+                    'negative_boost': demote[0]
+                    }
+                }
 
         if fields:
             qs['fields'] = list(fields)

@@ -3,6 +3,20 @@ What's new in ElasticUtils
 ==========================
 
 
+Version 0.5: in development
+===========================
+
+**API-breaking changes:**
+
+None.
+
+**Changes:**
+
+* Added ``demote`` transform: it adds boosting query support allowing
+  you to do a negative query which reduces scores for documents that
+  match.
+
+
 Version 0.4: Released July 31st, 2012
 =====================================
 

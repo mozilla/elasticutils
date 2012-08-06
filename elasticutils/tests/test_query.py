@@ -78,6 +78,17 @@ class QueryTest(HasDataTestCase):
         # Mispelled word gets one result with fuzzy query.
         eq_(len(self.get_s().query(foo__fuzzy='tran')), 1)
 
+    def test_q_demote(self):
+        s = self.get_s().query(foo__text='car')
+        scores = [(sr['id'], sr._score) for sr in s.values_dict('id')]
+
+        s = s.demote(0.5, width__term='5')
+        demoted_scores = [(sr['id'], sr._score) for sr in s.values_dict('id')]
+
+        # These are both sorted by scores. We're demoting one result
+        # so the top result in each list is different.
+        assert scores[0] != demoted_scores
+
     def test_q_query_string(self):
         eq_(len(self.get_s().query(foo__query_string='car AND train')), 1)
         eq_(len(self.get_s().query(foo__query_string='car OR duck')), 3)

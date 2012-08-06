@@ -209,9 +209,9 @@ will do a text query instead of a term query.
 
 There are many different field actions to choose from:
 
-======================  ===================
+======================  =======================
 field action            elasticsearch query
-======================  ===================
+======================  =======================
 (no action specified)   term query
 term                    term query
 text                    text query
@@ -220,7 +220,7 @@ gt, gte, lt, lte        range query
 fuzzy                   fuzzy query
 text_phrase             text_phrase query
 query_string            query_string query [2]_
-======================  ===================
+======================  =======================
 
 
 .. [1] You can also use ``startswith``, but that's deprecated.
@@ -455,6 +455,45 @@ only to that field name and field action. For example::
             .boost(title__prefix=4.0))
 
 will only apply the 4.0 boost to ``title__prefix``.
+
+
+Demoting
+========
+
+You can demote documents that match query criteria::
+
+    q = (S().query(title='trucks')
+            .demote(0.5, description__text='gross'))
+
+This does a query for trucks, but demotes any that have "gross" in the
+description with a fraction boost of 0.5.
+
+.. Note::
+
+   You can only call ``.demote()`` once. Calling it again overwrites
+   previous calls.
+
+This is implemented using the `boosting query` in ElasticSearch.
+Anything you specify with ``.query()`` goes into the `positive`
+section. The `negative query` and `negative boost` portions are
+specified as the first and second arguments to ``.demote()``.
+
+.. Note::
+
+   Order doesn't matter. So::
+
+       q = (S().query(title='trucks')
+               .demote(0.5, description__text='gross'))
+
+   does the same thing as::
+
+       q = (S().demote(0.5, description__text='gross')
+               .query(title='trucks'))
+
+.. seealso::
+
+   http://www.elasticsearch.org/guide/reference/query-dsl/boosting-query.html
+     ElasticSearch docs on boosting query (which are as clear as mud)
 
 
 Highlighting
