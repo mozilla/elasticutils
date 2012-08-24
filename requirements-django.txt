@@ -1,4 +1,6 @@
-django
+# Requirements file for elasticutils.contrib.django .
+-r requirements.txt
 
+django
 celery
 django-celery

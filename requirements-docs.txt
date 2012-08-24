@@ -1,0 +1,5 @@
+# Requirements file for ReadTheDocs to build the docs.
+-r requirements-django.txt
+
+Sphinx
+nose
