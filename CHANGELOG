@@ -16,6 +16,8 @@ None.
   you to do a negative query which reduces scores for documents that
   match.
 
+* The elasticutils version is in ``elasticutils.__version__`` now.
+
 
 Version 0.4: Released July 31st, 2012
 =====================================

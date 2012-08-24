@@ -2,7 +2,10 @@ import logging
 from itertools import izip
 from operator import itemgetter
 
-from pyes import ES, VERSION
+from pyes import ES
+from pyes import VERSION as PYES_VERSION
+
+from elasticutils._version import __version__
 
 
 log = logging.getLogger('elasticutils')
@@ -67,7 +70,7 @@ def get_es(hosts=None, default_indexes=None, timeout=None, dump_curl=None,
     # is set it manually after the ES has been created and
     # defaults['dump_curl'] is truthy. This might not work for all
     # values of dump_curl.
-    if VERSION[0:2] == (0, 15) and dump_curl is not None:
+    if PYES_VERSION[0:2] == (0, 15) and dump_curl is not None:
         es.dump_curl = dump_curl
 
     return es
