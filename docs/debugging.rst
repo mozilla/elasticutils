@@ -23,7 +23,7 @@ For example::
     from elasticutils import get_es
 
     class CurlDumper(object):
-        def write(self, s)
+        def write(self, s):
             print s
 
     es = get_es(dump_curl=CurlDumper())
