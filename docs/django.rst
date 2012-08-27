@@ -17,63 +17,65 @@ This chapter covers using ElasticUtils Django bits.
 Configuration
 =============
 
-ElasticUtils depends on the following settings:
+ElasticUtils depends on the following settings in your Django settings
+file:
 
 .. module:: django.conf.settings
 
 .. data:: ES_DISABLED
 
-    Disables talking to ElasticSearch from your app.  Any method
-    wrapped with `es_required` will return and log a warning.  This is
-    useful while developing, so you don't have to have ElasticSearch
-    running.
+   If `ES_DISABLED = True`, then Any method wrapped with
+   `es_required` will return and log a warning. This is useful while
+   developing, so you don't have to have ElasticSearch running.
 
 .. data:: ES_DUMP_CURL
 
-    If set to a path all the requests that `ElasticUtils` makes will
-    be dumped into the designated file.
+   If set to a file path all the requests that `ElasticUtils` makes
+   will be dumped into the designated file.
 
-    .. note:: Python does not write this file until the process is
-              finished.
+   If set to a class instance, calls the ``.write()`` method with
+   the curl equivalents.
 
+   See :ref:`django-debugging` for more details.
 
 .. data:: ES_HOSTS
 
-    This is a list of hosts.  In development this will look like::
+   This is a list of ES hosts. In development this will look like::
 
-        ES_HOSTS = ['127.0.0.1:9200']
+       ES_HOSTS = ['127.0.0.1:9200']
 
 .. data:: ES_INDEXES
 
-    This is a mapping of doctypes to indexes. A `default` mapping is
-    required for types that don't have a specific index.
+   This is a mapping of doctypes to indexes. A `default` mapping is
+   required for types that don't have a specific index.
 
-    When ElasticUtils queries the index for a model, it derives the
-    doctype from `Model._meta.db_table`.  When you build your indexes
-    and doctypes, make sure to name them after your model db_table.
+   When ElasticUtils queries the index for a model, by default it
+   derives the doctype from `Model._meta.db_table`. When you build
+   your indexes and mapping types, make sure to match the indexes and
+   mapping types you're using.
 
-    Example 1::
+   Example 1::
 
-        ES_INDEXES = {'default': 'main_index'}
+       ES_INDEXES = {'default': 'main_index'}
 
-    This only has a default, so ElasticUtils queries will look in
-    `main_index` for all doctypes.
+   This only has a default, so all ElasticUtils queries will look in
+   `main_index` for all mapping types.
 
-    Example 2::
+   Example 2::
 
-        ES_INDEXES = {'default': 'main_index',
-                      'splugs': 'splugs_index'}
+       ES_INDEXES = {'default': 'main_index',
+                     'splugs': 'splugs_index'}
 
-    Assuming you have a `Splug` model which has a
-    `Splug._meta.db_table` value of `splugs`, then ElasticUtils will
-    run queries for `Splug` in the `splugs_index`.  ElasticUtils will
-    run queries for other models in `main_index` because that's the
-    default.
+   Assuming you have a `Splug` model which has a
+   `Splug._meta.db_table` value of `splugs`, then ElasticUtils will
+   run queries for `Splug` in the `splugs_index`.  ElasticUtils will
+   run queries for other models in `main_index` because that's the
+   default.
 
 .. data:: ES_TIMEOUT
 
-    Defines the timeout for the `ES` connection.  This defaults to 5
-    seconds.
+   Defines the timeout for the `ES` connection.  This defaults to 5
+   seconds.
 
 
 ES
@@ -87,8 +89,8 @@ It is built with the settings from your `django.conf.settings`.
 .. Note::
 
    `get_es()` only caches the `ES` if you don't pass in any override
-   arguments. If you pass in override arguments, it doesn't cache it,
-   but instead creates a new one.
+   arguments. If you pass in override arguments, it doesn't cache it
+   and instead creates a new one.
 
 
 Using with Django ORM models
@@ -97,7 +99,7 @@ Using with Django ORM models
 :Requirements: Django
 
 The `elasticutils.contrib.django.S` class takes a model in the
-constructor. That model is a Django ORM Models derivative. For example::
+constructor. That model is a Django ORM model class. For example::
 
     from elasticutils.contrib.django import S
     from myapp.models import MyModel
@@ -110,14 +112,120 @@ bunch of functionality that makes indexing data easier.
 
 Two things to know:
 
-1. The doctype for the model is ``cls._meta.db_table``.
+1. The doctype for the model is ``cls._meta.db_table`` by default.
 
 2. The index that's searched is ``settings.ES_INDEXES[doctype]`` and
    if that doesn't exist, it defaults to
-   ``settings.ES_INDEXES['default']``
+   ``settings.ES_INDEXES['default']`` by default.
+
+
+For example, here's a minimal use of the SearchMixin::
+
+    from django.db import models
+
+    from elasticutils.contrib.django import SearchMixin
+
+
+    class Contact(models.Model, SearchMixin):
+        name = models.CharField(max_length=50)
+        bio = models.TextField(blank=True)
+        age = models.IntegerField()
+        website = models.URLField(blank=True)
+        last_udpated = models.DateTimeField(default=datetime.now)
+
+        @classmethod
+        def extract_document(cls, obj_id, obj=None):
+            """Takes an object id for this class, returns dict."""
+            if obj is None:
+                obj = cls.objects.get(pk=obj_id)
+
+            return {
+                'id': obj.id,
+                'name': obj.name,
+                'bio': obj.bio,
+                'age': obj.age,
+                'website': obj.website,
+                'last_updated': obj.last_updated
+                }
+
+
+This example doesn't specify a mapping. That's ok because ElasticSearch
+will infer from the shape of the data how it should analyze and store
+the data.
+
+If you want to specify this explicitly (and I suggest you do for
+anything that involves strings), then you want to additionally
+override `.get_mapping()`. Let's refine the above example by
+explicitly specifying `.get_mapping()`.
+
+::
+
+    from django.db import models
+
+    from elasticutils.contrib.django import SearchMixin
+
+
+    class Contact(models.Model, SearchMixin):
+        name = models.CharField(max_length=50)
+        bio = models.TextField(blank=True)
+        age = models.IntegerField()
+        website = models.URLField(blank=True)
+        last_udpated = models.DateTimeField(default=datetime.now)
+
+        @classmethod
+        def get_mapping(cls):
+            """Returns an ElasticSearch mapping."""
+            return {
+                # The id is an integer, so store it as such. ES would have
+                # inferred this just fine.
+                'id': {'type': 'integer'},
+
+                # The name is a name---so we shouldn't analyze it
+                # (de-stem, tokenize, parse, etc).
+                'name': {'type': 'string', 'index': 'not_analyzed'},
+
+                # The bio has free-form text in it, so analyze it with
+                # snowball.
+                'bio': {'type': 'string', 'analyzer': 'snowball'},
+
+                # The website also shouldn't be analyzed.
+                'website': {'type': 'string', 'index': 'not_analyzed'},
+
+                # The last_updated field is a date.
+                'last_updated': {'type': 'date'}
+                }
+
+        @classmethod
+        def extract_document(cls, obj_id, obj=None):
+            """Takes an object id for this class, returns dict."""
+            if obj is None:
+                obj = cls.objects.get(pk=obj_id)
+
+            return {
+                'id': obj.id,
+                'name': obj.name,
+                'bio': obj.bio,
+                'age': obj.age,
+                'website': obj.website,
+                'last_updated': obj.last_updated
+                }
+
+
+SearchMixin
+-----------
 
 .. autoclass:: elasticutils.contrib.django.models.SearchMixin
    :members:
+
+
+.. seealso::
+
+   http://www.elasticsearch.org/guide/reference/mapping/
+     The ElasticSearch guide on mapping types.
+
+   http://www.elasticsearch.org/guide/reference/mapping/core-types.html
+     The ElasticSearch guide on mapping type field types.
+
 
 
 Other helpers
@@ -126,12 +234,20 @@ Other helpers
 :Requirements: Django, Celery
 
 You can then utilize things such as
-:func:`~elasticutils.contrib.django.tasks.index_objects` to
+:func:`elasticutils.contrib.django.tasks.index_objects` to
 automatically index all new items.
+
+
+Tasks
+-----
 
 .. automodule:: elasticutils.contrib.django.tasks
 
    .. autofunction:: index_objects(model, ids=[...])
+
+
+Cron
+----
 
 .. automodule:: elasticutils.contrib.django.cron
 
@@ -165,32 +281,38 @@ Example::
             ...
 
 
+.. _django-debugging:
+
 Debugging
 =========
 
-From Rob Hudson (with some minor editing):
+You can set the ``settings.ES_DUMP_CURL`` to a few different things
+all of which can be helpful in debugging ElasticUtils.
 
-    I recently discovered a nice tool for helping solve ElasticSearch
-    problems that I thought I'd share...
+1. a file path
 
-    While scanning the code of pyes I discovered that it has an option
-    to dump the commands it is sending to the ES backend to whatever
-    you give it that has a ``write()`` method [1]_.  I also discovered
-    that elasticutils will pass this through to pyes based on the
-    ``settings.ES_DUMP_CURL`` [2]_.
+   This will cause PyES to write the curl equivalents of the commands
+   it's sending to ElasticSearch to a file.
 
-    I threw together a quick and ugly class just to dump output while
-    debugging an ES problem::
+   Example setting::
+
+       ES_DUMP_CURL = '/var/log/es_curl.log'
+
+
+   .. Note::
+
+      The file is not closed until the process ends. Because of that,
+      you don't see much in the file until it's done.
+
+
+2. a class instance that has a ``.write()`` method
+
+   PyES will call the ``.write()`` method with the curl equivalent and
+   then you can do whatever you want with it.
+
+   For example, this writes curl equivalent output to stdout::
 
         class CurlDumper(object):
             def write(self, s):
                 print s
         ES_DUMP_CURL = CurlDumper()
-
-    This is pretty great when running a test with output enabled, or
-    even in the runserver output. But to my surprise, when running
-    tests with output not enabled I see the curl dump for only tests
-    that fail, which has turned out to be very useful information.
-
-.. [1] https://github.com/aparo/pyes/blob/master/pyes/es.py#L496
-.. [2] https://github.com/mozilla/elasticutils/blob/master/elasticutils/__init__.py#L29
