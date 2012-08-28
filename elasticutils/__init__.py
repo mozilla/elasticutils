@@ -828,7 +828,7 @@ class TupleResult(tuple):
 class DictSearchResults(SearchResults):
     def set_objects(self, hits):
         key = 'fields' if self.fields else '_source'
-        self.objects = [_decorate_with_metadata(DictResult(r[key]), r)
+        self.objects = [decorate_with_metadata(DictResult(r[key]), r)
                         for r in hits]
 
 
@@ -846,7 +846,7 @@ class ListSearchResults(SearchResults):
                 objs = [((obj,), r) for obj, r in objs]
         else:
             objs = [(r['_source'].values(), r) for r in hits]
-        self.objects = [_decorate_with_metadata(TupleResult(obj), r)
+        self.objects = [decorate_with_metadata(TupleResult(obj), r)
                         for obj, r in objs]
 
 
@@ -857,13 +857,13 @@ class ObjectSearchResults(SearchResults):
 
     def __iter__(self):
         objs = dict((obj.id, obj) for obj in self.objects)
-        return (_decorate_with_metadata(objs[id], r)
+        return (decorate_with_metadata(objs[id], r)
                 for id, r in
                 izip(self.ids, self.results['hits']['hits'])
                 if id in objs)
 
 
-def _decorate_with_metadata(obj, hit):
+def decorate_with_metadata(obj, hit):
     """Return obj decorated with hit-scope metadata."""
     # The search result score
     obj._score = hit.get('_score')
