@@ -660,6 +660,74 @@ class S(object):
         return facets
 
 
+class MLT(object):
+    """
+    Represents a lazy ElasticSearch more like this API call.
+    """
+    def __init__(self, s, id, fields=None, index=None, doc_type=None,
+                 **query_params):
+        """
+        When the MLT is evaluated, it generates a list of dict results.
+
+        :arg s: An instance of an S. The query is passed in the body of
+                the more like this request.
+        :arg id: The id of the document we want to find more like.
+        :arg fields: A list of fields to use for more like this.
+        :arg index: The index to use. Falls back to the first index
+                    listed in s.
+        :arg doc_type: The doctype to use. Falls back to the first
+                       doctype listed in s.
+        :arg query_params: Any additional query parameters for the
+                           more like this call.
+        """
+        self.s = s
+        # If an index or doctype isn't given, we use the first one
+        # in the S.
+        self.index = index or s.get_indexes()[0]
+        self.doc_type = doc_type or s.get_doctypes()[0]
+        self.id = id
+        self.fields = fields
+        self.query_params = query_params
+        self._results_cache = None
+        self.type = s.type
+
+    def __iter__(self):
+        return iter(self._do_search())
+
+    def __len__(self):
+        return len(self._do_search())
+
+    def raw(self):
+        """
+        Build query and passes to ElasticSearch, then returns the raw
+        format returned.
+        """
+        qs = self.s._build_query()
+        es = self.s.get_es()
+        try:
+            path = es._make_path([self.index, self.doc_type, self.id, '_mlt'])
+            if self.fields:
+                self.query_params['mlt_fields'] = ','.join(self.fields)
+            hits = es._send_request(
+                'GET', path, body=qs, params=self.query_params)
+            log.debug(hits)
+        except Exception:
+            log.error(qs)
+            raise
+        log.debug('[%s] %s' % (hits['took'], qs))
+        return hits
+
+    def _do_search(self):
+        """
+        Perform the mlt call, then convert that raw format into a
+        SearchResults instance and return it.
+        """
+        if not self._results_cache:
+            hits = self.raw()
+            self._results_cache = DictSearchResults(self.type, hits, None)
+        return self._results_cache
+
+
 class SearchResults(object):
     def __init__(self, type, results, fields):
         self.type = type
