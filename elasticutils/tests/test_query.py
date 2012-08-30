@@ -50,6 +50,9 @@ class QueryTest(HasDataTestCase):
         eq_(len(self.get_s().query(foo='car')), 2)
         eq_(len(self.get_s().query(foo__term='car')), 2)
 
+    def test_q_in(self):
+        eq_(len(self.get_s().query(foo__in=['car', 'bar'])), 3)
+
     def test_q_text(self):
         eq_(len(self.get_s().query(foo__text='car')), 2)
 

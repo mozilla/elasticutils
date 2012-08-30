@@ -195,6 +195,7 @@ def _boosted_value(name, action, key, value, boost):
 # Maps ElasticUtils field actions to their ElasticSearch query names.
 ACTION_MAP = {
     None: 'term',  # Default to term
+    'in': 'in',
     'term': 'term',
     'startswith': 'prefix',  # Backwards compatability
     'prefix': 'prefix',

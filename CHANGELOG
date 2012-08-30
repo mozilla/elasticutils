@@ -18,6 +18,12 @@ None.
 
 * The elasticutils version is in ``elasticutils.__version__`` now.
 
+* Added ``__in`` support for queries. Doing::
+
+      S().query(foo__in=['a', 'b', 'c'])
+
+  does a terms query now.
+
 
 Version 0.4: Released July 31st, 2012
 =====================================
