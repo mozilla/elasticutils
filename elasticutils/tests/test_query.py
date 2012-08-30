@@ -140,6 +140,9 @@ class QueryTest(HasDataTestCase):
         eq_(len(self.get_s().filter(~F(tag='boat')).filter(~F(foo='bar'))), 3)
         eq_(len(self.get_s().filter(~F(tag='boat', foo='barf'))), 5)
 
+    def test_filter_in(self):
+        eq_(len(self.get_s().filter(foo__in=['car', 'bar'])), 3)
+
     def test_filter_bad_field_action(self):
         with self.assertRaises(InvalidFieldActionError):
             len(self.get_s().filter(F(tag__faux='awesome')))
