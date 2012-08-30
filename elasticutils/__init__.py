@@ -324,12 +324,21 @@ class S(object):
     def values_list(self, *fields):
         """
         Return a new S instance that returns ListSearchResults.
+
+        :arg fields: the list of fields to have in the results.
+            By default this is at least ``['id']``.
+
         """
         return self._clone(next_step=('values_list', fields))
 
     def values_dict(self, *fields):
         """
         Return a new S instance that returns DictSearchResults.
+
+        :arg fields: the list of fields to have in the results.
+            By default, this won't specify fields and thus ES
+            will return everything.
+
         """
         return self._clone(next_step=('values_dict', fields))
 
@@ -453,7 +462,8 @@ class S(object):
         filters = []
         queries = []
         sort = []
-        fields = set(['id'])
+        dict_fields = set()
+        list_fields = set()
         facets = {}
         facets_raw = {}
         demote = None
@@ -470,13 +480,16 @@ class S(object):
                     else:
                         sort.append(key)
             elif action == 'values_list':
-                fields |= set(value)
+                if not value:
+                    list_fields = set()
+                else:
+                    list_fields |= set(value)
                 as_list, as_dict = True, False
             elif action == 'values_dict':
                 if not value:
-                    fields = set()
+                    dict_fields = set()
                 else:
-                    fields |= set(value)
+                    dict_fields |= set(value)
                 as_list, as_dict = False, True
             elif action == 'explain':
                 explain = value
@@ -525,8 +538,12 @@ class S(object):
                     }
                 }
 
-        if fields:
-            qs['fields'] = list(fields)
+        if as_list and list_fields:
+            fields = qs['fields'] = list(list_fields)
+        elif as_dict and dict_fields:
+            fields = qs['fields'] = list(dict_fields)
+        else:
+            fields = set()
 
         if facets:
             qs['facets'] = facets
@@ -616,7 +633,7 @@ class S(object):
             hits = self.raw()
             if self.as_list:
                 ResultClass = ListSearchResults
-            elif self.as_dict or self.type is None:
+            elif self.as_dict:
                 ResultClass = DictSearchResults
             else:
                 ResultClass = ObjectSearchResults
@@ -638,12 +655,20 @@ class S(object):
         for action, value in reversed(self.steps):
             if action == 'indexes':
                 return value
+
+        if self.type is not None:
+            return self.type.get_index()
+
         return default_indexes
 
     def get_doctypes(self, default_doctypes=DEFAULT_DOCTYPES):
         for action, value in reversed(self.steps):
             if action == 'doctypes':
                 return value
+
+        if self.type is not None:
+            return self.type.get_mapping_type_name()
+
         return default_doctypes
 
     def raw(self):
@@ -801,11 +826,11 @@ class MLT(object):
 class SearchResults(object):
     def __init__(self, type, results, fields):
         self.type = type
-        self.took = results['took']
-        self.count = results['hits']['total']
+        self.took = results.get('took', 0)
+        self.count = results.get('hits', {}).get('total', 0)
         self.results = results
         self.fields = fields
-        self.set_objects(results['hits']['hits'])
+        self.set_objects(results.get('hits', {}).get('hits', []))
 
     def set_objects(self, hits):
         raise NotImplementedError()
@@ -850,21 +875,35 @@ class ListSearchResults(SearchResults):
                         for obj, r in objs]
 
 
+def _convert_results_to_dict(r):
+    """Takes a results from ES and returns fields."""
+    if 'fields' in r:
+        return r['fields']
+    if '_source' in r:
+        return r['_source']
+    return {'id': r['_id']}
+
+
 class ObjectSearchResults(SearchResults):
     def set_objects(self, hits):
-        self.ids = [int(r['_id']) for r in hits]
-        self.objects = self.type.objects.filter(id__in=self.ids)
+        mapping_type = (self.type if self.type is not None
+                        else DefaultMappingType)
+        self.objects = [
+            decorate_with_metadata(
+                mapping_type.from_results(_convert_results_to_dict(r)),
+                r)
+            for r in hits]
 
     def __iter__(self):
-        objs = dict((obj.id, obj) for obj in self.objects)
-        return (decorate_with_metadata(objs[id], r)
-                for id, r in
-                izip(self.ids, self.results['hits']['hits'])
-                if id in objs)
+        return self.objects.__iter__()
 
 
 def decorate_with_metadata(obj, hit):
     """Return obj decorated with hit-scope metadata."""
+    # ES id
+    obj._id = hit.get('_id', 0)
+    # Source data
+    obj._source = hit.get('_source', {})
     # The search result score
     obj._score = hit.get('_score')
     # The document type
@@ -874,3 +913,149 @@ def decorate_with_metadata(obj, hit):
     # Highlight bits
     obj._highlight = hit.get('highlight', {})
     return obj
+
+
+class NoModelError(Exception):
+    pass
+
+
+class MappingType(object):
+    """Base class for mapping types.
+
+    To extend this class:
+
+    1. implement ``get_index``.
+    2. implement ``get_mapping_type_name``.
+    3. if this ties back to a model, implement ``get_model``
+       and possibly also ``get_object``.
+
+    """
+    def __init__(self):
+        self._results_dict = {}
+        self._object = None
+
+    @classmethod
+    def from_results(cls, results_dict):
+        mt = cls()
+        mt._results_dict = results_dict
+        return mt
+
+    def _get_object_lazy(self):
+        if self._object:
+            return self._object
+
+        self._object = self.get_object()
+        return self._object
+
+    def get_object(self):
+        """Returns the model instance
+
+        This gets called when someone uses the ``.object`` attribute
+        which triggers lazy-loading of the object.
+
+        If this MappingType is associated with a model, then by
+        default, it calls::
+
+            self.get_model().get(id=self._id)
+
+        where ``self._id`` is the ElasticSearch document id.
+
+        Override it to do something different.
+
+        :raises cls.DoesNotExist: if the instance doesn't exist.
+            You should wrap this in a try/except block like this::
+
+                try:
+                    obj = result.object
+                except result.get_model().DoesNotExist:
+                    # exception handling here....
+
+        """
+        return self.get_model().get(id=self._id)
+
+    @classmethod
+    def get_indexes(cls):
+        """Returns the indexes to use for this mapping type.
+
+        You can specify the indexes to use for this mapping type.
+        This affects ``S`` built with this type.
+
+        By default, this is ["default"].
+
+        Override this if you want something different.
+
+        """
+        return DEFAULT_INDEXES
+
+    @classmethod
+    def get_mapping_type_name(cls):
+        """Returns the mapping type name.
+
+        You can specify the mapping type name (also sometimes called the
+        document type) with this method.
+
+        By default, this is None.
+
+        Override this if you want something different.
+
+        """
+        return DEFAULT_DOCTYPES
+
+    @classmethod
+    def get_model(cls):
+        """Return the model related to this MappingType.
+
+        This can be any class that has an instance related to this
+        Mappingtype by id.
+
+        By default, raises NoModelError.
+
+        Override this to return a class that has a ``.get(id=id)``
+        classmethod.
+
+        TODO: fix the docs.
+
+        """
+        raise NoModelError
+
+    # Simulate attribute access
+
+    def __getattr__(self, name):
+        if name in self.__dict__:
+            # We want instance/class attributes to take precedence.
+            # So if something like that exists, we raise an
+            # AttributeError and Python handles it.
+            raise AttributeError
+
+        if name == 'object':
+            # 'object' is lazy-loading. We don't do this with a
+            # property because Python sucks at properties and
+            # subclasses.
+            return self.get_object()
+
+        # If that doesn't exist, then check the results_dict.
+        if name in self._results_dict:
+            return self._results_dict[name]
+
+        raise AttributeError
+
+    # Simulate read-only container access
+
+    def __len__(self):
+        return self._results_dict.__len__()
+
+    def __getitem__(self, key):
+        return self._results_dict.__getitem__(key)
+
+    def __iter__(self):
+        return self._results_dict.__iter__()
+
+    def __reversed__(self):
+        return self._results_dict.__reversed__()
+
+    def __contains__(self, item):
+        return self._results_dict.__contains__(item)
+
+
+class DefaultMappingType(MappingType):
+    """This is the default mapping type for S."""

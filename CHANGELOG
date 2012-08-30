@@ -2,6 +2,83 @@
 What's new in ElasticUtils
 ==========================
 
+Version 0.6: in development
+===========================
+
+**API-breaking changes:**
+
+* **values_dict no longer always includes id.**
+
+  ``values_dict`` no longer always includes an 'id' field in the
+  fields list if you don't specify it.
+
+  Specifying no fields now returns **all** fields::
+
+      S().values_dict()
+
+  Specifying fields now returns only those fields::
+
+      S().values_dict('name', 'number')
+
+* **values_list no longer always includes id.**
+
+  ``values_list`` no longer always includes an 'id' field in the
+  fields list if you don't specify it.
+
+  Specifying no fields now returns **all** fields::
+
+      S().values_list()
+
+  Specifying fields now returns data for those fields in the order
+  the fields are specified::
+
+      S().values_list('name', 'number')
+
+* **Types have changed.**
+
+  This is a big change.
+
+  In ElasticUtils v0.4, `S` could take a type and that type was a
+  model. This is now completely different.
+
+  In ElasticUtils v0.5 and later, `S` takes a `MappingType`. A
+  `MappingType` can be related to a model, but it itself should not be
+  a model. This allows us to return search results as a list of
+  `MappingType` instances which can do things rather than forcing you
+  to do a db hit to get back instances that can do things.
+
+  This is similar to how django-haystack works with the SearchIndex
+  class, except ElasticUtils doesn't yet support declarative mapping
+  definition.
+
+  See documentation for more details.
+
+* **By default, results are now DefaultMappingType.**
+
+  In ElasticUtils v0.4, if the `S` was untyped and you didn't specify
+  either ``values_dict`` or ``values_list``, then the results would
+  come back as a list of dicts.
+
+  In ElasticUtils v0.5, if the `S` is untyped and you didn't specify
+  either ``values_dict`` or ``values_list``, then the results would
+  come back as a list of `DefaultMappingType`.
+
+  See documentation for more details.
+
+* **elasticutils.contrib.django.models.SearchMixin is no more.**
+
+  The `SearchMixin` class is replaced by `DjangoMappingType` which
+  relates ElasticSearch mapping types to Django ORM models and
+  `Indexable` which is a mixin that adds a bunch of index-related
+  infrastructure.
+
+**Changes:**
+
+* Added ``_source`` and ``_id`` to the metadata decorated on the
+  search results.
+
+  See documentation for more details.
+
 
 Version 0.5: in development
 ===========================

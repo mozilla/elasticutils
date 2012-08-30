@@ -1,17 +1,31 @@
 from django.conf import settings
 
+from elasticutils import MappingType, NoModelError
 from elasticutils.contrib.django import get_es, S
 
 
-class SearchMixin(object):
-    """Mixin for indexing Django model instances
+class DjangoMappingType(MappingType):
+    """This has most of the pieces you need to tie back to a Django ORM model.
 
-    Add this mixin to your Django ORM model class and it gives you
-    super indexing power. This correlates an ES mapping type to a
-    Django ORM model. Using this allows you to get Django model
-    instances as ES search results.
+    Subclass this and override at least `get_model`.
 
     """
+    def get_object(self):
+        return self.get_model().get(pk=self._id)
+
+    @classmethod
+    def get_model(cls):
+        """Return the model related to this DjangoMappingType.
+
+        This can be any class that has an instance related to this
+        DjangoMappingtype by id.
+
+        Override this to return a model class.
+
+        :returns: model class
+
+        """
+        raise NoModelError
 
     @classmethod
     def get_index(cls):
@@ -30,13 +44,13 @@ class SearchMixin(object):
 
         """
         indexes = settings.ES_INDEXES
-        return indexes.get(cls.get_mapping_type()) or indexes['default']
+        return indexes.get(cls.get_mapping_type_name()) or indexes['default']
 
     @classmethod
-    def get_mapping_type(cls):
+    def get_mapping_type_name(cls):
         """Returns the name of the mapping.
 
-        By default, this is ``cls._meta.db_table``.
+        By default, this is ``cls.get_model()._meta.db_table``.
 
         Override this if you want to compute the mapping type name
         differently.
@@ -44,7 +58,25 @@ class SearchMixin(object):
         :returns: mapping type string
 
         """
-        return cls._meta.db_table
+        return cls.get_model()._meta.db_table
+
+    @classmethod
+    def search(cls):
+        """Returns a typed S for this class.
+
+        :returns: an `S`
+
+        """
+        return S(cls)
+
+
+class Indexable(object):
+    """Mixin for mapping types with all the indexing hoo-hah.
+
+    Add this mixin to your DjangoMappingType subclass and it gives you
+    super indexing power.
+
+    """
 
     @classmethod
     def get_mapping(cls):
@@ -86,12 +118,13 @@ class SearchMixin(object):
 
         Defaults to::
 
-            cls.objects.order_by('id').values_list('id', flat=True)
+            cls.get_model().objects.order_by('id').values_list('id', flat=True)
 
         :returns: iterable of ids of objects to be indexed
 
         """
-        return cls.objects.order_by('id').values_list('id', flat=True)
+        model = cls.get_model()
+        return model.objects.order_by('id').values_list('id', flat=True)
 
     @classmethod
     def index(cls, document, id_=None, bulk=False, force_insert=False,
@@ -127,11 +160,12 @@ class SearchMixin(object):
             es = get_es()
 
         es.index(
-            document, index=cls.get_index(), doc_type=cls.get_mapping_type(),
+            document, index=cls.get_index(),
+            doc_type=cls.get_mapping_type_name(),
             id=id_, bulk=bulk, force_insert=force_insert)
 
     @classmethod
-    def unindex(cls, id, es=None):
+    def unindex(cls, id_, es=None):
         """Removes a particular item from the search index.
 
         TODO: document this better.
@@ -140,7 +174,7 @@ class SearchMixin(object):
         if es is None:
             es = get_es()
 
-        es.delete(cls.get_index(), cls.get_mapping_type(), id)
+        es.delete(cls.get_index(), cls.get_mapping_type_name(), id_)
 
     @classmethod
     def refresh_index(cls, timesleep=0, es=None):
@@ -153,8 +187,3 @@ class SearchMixin(object):
             es = get_es()
 
         es.refresh(cls.get_index(), timesleep=timesleep)
-
-    @classmethod
-    def search(cls):
-        """Returns a typed S for this class."""
-        return S(cls).indexes(cls.get_index()).doctypes(cls.get_mapping_type())

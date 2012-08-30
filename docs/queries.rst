@@ -61,17 +61,16 @@ The ElasticSearch REST API curl would look like this::
                    {'term': {'product': 'firefox'}},
                    {'term': {'platform': 'all'}},
                    {'term': {'version': '4.0'}}]},
-           'field': 'version'}},
-    'fields': ['id']
+           'field': 'version'}}
     }
     '
 
 That's it!
 
 For the rest of this chapter, when we translate ElasticUtils queries
-to their equivalent elasticsearch REST API, we're going to use a
+to their equivalent ElasticSearch REST API, we're going to use a
 shorthand and only talk about the body of the request which we'll call
-the `elasticsearch JSON`.
+the `ElasticSearch JSON`.
 
 
 .. seealso::
@@ -119,37 +118,35 @@ all.
 
 `s4` has everything in `s2` with a ``awesome=False`` filter.
 
-
-Typed S and creating types
---------------------------
-
-You can also construct a `typed S` which is an `S` with a model
-class. For example::
-
-   S(Model)
+When you create an `S` with no type, it's called an "untyped S". If
+you don't specify ``.values_dict`` or ``.values_list``, then your
+search results are in the form of a sequence of `DefaultMappingType`
+instances. More about this in :ref:`queries-mapping-type`.
 
 
-The model class needs to follow Django's ORM model system, but you can
-stub out the required bits even if you're not using Django.
+Typed S
+-------
 
-1. The model class needs a class-level attribute ``objects``.
-2. The ``objects`` attribute needs a method ``filter``.
-3. The ``filter`` method has a ``id__in`` argument which takes an
-   iterable of ids.
+You can also construct a `typed S` which is an `S` with a
+`MappingType` subclass. For example::
 
-For example::
+    from elasticutils import MappingType, S
 
-    class FakeModelManager(object):
-        def filter(self, id__in):
-            # returns list of FakeModel objects with those ids
+    class MyMappingType(MappingType):
+        @classmethod
+        def get_index(cls):
+            return 'sumo_index'
 
-    class FakeModel(object):
-        objects = FakeModelManager()
+        @classmethod
+        def get_mapping_type_name(cls):
+            return 'mymappingtype'
 
 
-Then you can create an `S`::
+    results = S(MyMappingType).query(title__text='plugins')
 
-    searcher = S(FakeModel)
+
+``results`` will be an iterable of `MyMappingType` instances---one for
+each search result.
 
 
 Match All
@@ -311,8 +308,8 @@ This translates to::
        'and': [
            {'term': {'style': 'korean'}},
            {'term': {'price': 'FREE'}}
-       ]},
-    'fields': ['id']}
+       ]}
+   }
 
 
 in elasticutils JSON.
@@ -331,8 +328,8 @@ that also translates to::
        'and': [
            {'term': {'style': 'korean'}},
            {'term': {'price': 'FREE'}}
-       ]},
-    'fields': ['id']}
+       ]}
+   }
 
 
 in elasticutils JSON.
@@ -351,8 +348,8 @@ That translates to::
        'or': [
            {'term': {'style': 'korean'}},
            {'term': {'style': 'mexican'}}
-       ]},
-    'fields': ['id']}
+       ]}
+   }
 
 
 But, that's kind of icky looking.
@@ -374,8 +371,8 @@ That translates to::
        'or': [
            {'term': {'style': 'korean'}},
            {'term': {'style': 'mexican'}}
-       ]},
-    'fields': ['id']}
+       ]}
+   }
 
 
 What if you want Mexican food, but only if it's FREE, otherwise you
@@ -393,8 +390,8 @@ That translates to::
                {'term': {'style': 'mexican'}}
            ]},
            {'term': {'style': 'korean'}}
-       ]},
-    'fields': ['id']}
+       ]}
+   }
 
 
 ``F`` supports AND, OR, and NOT operators which are ``&``, ``|`` and
@@ -609,8 +606,8 @@ That translates to::
      'facets': {
          'style': {'terms': {'field': 'style'}},
          'location': {'terms': {'field': 'location'}}
-     },
-     'fields': ['id']}
+         }
+    }
 
 Note that the fieldname you provide in the ``.facet()`` call becomes
 the facet name as well.
@@ -652,12 +649,12 @@ That translates to this::
      'facets': {
          'style': {
              'terms': {'field': 'style'}
-         },
+             },
          'location': {
              'terms': {'field': 'location'}
+             }
          }
-     },
-     'fields': ['id']}
+     }
 
 
 The "style" and "location" facets here ONLY apply to the results of
@@ -679,13 +676,13 @@ That translates to this::
          'styles': {
              'facet_filter': {'term': {'style': 'korean'}},
              'terms': {'field': 'style'}
-         },
+             },
          'locations': {
              'facet_filter': {'term': {'style': 'korean'}},
              'terms': {'field': 'location'}
+             }
          }
-     },
-     'fields': ['id']}
+    }
 
 
 Notice how there's an additional `facet_filter` component to the
@@ -708,12 +705,12 @@ That translates to this::
          'style': {
              'facet_filter': {'term': {'style': 'korean'}},
              'terms': {'field': 'style'}
-         },
+             },
          'location': {
              'terms': {'field': 'location'}
+             }
          }
-     },
-     'fields': ['id']}
+     }
 
 
 What if you want the facets to apply to the entire corpus and not just
@@ -729,15 +726,16 @@ That translates to this::
     {'query': {'term': {'title': 'taco trucks'}},
      'filter': {'term': {'style': 'korean'}},
      'facets': {
-         'style': {
+        'style': {
              'global': True,
-             'terms': {'field': 'style'}},
-         'location': {
+             'terms': {'field': 'style'}
+             },
+        'location': {
              'global': True,
              'terms': {'field': 'location'}
-         }
-     },
-     'fields': ['id']}
+             }
+        }
+    }
 
 .. Note::
 
@@ -782,9 +780,9 @@ That translates to::
          'styles': {
              'field': 'style',
              'script': 'term == korean ? true : false'
+             }
          }
-     },
-     'fields': ['id']}
+    }
 
 
 .. Warning::
@@ -834,6 +832,66 @@ Total hits can be found by using ``.count()``. For example::
    documents.
 
 
+.. _queries-mapping-type:
+
+Mapping types
+=============
+
+`MappingType` lets you specify the instance type for search results
+you get back from ElasticSearch searches. You can additionally relate
+a `MappingType` to a database model allowing you to link documents in
+the ElasticSearch index back to database objects in a lazy-loading
+way.
+
+Creating a `MappingType` lets you specify the index and doctype
+easily.  It also lets you tie business logic to your search results.
+
+For example, say you had a description field and wanted to have a
+truncated version of it::
+
+    class MyMappingType(MappingType):
+        def description_truncated(self):
+            return self.description[:100]
+
+    res = list(S(MyMappingType).query(description__text='stormy night'))[0]
+
+    print res.description_truncated()
+
+
+The most basic `MappingType` is the `DefaultMappingType` which is
+returned if you don't specify a `MappingType` and also don't specify
+``values_dict`` or ``values_list``. The `DefaultMappingType` lets you
+access search result fields as instance attributes or as keys::
+
+    res.description
+    res['description']
+
+The latter syntax is helpful when there are attributes defined on the
+class that have the same name as the document field.
+
+To create a `MappingType` you should probably override at least
+`get_index` and `get_mapping_type_name`. If you want to tie the
+`MappingType` to a database model, then you should define `get_model`
+which relates the `MappingType` to a database model class and
+`get_object` which returns the database object related to that search
+result. For example::
+
+    class ContactType(MappingType):
+        @classmethod
+        def get_index(cls):
+            return 'contacts_index'
+
+        @classmethod
+        def get_mapping_type_name(cls):
+            return 'contact_type'
+
+        @classmethod
+        def get_model(cls):
+            return ContactModel
+
+        def get_object(self):
+            return self.get_model().get(id=self._id)
+
 
 Results
 =======
@@ -844,41 +902,47 @@ By default
 Results are lazy-loaded, so the query will not be made until you try
 to access an item or some other attribute requiring the data.
 
-If you have a typed `S` (e.g. ``S(Model)``), then by default, results
-will be instances of that type.
+If you have a typed `S` (e.g. ``S(MappingType)``), then by default,
+results will be instances of that type.
 
 If you have an untyped `S` (e.g. ``S()``), then by default, results
-will be dicts.
+will be `DefaultMappingType`.
 
 
 Results as a list of tuples
 ---------------------------
 
-`values_list` with no arguments returns a list of tuples each with an
-id. With arguments, it'll return a list of tuples of values of the
-fields specified in the order the fields were specified.
+`values_list` with no arguments returns a list of tuples of all the
+data for that document. With arguments, it'll return a list of tuples
+of values of the fields specified in the order the fields were
+specified.
 
 For example:
 
 >>> list(S().values_list())
-[(1,), (2,), (3,)]
+[(1, 'fred', 40), (2, 'brian', 30), (3, 'james', 45)]
 >>> list(S().values_list('id', 'name'))
 [(1, 'fred'), (2, 'brian'), (3, 'james')]
 >>> list(S().values_list('name', 'id')
 [('fred', 1), ('brian', 2), ('james', 3)]
+
+.. Note::
+
+   If you don't specify fields, the data comes back in an arbitrary
+   order. It's probably best to specify fields or use ``values_dict``.
 
 
 Results as a list of dicts
 --------------------------
 
 `values_dict` returns a list of dicts. With no arguments, it returns a
-list of dicts with a single ``id`` field. With arguments, it returns a
-list of dicts with specified fields.
+list of dicts with all the fields. With arguments, it returns a list
+of dicts with specified fields.
 
 For example:
 
 >>> list(S().values_dict())
-[{'id': 1}, {'id': 2}]
+[{'id': 1, 'name': 'fred', 'age': 40}, {'id': 2, 'name': 'dennis', 'age': 37}]
 >>> list(S().values_dict('id', 'name')
 [{'id': 1, 'name': 'fred'}, {'id': 2, 'name': 'brian'}]
 

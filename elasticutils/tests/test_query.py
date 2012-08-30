@@ -1,44 +1,26 @@
 from nose.tools import eq_
 
-from elasticutils import F, S, InvalidFieldActionError
-from elasticutils.tests import FakeModel, ElasticTestCase, facet_counts_dict
+from elasticutils import F, InvalidFieldActionError
+from elasticutils.tests import ElasticTestCase, facet_counts_dict
 
 
-class HasDataTestCase(ElasticTestCase):
+class QueryTest(ElasticTestCase):
     @classmethod
     def setup_class(cls):
-        super(HasDataTestCase, cls).setup_class()
+        super(QueryTest, cls).setup_class()
         if cls.skip_tests:
             return
 
-        es = cls.get_es()
-        es.delete_index_if_exists(cls.index_name)
+        cls.create_index()
+        cls.index_data([
+                {'id': 1, 'foo': 'bar', 'tag': 'awesome', 'width': '2'},
+                {'id': 2, 'foo': 'bart', 'tag': 'boring', 'width': '7'},
+                {'id': 3, 'foo': 'car', 'tag': 'awesome', 'width': '5'},
+                {'id': 4, 'foo': 'duck', 'tag': 'boat', 'width': '11'},
+                {'id': 5, 'foo': 'train car', 'tag': 'awesome', 'width': '7'}
+            ])
+        cls.refresh()
 
-        data1 = FakeModel(id=1, foo='bar', tag='awesome', width='2')
-        data2 = FakeModel(id=2, foo='barf', tag='boring', width='7')
-        data3 = FakeModel(id=3, foo='car', tag='awesome', width='5')
-        data4 = FakeModel(id=4, foo='duck', tag='boat', width='11')
-        data5 = FakeModel(id=5, foo='train car', tag='awesome', width='7')
-
-        for data in (data1, data2, data3, data4, data5):
-            es.index(data.__dict__, cls.index_name, FakeModel._meta.db_table,
-                    bulk=True, id=data.id)
-        es.refresh()
-
-    @classmethod
-    def teardown_class(cls):
-        super(HasDataTestCase, cls).teardown_class()
-        if cls.skip_tests:
-            return
-
-        es = cls.get_es()
-        es.delete_index(cls.index_name)
-
-    def get_s(self):
-        return S().indexes(self.index_name).doctypes(FakeModel._meta.db_table)
-
-
-class QueryTest(HasDataTestCase):
     def test_q(self):
         eq_(len(self.get_s().query(foo='bar')), 1)
         eq_(len(self.get_s().query(foo='car')), 2)
@@ -324,102 +306,3 @@ class QueryTest(HasDataTestCase):
         # Set it back to no fields and no highlight.
         s = s.highlight(None)
         eq_(list(s)[0]._highlight, {})
-
-
-class ResultsTests(HasDataTestCase):
-    def test_default_results_are_dicts(self):
-        """With untyped S, return dicts."""
-        searcher = list(S().indexes(self.index_name)
-                           .doctypes(FakeModel._meta.db_table)
-                           .query(foo='bar'))
-        assert isinstance(searcher[0], dict)
-
-    def test_typed_s_returns_type(self):
-        """With typed S, return objects of type."""
-        searcher = list(S(FakeModel).indexes(self.index_name)
-                                    .doctypes(FakeModel._meta.db_table)
-                                    .query(foo='bar'))
-        assert isinstance(searcher[0], FakeModel)
-
-    def test_values_dict_results(self):
-        """With values_dict, return list of dicts."""
-        searcher = list(self.get_s().query(foo='bar').values_dict())
-        assert isinstance(searcher[0], dict)
-
-    def test_values_list_results_no_fields(self):
-        """No values_list fields, this returns a list of tuples."""
-        searcher = list(self.get_s().query(foo='bar').values_list())
-        eq_(searcher[0], (1,))
-
-    def test_values_list_results(self):
-        """With values_list fields, returns list of tuples."""
-        searcher = list(self.get_s().query(foo='bar')
-                                    .values_list('foo', 'width'))
-        assert isinstance(searcher[0], tuple)
-
-    def test_default_results_form_has_score(self):
-        """Test default results form has _score."""
-        searcher = list(self.get_s().query(foo='bar'))
-        assert hasattr(searcher[0], '_score')
-
-    def test_values_list_form_has_score(self):
-        """Test default results form has _score."""
-        searcher = list(self.get_s().query(foo='bar').values_list())
-        assert hasattr(searcher[0], '_score')
-
-    def test_values_dict_form_has_score(self):
-        """Test default results form has _score."""
-        searcher = list(self.get_s().query(foo='bar').values_dict())
-        assert hasattr(searcher[0], '_score')
-
-    def test_values_dict_no_args(self):
-        """Calling values_dict() with no args fetches all fields."""
-        eq_(S().query(fld1=2)
-               .values_dict()
-               ._build_query(),
-            {"query": {"term": {"fld1": 2}}})
-
-    def test_values_list_no_args(self):
-        """Calling values() with no args fetches only id."""
-        eq_(S(FakeModel).query(fld1=2)
-                        .values_list()
-                        ._build_query(),
-            {'query':
-                 {"term": {"fld1": 2}},
-             'fields': ['id']})
-
-    def test_values_dict_id(self):
-        """Calling values_dict('id') shouldn't return the ID field twice."""
-        eq_(S(FakeModel).query(fld1=2)
-                        .values_dict('id')
-                        ._build_query(),
-            {'query':
-                 {"term": {"fld1": 2}},
-             'fields': ['id']})
-
-    def test_values_list_id(self):
-        """Calling values('id') shouldn't return the ID field twice."""
-        eq_(S(FakeModel).query(fld1=2)
-                        .values_list('id')
-                        ._build_query(),
-            {'query':
-                 {"term": {"fld1": 2}},
-             'fields': ['id']})
-
-    def test_values_dict_implicit_id(self):
-        """Calling values_dict() always fetches ID."""
-        eq_(S(FakeModel).query(fld1=2)
-                        .values_dict('thing')
-                        ._build_query(),
-            {'query':
-                 {"term": {"fld1": 2}},
-             'fields': ['thing', 'id']})
-
-    def test_values_list_implicit_id(self):
-        """Calling values() always fetches ID."""
-        eq_(S(FakeModel).query(fld1=2)
-                        .values_list('thing')
-                        ._build_query(),
-            {'query':
-                 {"term": {"fld1": 2}},
-             'fields': ['thing', 'id']})

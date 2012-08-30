@@ -135,19 +135,19 @@ class S(elasticutils.S):
       it took to do the query
 
     """
-    def __init__(self, type_):
+    def __init__(self, mapping_type):
         """Create and return an S.
 
-        :arg type_: class; the model that this S is based on
+        :arg mapping_type: class; the mapping type that this S is based on
 
         .. Note::
 
-           The :class: `elasticutils.S` doesn't require the `type_`
-           argument, but the :class:`elasticutils.contrib.django.S`
-           does.
+           The :class: `elasticutils.S` doesn't require the
+           `mapping_type` argument, but the
+           :class:`elasticutils.contrib.django.S` does.
 
         """
-        return super(S, self).__init__(type_)
+        return super(S, self).__init__(mapping_type)
 
     def raw(self):
         hits = super(S, self).raw()
@@ -160,11 +160,11 @@ class S(elasticutils.S):
         return super(S, self).get_es(default_builder=get_es)
 
     def get_indexes(self, default_indexes=None):
-        doctype = self.type._meta.db_table
+        doctype = self.type.get_mapping_type_name()
         indexes = (settings.ES_INDEXES.get(doctype) or
                    settings.ES_INDEXES['default'])
         return super(S, self).get_indexes(default_indexes=indexes)
 
     def get_doctypes(self, default_doctypes=None):
-        doctype = self.type._meta.db_table
+        doctype = self.type.get_mapping_type_name()
         return super(S, self).get_doctypes(default_doctypes=doctype)

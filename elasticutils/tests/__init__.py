@@ -3,32 +3,7 @@ from unittest import TestCase
 from nose import SkipTest
 import pyes
 
-from elasticutils import get_es
-
-
-model_cache = []
-
-def reset_model_cache():
-    del model_cache[0:]
-
-class Meta(object):
-    def __init__(self, db_table):
-        self.db_table = db_table
-
-
-class Manager(object):
-    def filter(self, id__in=None):
-        return [m for m in model_cache if m.id in id__in]
-
-
-class FakeModel(object):
-    _meta = Meta('fake')
-    objects = Manager()
-
-    def __init__(self, **kw):
-        for key in kw:
-            setattr(self, key, kw[key])
-        model_cache.append(self)
+from elasticutils import get_es, S
 
 
 class ElasticTestCase(TestCase):
@@ -43,6 +18,8 @@ class ElasticTestCase(TestCase):
 
     """
     index_name = 'elasticutilstest'
+    mapping_type_name = 'elasticutilsmappingtype'
+
     skip_tests = False
 
     @classmethod
@@ -61,7 +38,10 @@ class ElasticTestCase(TestCase):
     @classmethod
     def teardown_class(cls):
         """Class tear down for tests."""
-        reset_model_cache()
+        if cls.skip_tests:
+            return
+
+        cls.cleanup_index()
 
     def setUp(self):
         """Set up a single test.
@@ -78,7 +58,43 @@ class ElasticTestCase(TestCase):
     def get_es(cls):
         return get_es(default_indexes=[cls.index_name])
 
-    def refresh(self, timesleep=0):
+    @classmethod
+    def get_s(cls, mapping_type=None):
+        if mapping_type is not None:
+            s = S(mapping_type)
+        else:
+            s = S()
+        return s.indexes(cls.index_name).doctypes(cls.mapping_type_name)
+
+    @classmethod
+    def create_index(cls):
+        es = cls.get_es()
+        es.delete_index_if_exists(cls.index_name)
+        es.create_index(cls.index_name)
+
+    @classmethod
+    def index_data(cls, data, index=None, doctype=None, create_index=False):
+        index = index or cls.index_name
+        doctype = doctype or cls.mapping_type_name
+
+        es = cls.get_es()
+
+        if create_index:
+            cls.create_index()
+
+        for item in data:
+            es.index(item, index, doctype, bulk=True, id=item['id'])
+
+        es.flush_bulk(forced=True)
+        cls.refresh()
+
+    @classmethod
+    def cleanup_index(cls):
+        es = cls.get_es()
+        es.delete_index_if_exists(cls.index_name)
+
+    @classmethod
+    def refresh(cls, timesleep=0):
         """Refresh index after indexing.
 
         This refreshes the index specified by `self.index_name`.
@@ -87,7 +103,7 @@ class ElasticTestCase(TestCase):
             ES to refresh
 
         """
-        get_es().refresh(self.index_name, timesleep=timesleep)
+        cls.get_es().refresh(cls.index_name, timesleep=timesleep)
 
 
 def facet_counts_dict(qs, field):

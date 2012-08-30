@@ -1,48 +1,28 @@
 from nose.tools import eq_
 
-from elasticutils import MLT, S
-from elasticutils.tests import FakeModel, ElasticTestCase, facet_counts_dict
+from elasticutils import MLT
+from elasticutils.tests import ElasticTestCase
 
 
-class HasDataTestCase(ElasticTestCase):
+class MoreLikeThisTest(ElasticTestCase):
     @classmethod
     def setup_class(cls):
-        super(HasDataTestCase, cls).setup_class()
+        super(MoreLikeThisTest, cls).setup_class()
         if cls.skip_tests:
             return
 
-        es = cls.get_es()
-        es.delete_index_if_exists(cls.index_name)
+        cls.create_index()
+        cls.index_data([
+                {'id': 1, 'foo': 'bar', 'tag': 'awesome'},
+                {'id': 2, 'foo': 'bar', 'tag': 'boring'},
+                {'id': 3, 'foo': 'bar', 'tag': 'awesome'},
+                {'id': 4, 'foo': 'bar', 'tag': 'boring'},
+                {'id': 5, 'foo': 'bar', 'tag': 'elite'},
+                {'id': 6, 'foo': 'notbar', 'tag': 'gross'},
+                {'id': 7, 'foo': 'notbar', 'tag': 'awesome'},
+            ])
+        cls.refresh()
 
-        data = []
-        data.append(FakeModel(id=1, foo='bar', tag='awesome'))
-        data.append(FakeModel(id=2, foo='bar', tag='boring'))
-        data.append(FakeModel(id=3, foo='bar', tag='awesome'))
-        data.append(FakeModel(id=4, foo='bar', tag='boring'))
-        data.append(FakeModel(id=5, foo='bar', tag='elite'))
-        data.append(FakeModel(id=6, foo='notbar', tag='gross'))
-        data.append(FakeModel(id=7, foo='notbar', tag='awesome'))
-
-        for datum in data:
-            es.index(datum.__dict__, cls.index_name, FakeModel._meta.db_table,
-                    bulk=True, id=datum.id)
-        es.refresh()
-
-    @classmethod
-    def teardown_class(cls):
-        super(HasDataTestCase, cls).teardown_class()
-        if cls.skip_tests:
-            return
-
-        es = cls.get_es()
-        es.delete_index(cls.index_name)
-
-    def get_s(self):
-        return S().indexes(
-            self.index_name).doctypes(FakeModel._meta.db_table).values_dict()
-
-
-class MoreLikeThisTest(HasDataTestCase):
     def test_bad_mlt(self):
         """Tests S or index and doc_type is specified."""
         self.assertRaises(ValueError, lambda: MLT(1))

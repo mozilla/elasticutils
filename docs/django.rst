@@ -98,60 +98,71 @@ Using with Django ORM models
 
 :Requirements: Django
 
-The `elasticutils.contrib.django.S` class takes a model in the
-constructor. That model is a Django ORM model class. For example::
+The `elasticutils.contrib.django.S` class takes a `MappingType` in the
+constructor. That allows you to tie Django ORM models to ElasticSearch
+index search results.
 
-    from elasticutils.contrib.django import S
-    from myapp.models import MyModel
+In ``elasticutils.contrib.django.models`` is `DjangoMappingType` which
+has some additional Django ORM-specific code in it to make it easier.
 
-    searcher = S(MyModel)
+Define a `DjangoMappingType` subclass for your model. The minimal you
+need to define is `get_model`.
 
-Further, you can have your model extend
-:class:`elasticutils.contrib.django.models.SearchMixin` and get a
-bunch of functionality that makes indexing data easier.
+Further, you can use the `Indexable` mixin to get a bunch of helpful
+indexing-related code.
 
-Two things to know:
+For example, here's a minimal `DjangoMappingType` subclass::
 
-1. The doctype for the model is ``cls._meta.db_table`` by default.
-
-2. The index that's searched is ``settings.ES_INDEXES[doctype]`` and
-   if that doesn't exist, it defaults to
-   ``settings.ES_INDEXES['default']`` by default.
+    from django.models import Model
+    from elasticutils.contrib.django.models import DjangoMappingType
 
 
-For example, here's a minimal use of the SearchMixin::
-
-    from django.db import models
-
-    from elasticutils.contrib.django import SearchMixin
+    class MyModel(Model):
+        ...
 
 
-    class Contact(models.Model, SearchMixin):
-        name = models.CharField(max_length=50)
-        bio = models.TextField(blank=True)
-        age = models.IntegerField()
-        website = models.URLField(blank=True)
-        last_udpated = models.DateTimeField(default=datetime.now)
+    class MyMappingType(DjangoMappingType):
+        @classmethod
+        def get_model(cls):
+            return MyModel
+
+    searcher = MyMappingType.search()
+
+
+Here's one that uses `Indexable` and handles indexing::
+
+    from django.models import Model
+    from elasticutils.contrib.django.models import DjangoMappingType
+
+
+    class MyModel(Model):
+        ...
+
+
+    class MyMappingType(DjangoMappingType, Indexable):
+        @classmethod
+        def get_model(cls):
+            return MyModel
 
         @classmethod
         def extract_document(cls, obj_id, obj=None):
-            """Takes an object id for this class, returns dict."""
             if obj is None:
-                obj = cls.objects.get(pk=obj_id)
+                obj = cls.get_model().get(pk=obj_id)
 
             return {
                 'id': obj.id,
                 'name': obj.name,
                 'bio': obj.bio,
-                'age': obj.age,
-                'website': obj.website,
-                'last_updated': obj.last_updated
+                'age': obj.age
                 }
 
 
-This example doesn't specify a mapping. That's ok because ElasticSearch
-will infer from the shape of the data how it should analyze and store
-the data.
+    searcher = MyMappingType.search()
+
+
+This example doesn't specify a mapping. That's ok because
+ElasticSearch will infer from the shape of the data how it should
+analyze and store the data.
 
 If you want to specify this explicitly (and I suggest you do for
 anything that involves strings), then you want to additionally
@@ -160,17 +171,18 @@ explicitly specifying `.get_mapping()`.
 
 ::
 
-    from django.db import models
+    from django.models import Model
+    from elasticutils.contrib.django.models import DjangoMappingType
 
-    from elasticutils.contrib.django import SearchMixin
+
+    class MyModel(Model):
+        ...
 
 
-    class Contact(models.Model, SearchMixin):
-        name = models.CharField(max_length=50)
-        bio = models.TextField(blank=True)
-        age = models.IntegerField()
-        website = models.URLField(blank=True)
-        last_udpated = models.DateTimeField(default=datetime.now)
+    class MyMappingType(DjangoMappingType, Indexable):
+        @classmethod
+        def get_model(cls):
+            return MyModel
 
         @classmethod
         def get_mapping(cls):
@@ -188,33 +200,38 @@ explicitly specifying `.get_mapping()`.
                 # snowball.
                 'bio': {'type': 'string', 'analyzer': 'snowball'},
 
-                # The website also shouldn't be analyzed.
-                'website': {'type': 'string', 'index': 'not_analyzed'},
-
-                # The last_updated field is a date.
-                'last_updated': {'type': 'date'}
+                # Age is an integer
+                'age': {'type': 'integer'}
                 }
 
         @classmethod
         def extract_document(cls, obj_id, obj=None):
-            """Takes an object id for this class, returns dict."""
             if obj is None:
-                obj = cls.objects.get(pk=obj_id)
+                obj = cls.get_model().get(pk=obj_id)
 
             return {
                 'id': obj.id,
                 'name': obj.name,
                 'bio': obj.bio,
-                'age': obj.age,
-                'website': obj.website,
-                'last_updated': obj.last_updated
+                'age': obj.age
                 }
 
 
-SearchMixin
------------
+    searcher = MyMappingType.search()
 
-.. autoclass:: elasticutils.contrib.django.models.SearchMixin
+
+
+DjangoMappingType
+-----------------
+
+.. autoclass:: elasticutils.contrib.django.models.DjangoMappingType
+   :members:
+
+
+Indexable
+---------
+
+.. autoclass:: elasticutils.contrib.django.models.Indexable
    :members:
 
 
@@ -225,7 +242,6 @@ SearchMixin
 
    http://www.elasticsearch.org/guide/reference/mapping/core-types.html
      The ElasticSearch guide on mapping type field types.
-
 
 
 Other helpers
