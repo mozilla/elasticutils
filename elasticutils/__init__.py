@@ -582,6 +582,10 @@ class S(object):
                     {'range': {field_name: _boosted_value(
                                 field_name, field_action, key, val, boost)}})
 
+            else:
+                raise InvalidFieldActionError(
+                    '%s is not a valid field action' % field_action)
+
         if or_:
             rv.append({'bool': {'should': self._process_queries(or_.items())}})
         return rv

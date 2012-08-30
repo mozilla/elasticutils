@@ -99,6 +99,10 @@ class QueryTest(HasDataTestCase):
         # You can query against different fields with the query_string.
         eq_(len(self.get_s().query(foo__query_string='tag:boat OR car')), 3)
 
+    def test_q_bad_field_action(self):
+        with self.assertRaises(InvalidFieldActionError):
+            len(self.get_s().query(foo__foo='awesome'))
+
     def test_filter_empty_f(self):
         eq_(len(self.get_s().filter(F() | F(tag='awesome'))), 3)
         eq_(len(self.get_s().filter(F() & F(tag='awesome'))), 3)
