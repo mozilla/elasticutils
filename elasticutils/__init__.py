@@ -13,8 +13,8 @@ log = logging.getLogger('elasticutils')
 
 DEFAULT_HOSTS = ['localhost:9200']
 DEFAULT_TIMEOUT = 5
-DEFAULT_DOCTYPES = None
-DEFAULT_INDEXES = 'default'
+DEFAULT_DOCTYPES = ['document']
+DEFAULT_INDEXES = ['default']
 DEFAULT_DUMP_CURL = None
 
 
@@ -621,7 +621,6 @@ class S(object):
         for action, value in reversed(self.steps):
             if action == 'indexes':
                 return value
-
         return default_indexes
 
     def get_doctypes(self, default_doctypes=DEFAULT_DOCTYPES):

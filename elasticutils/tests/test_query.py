@@ -35,7 +35,7 @@ class HasDataTestCase(ElasticTestCase):
         es.delete_index(cls.index_name)
 
     def get_s(self):
-        return S().indexes(self.index_name)
+        return S().indexes(self.index_name).doctypes(FakeModel._meta.db_table)
 
 
 class QueryTest(HasDataTestCase):
@@ -329,12 +329,16 @@ class QueryTest(HasDataTestCase):
 class ResultsTests(HasDataTestCase):
     def test_default_results_are_dicts(self):
         """With untyped S, return dicts."""
-        searcher = list(S().indexes(self.index_name).query(foo='bar'))
+        searcher = list(S().indexes(self.index_name)
+                           .doctypes(FakeModel._meta.db_table)
+                           .query(foo='bar'))
         assert isinstance(searcher[0], dict)
 
     def test_typed_s_returns_type(self):
         """With typed S, return objects of type."""
-        searcher = list(S(FakeModel).indexes(self.index_name).query(foo='bar'))
+        searcher = list(S(FakeModel).indexes(self.index_name)
+                                    .doctypes(FakeModel._meta.db_table)
+                                    .query(foo='bar'))
         assert isinstance(searcher[0], FakeModel)
 
     def test_values_dict_results(self):

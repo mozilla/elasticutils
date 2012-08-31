@@ -13,7 +13,7 @@ class ESTest(TestCase):
         # dump_curl defaults to False, but if dump_curl is Falsey,
         # then pyes.es.ES sets its dump_curl attribute to None.
         eq_(es.dump_curl, None)
-        eq_(es.default_indexes, [DEFAULT_INDEXES])
+        eq_(es.default_indexes, DEFAULT_INDEXES)
 
     def test_get_es_overriding_defaults(self):
         """Test that overriding defaults works."""
