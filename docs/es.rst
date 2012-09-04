@@ -12,7 +12,7 @@ To access this, you use `get_es()` which builds an `ES`.
 
 .. Warning::
 
-   ElasticUtils works best with ``pyes`` 0.15 and 0.16. The API for
-   later versions has changed too drastically. While we'd welcome
-   compatibility patches, we feel a better approach would be to remove
-   our dependency on ``pyes``.
+   ElasticUtils works with ``pyes`` 0.15 and 0.16. The API for later
+   versions of pyes has changed too much and won't work with
+   ElasticUtils. We're planning to switch to something different in
+   the future.

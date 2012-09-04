@@ -455,6 +455,29 @@ only to that field name and field action. For example::
 will only apply the 4.0 boost to ``title__prefix``.
 
 
+Ordering
+========
+
+You can order search results by specified fields::
+
+    q = (S().query(title='trucks')
+            .order_by('title')
+
+This orders search results by the `title` field in ascending order.
+
+If you want to sort by descending order, prepend a ``-``::
+
+    q = (S().query(title='trucks')
+            .order_by('-title')
+
+You can also sort by the computed field ``_score``.
+
+.. seealso::
+
+   http://www.elasticsearch.org/guide/reference/api/search/sort.html
+     ElasticSearch docs on sort parameter in the Search API
+
+
 Demoting
 ========
 
@@ -909,3 +932,62 @@ This works regardless of what form the search results are in.
    http://www.elasticsearch.org/guide/reference/api/search/explain.html
      ElasticSearch docs on explain (which are pretty bereft of
      details).
+
+
+API
+===
+
+The S class
+-----------
+
+.. autoclass:: elasticutils.S
+
+   .. automethod:: elasticutils.S.__init__
+
+   **Chaining transforms**
+
+       .. automethod:: elasticutils.S.query
+
+       .. automethod:: elasticutils.S.filter
+
+       .. automethod:: elasticutils.S.order_by
+
+       .. automethod:: elasticutils.S.boost
+
+       .. automethod:: elasticutils.S.demote
+
+       .. automethod:: elasticutils.S.facet
+
+       .. automethod:: elasticutils.S.facet_raw
+
+       .. automethod:: elasticutils.S.highlight
+
+       .. automethod:: elasticutils.S.values_list
+
+       .. automethod:: elasticutils.S.values_dict
+
+       .. automethod:: elasticutils.S.es
+
+       .. automethod:: elasticutils.S.es_builder
+
+       .. automethod:: elasticutils.S.indexes
+
+       .. automethod:: elasticutils.S.doctypes
+
+       .. automethod:: elasticutils.S.explain
+
+   **Methods to override if you need different behavior**
+
+       .. automethod:: elasticutils.S.get_es
+
+       .. automethod:: elasticutils.S.get_indexes
+
+       .. automethod:: elasticutils.S.get_doctypes
+
+   **Methods that force evaluation**
+
+       .. automethod:: elasticutils.S.count
+
+       .. automethod:: elasticutils.S.facet_counts
+
+

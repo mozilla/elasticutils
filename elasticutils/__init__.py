@@ -39,15 +39,23 @@ def get_es(hosts=None, default_indexes=None, timeout=None, dump_curl=None,
 
     Examples:
 
-    >>> get_es()
-    >>> get_es(hosts=['localhost:9200'])
-    >>> get_es(timeout=30)  # good for indexing
-    >>> get_es(default_indexes=['sumo_prod_20120627']
+    >>> es = get_es()
+
+
+    >>> es = get_es(hosts=['localhost:9200'])
+
+
+    >>> es = get_es(timeout=30)  # good for indexing
+
+
+    >>> es = get_es(default_indexes=['sumo_prod_20120627']
+
+
     >>> class CurlDumper(object):
     ...     def write(self, text):
     ...         print text
     ...
-    >>> get_es(dump_curl=CurlDumper())
+    >>> es = get_es(dump_curl=CurlDumper())
 
     """
     # Cheap way of de-None-ifying things
@@ -205,9 +213,18 @@ ACTION_MAP = {
 
 
 class S(object):
-    """
-    Represents a lazy ElasticSearch lookup, with a similar api to
-    Django's QuerySet.
+    """Represents a lazy ElasticSearch Search API request.
+
+    The API for `S` takes inspiration from Django's QuerySet.
+
+    `S` can be either typed or untyped. An untyped `S` returns dict
+    results by default.
+
+    An `S` is lazy in the sense that it doesn't do an ElasticSearch
+    search request until it's forced to evaluate by either iterating
+    over it, calling ``.count``, doing ``len(s)``, or calling
+    ``.facet_count``.
+
     """
     def __init__(self, type_=None):
         """Create and return an S.
@@ -246,7 +263,7 @@ class S(object):
         the search.
 
         :arg settings: the settings you'd use to build the ES---same
-            as what you'd pass to :fun:`get_es`.
+            as what you'd pass to :py:func:`get_es`.
 
         """
         return self._clone(next_step=('es', settings))
