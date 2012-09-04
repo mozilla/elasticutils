@@ -16,7 +16,8 @@ None.
   you to do a negative query which reduces scores for documents that
   match.
 
-* The elasticutils version is in ``elasticutils.__version__`` now.
+* The elasticutils version is now available in ``elasticutils.__version__``
+  as well as ``elasticutils._version.__version__``.
 
 * Added ``__in`` support for queries. Doing::
 
@@ -24,7 +25,10 @@ None.
 
   does a terms query now.
 
-* Added ``MLT`` class which does morelikethis.
+* Added `MLT` class which does morelikethis.
+
+* Added API documentation for S, an index, ``order_by`` docs, fixed some
+  icky bugs, and generally improved everything at least a little bit.
 
 
 Version 0.4: Released July 31st, 2012
