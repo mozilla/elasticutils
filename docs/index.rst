@@ -47,6 +47,7 @@ Contributor's Guide
    dev_testing
    dev_releaseprocess
 
+
 Sample programs
 ===============
 
@@ -54,3 +55,9 @@ Sample programs
    :maxdepth: 1
 
    sampleprogram1
+
+
+Indices and tables
+==================
+
+* :ref:`genindex`
