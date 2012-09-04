@@ -1,6 +1,6 @@
-==========================
-Querying with ElasticUtils
-==========================
+===============
+Querying with S
+===============
 
 .. contents::
    :local:
@@ -12,9 +12,7 @@ Overview
 ElasticUtils makes querying and filtering and collecting facets from
 ElasticSearch simple.
 
-For example:
-
-.. code-block:: python
+For example::
 
    q = (S().filter(product='firefox')
            .filter(version='4.0', platform='all')

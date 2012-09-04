@@ -24,6 +24,8 @@ None.
 
   does a terms query now.
 
+* Added ``MLT`` class which does morelikethis.
+
 
 Version 0.4: Released July 31st, 2012
 =====================================

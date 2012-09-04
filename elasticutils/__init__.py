@@ -661,35 +661,65 @@ class S(object):
 
 
 class MLT(object):
+    """Represents a lazy ElasticSearch More Like This API request.
+
+    This is lazy in the sense that it doesn't evaluate and execute the
+    ElasticSearch request unless you force it to by iterating over it
+    or getting the length of the search results.
+
+    For example::
+
+    >>> mlt = MLT(2034, index='addons_index', doctype='addon')
+    >>> num_related_documents = len(mlt)
+    >>> num_related_documents = list(mlt)
+
     """
-    Represents a lazy ElasticSearch more like this API call.
-    """
-    def __init__(self, s, id, fields=None, index=None, doc_type=None,
-                 **query_params):
+    def __init__(self, id_, s=None, fields=None, index=None, doctype=None,
+                 es=None, **query_params):
         """
         When the MLT is evaluated, it generates a list of dict results.
 
+        :arg id_: The id of the document we want to find more like.
         :arg s: An instance of an S. The query is passed in the body of
-                the more like this request.
-        :arg id: The id of the document we want to find more like.
+            the more like this request.
         :arg fields: A list of fields to use for more like this.
         :arg index: The index to use. Falls back to the first index
-                    listed in s.
-        :arg doc_type: The doctype to use. Falls back to the first
-                       doctype listed in s.
+            listed in s.
+        :arg doctype: The doctype to use. Falls back to the first
+            doctype listed in s.
+        :arg es: The ES object to use. If you don't provide one, then it
+            will create one for you.
         :arg query_params: Any additional query parameters for the
-                           more like this call.
+            more like this call.
+
+        .. Note::
+
+           You must specify either an `s` or the `index` and `doctype`
+           arguments. Omitting them will result in a `ValueError`.
+
         """
+        # You have to provide either an s OR an index and a doc_type.
+        if s is None and (index is None or doctype is None):
+            raise ValueError(
+                'Either you must provide a valid s or index and doc_type')
+
         self.s = s
-        # If an index or doctype isn't given, we use the first one
-        # in the S.
-        self.index = index or s.get_indexes()[0]
-        self.doc_type = doc_type or s.get_doctypes()[0]
-        self.id = id
+        if s is not None:
+            # If an index or doctype isn't given, we use the first one
+            # in the S.
+            self.index = index or s.get_indexes()[0]
+            self.doctype = doctype or s.get_doctypes()[0]
+            self.type = s.type
+        else:
+            self.index = index
+            self.doctype = doctype
+            self.type = None
+
+        self.id = id_
         self.fields = fields
+        self.es = es
         self.query_params = query_params
         self._results_cache = None
-        self.type = s.type
 
     def __iter__(self):
         return iter(self._do_search())
@@ -697,24 +727,47 @@ class MLT(object):
     def __len__(self):
         return len(self._do_search())
 
+    def get_es(self):
+        """Returns an ES
+
+        * If there's an s, then it returns that ES.
+        * If the es was provided in the constructor, then it returns that ES.
+        * Otherwise, it creates a new ES and returns that.
+
+        Override this if that behavior isn't correct for you.
+
+        """
+        if self.s:
+            return self.s.get_es()
+
+        return self.es or get_es()
+
     def raw(self):
         """
         Build query and passes to ElasticSearch, then returns the raw
         format returned.
         """
-        qs = self.s._build_query()
-        es = self.s.get_es()
+        es = self.get_es()
+
+        kwargs = {}
+        path = es._make_path([self.index, self.doctype, self.id, '_mlt'])
+
+        params = dict(self.query_params)
+
+        if self.fields and 'mlt_fields' not in params:
+            params['mlt_fields'] = ','.join(self.fields)
+        kwargs['params'] = params
+
+        if self.s:
+            kwargs['body'] = self.s._build_query()
+
         try:
-            path = es._make_path([self.index, self.doc_type, self.id, '_mlt'])
-            if self.fields:
-                self.query_params['mlt_fields'] = ','.join(self.fields)
-            hits = es._send_request(
-                'GET', path, body=qs, params=self.query_params)
+            hits = es._send_request('GET', path, **kwargs)
             log.debug(hits)
         except Exception:
-            log.error(qs)
+            log.error(kwargs)
             raise
-        log.debug('[%s] %s' % (hits['took'], qs))
+        log.debug('[%s] %s' % (hits['took'], kwargs))
         return hits
 
     def _do_search(self):

@@ -28,6 +28,7 @@ User's Guide
    changelog
    installation
    queries
+   mlt
    es
    debugging
    django
