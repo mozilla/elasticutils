@@ -1,6 +1,6 @@
-===============
-Querying with S
-===============
+================
+Searching with S
+================
 
 .. contents::
    :local:
