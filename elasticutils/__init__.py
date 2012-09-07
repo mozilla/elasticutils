@@ -18,6 +18,16 @@ DEFAULT_INDEXES = ['default']
 DEFAULT_DUMP_CURL = None
 
 
+class InvalidFieldActionError(Exception):
+    """Raise this when the field action doesn't exist"""
+    pass
+
+
+class InvalidFacetType(Exception):
+    """Raise when _type is unrecognized."""
+    pass
+
+
 def _split(s):
     if '__' in s:
         return s.rsplit('__', 1)
@@ -82,11 +92,6 @@ def get_es(hosts=None, default_indexes=None, timeout=None, dump_curl=None,
         es.dump_curl = dump_curl
 
     return es
-
-
-class InvalidFieldActionError(Exception):
-    """Raise this when the field action doesn't exist"""
-    pass
 
 
 def _process_filters(filters):
@@ -699,6 +704,12 @@ class S(object):
                 facets[key] = [v for v in val['terms']]
             elif val['_type'] == 'range':
                 facets[key] = [v for v in val['ranges']]
+            elif val['_type'] == 'date_histogram':
+                facets[key] = [v for v in val['entries']]
+            else:
+                raise InvalidFacetType(
+                    'Facet _type "%s". key "%s" val "%r"' %
+                    (val['_type'], key, val))
         return facets
 
 

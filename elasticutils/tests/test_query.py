@@ -1,6 +1,8 @@
+from datetime import datetime, timedelta
+
 from nose.tools import eq_
 
-from elasticutils import F, InvalidFieldActionError
+from elasticutils import F, InvalidFieldActionError, InvalidFacetType
 from elasticutils.tests import ElasticTestCase, facet_counts_dict
 
 
@@ -306,3 +308,52 @@ class QueryTest(ElasticTestCase):
         # Set it back to no fields and no highlight.
         s = s.highlight(None)
         eq_(list(s)[0]._highlight, {})
+
+
+class FacetTest(ElasticTestCase):
+    def test_facet_date_histogram(self):
+        """facet_raw with date_histogram works."""
+        today = datetime.now()
+        tomorrow = today + timedelta(days=1)
+
+        FacetTest.create_index()
+        FacetTest.index_data([
+                {'id': 1, 'created': today},
+                {'id': 2, 'created': today},
+                {'id': 3, 'created': tomorrow},
+                {'id': 4, 'created': tomorrow},
+                {'id': 5, 'created': tomorrow},
+            ])
+        FacetTest.refresh()
+
+        qs = (self.get_s()
+              .facet_raw(created1={
+                    'date_histogram': {
+                        'interval': 'day', 'field': 'created'
+                        }
+                    }))
+
+        # TODO: This is a mediocre test because it doesn't test the
+        # dates and it probably should.
+        facet_counts = [item['count']
+                        for item in qs.facet_counts()['created1']]
+        eq_(sorted(facet_counts), [2, 3])
+
+    def test_invalid_field_type(self):
+        """Invalid _type should raise InvalidFacetType."""
+        FacetTest.create_index()
+        FacetTest.index_data([
+                {'id': 1, 'age': 30},
+                {'id': 2, 'age': 40}
+            ])
+        FacetTest.refresh()
+
+        # Note: This uses histogram. If we implement handling for
+        # that, then we need to pick another facet type to fail on or
+        # do the right thing and mock the test.
+        self.assertRaises(
+            InvalidFacetType,
+            lambda: (self.get_s()
+                     .facet_raw(created1={
+                        'histogram': {'field': 'age', 'interval': 10}})
+                     .facet_counts()))
