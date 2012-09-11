@@ -170,7 +170,8 @@ things are very different.
 A filter determines whether a document is in the results set or
 not. If you do a term filter on whether field `foo` has value `bar`,
 then the result set ONLY has documents where `foo` has value `bar`.
-Filters are fast and filter results are cached in ElasticSearch.
+Filters are fast and filter results are cached in ElasticSearch when
+appropriate.
 
 A query affects the score for a document. If you do a term query on
 whether field `foo` has value `bar`, then the result set will score
@@ -180,6 +181,12 @@ query results are not cached in ElasticSearch.
 
 The other place where this affects things is when you specify
 facets. See :ref:`queries-chapter-facets-section` for details.
+
+
+.. seealso::
+
+   http://www.elasticsearch.org/guide/reference/query-dsl/
+     ElasticSearch Filters and Caching notes
 
 
 Queries
