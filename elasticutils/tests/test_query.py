@@ -131,6 +131,48 @@ class QueryTest(ElasticTestCase):
         with self.assertRaises(InvalidFieldActionError):
             len(self.get_s().filter(F(tag__faux='awesome')))
 
+    def test_f_mutation_with_and(self):
+        """Make sure AND doesn't mutate operands."""
+        f1 = F(fielda='tag', fieldb='boat')
+        f2 = F(fieldc='car')
+
+        f1 & f2
+        # Should only contain f1 filters.
+        eq_(sorted(f1.filters['and']),
+            sorted([{'term': {'fielda': 'tag'}},
+                    {'term': {'fieldb': 'boat'}}]))
+
+        # Should only contain f2 filters.
+        eq_(f2.filters, {'term': {'fieldc': 'car'}})
+
+    def test_f_mutation_with_or(self):
+        """Make sure OR doesn't mutate operands."""
+        f1 = F(fielda='tag', fieldb='boat')
+        f2 = F(fieldc='car')
+
+        f1 | f2
+        # Should only contain f1 filters.
+        eq_(sorted(f1.filters['and']),
+            sorted([{'term': {'fielda': 'tag'}},
+                    {'term': {'fieldb': 'boat'}}]))
+
+        # Should only contain f2 filters.
+        eq_(f2.filters, {'term': {'fieldc': 'car'}})
+
+    def test_f_mutation_with_not(self):
+        """Make sure NOT doesn't mutate operands."""
+        f1 = F(fielda='tag')
+        f2 = ~f1
+
+        # Change f2 to see if it changes f1.
+        f2.filters['not']['filter']['term']['fielda'] = 'boat'
+
+        # Should only contain f1 filters.
+        eq_(f1.filters, {'term': {'fielda': 'tag'}})
+
+        # Should only contain f2 tweaked filter.
+        eq_(f2.filters, {'not': {'filter': {'term': {'fielda': 'boat'}}}})
+
     def test_boost(self):
         def _get_queries(search):
             # The stuff we want is buried in the search and it's in

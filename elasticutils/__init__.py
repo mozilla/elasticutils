@@ -1,5 +1,5 @@
+import copy
 import logging
-from itertools import izip
 from operator import itemgetter
 
 from pyes import ES
@@ -158,18 +158,23 @@ class F(object):
         objects combined with the connector `conn`.
         """
         f = F()
+
+        self_filters = copy.deepcopy(self.filters)
+        other_filters = copy.deepcopy(other.filters)
+
         if not self.filters:
-            f.filters = other.filters
+            f.filters = other_filters
         elif not other.filters:
-            f.filters = self.filters
+            f.filters = self_filters
         elif conn in self.filters:
-            f.filters = self.filters
-            f.filters[conn].append(other.filters)
+            f.filters = self_filters
+            f.filters[conn].append(other_filters)
         elif conn in other.filters:
-            f.filters = other.filters
-            f.filters[conn].append(self.filters)
+            f.filters = other_filters
+            f.filters[conn].append(self_filters)
         else:
-            f.filters = {conn: [self.filters, other.filters]}
+            f.filters = {conn: [self_filters, other_filters]}
+
         return f
 
     def __or__(self, other):
@@ -180,11 +185,13 @@ class F(object):
 
     def __invert__(self):
         f = F()
-        if (len(self.filters) < 2 and
-           'not' in self.filters and 'filter' in self.filters['not']):
-            f.filters = self.filters['not']['filter']
+        self_filters = copy.deepcopy(self.filters)
+        if (len(self_filters) < 2
+            and 'not' in self_filters
+            and 'filter' in self_filters['not']):
+            f.filters = self_filters['not']['filter']
         else:
-            f.filters = {'not': {'filter': self.filters}}
+            f.filters = {'not': {'filter': self_filters}}
         return f
 
 
