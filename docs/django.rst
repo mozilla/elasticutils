@@ -254,6 +254,14 @@ You can then utilize things such as
 automatically index all new items.
 
 
+View decorators
+---------------
+
+.. autofunction:: elasticutils.contrib.django.es_required
+
+.. autofunction:: elasticutils.contrib.django.es_required_or_50x
+
+
 Tasks
 -----
 

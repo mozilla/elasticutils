@@ -2,7 +2,7 @@ import logging
 from functools import wraps
 from threading import local
 
-from pyes import exceptions
+import pyes
 from pyes.es import thrift_enable
 
 import elasticutils
@@ -10,6 +10,7 @@ from elasticutils import F, InvalidFieldActionError
 
 try:
     from django.conf import settings
+    from django.shortcuts import render
 except ImportError:
     pass
 
@@ -79,48 +80,95 @@ def get_es(**overrides):
     return es
 
 
-def es_required(f):
-    @wraps(f)
+def es_required(fun):
+    """Wrap a callable and return None if ES_DISABLED is False.
+
+    This also adds an additional `es` argument to the callable
+    giving you an ES to use.
+
+    """
+    @wraps(fun)
     def wrapper(*args, **kw):
-        if settings.ES_DISABLED:
+        if getattr(settings, 'ES_DISABLED', False):
             # Log once.
-            if f.__name__ not in _local.disabled:
-                log.debug('Search disabled for %s.' % f)
-                _local.disabled[f.__name__] = 1
+            if fun.__name__ not in _local.disabled:
+                log.debug('Search disabled for %s.' % fun)
+                _local.disabled[fun.__name__] = 1
             return
 
-        return f(*args, es=get_es(), **kw)
+        return fun(*args, es=get_es(), **kw)
     return wrapper
 
 
-def es_required_or_50x(disabled_msg, error_msg):
-    """
-    This takes a Django view that requires ElasticSearch.
+def es_required_or_50x(disabled_template='elasticutils/501.html',
+                       error_template='elasticutils/503.html'):
+    """Wrap a Django view and handle ElasticSearch errors.
 
-    If `ES_DISABLED` is `True` then we raise a 501 Not Implemented and display
-    the disabled_msg.  If we try the view and an ElasticSearch exception is
-    raised we raise a 503 error with the error_msg.
+    This wraps a Django view and returns 501 or 503 status codes and
+    pages if things go awry.
 
-    We use user-supplied templates in elasticutils/501.html and
-    elasticutils/503.html.
+    HTTP 501
+      Returned when ``ES_DISABLED`` is True.
+
+    HTTP 503
+      Returned when any of the following exceptions are thrown:
+
+      * pyes.urllib3.MaxRetryException: Connection problems with ES.
+      * pyes.exceptions.IndexMissingException: When the index is
+        missing.
+      * pyes.exceptions.ElasticSearchException: Various other
+        ElasticSearch related errors.
+
+      Template variables:
+
+      * error: A string version of the exception thrown.
+
+    :arg disabled_template: The template to use when ES_DISABLED is
+        True.
+
+        Defaults to ``elasticutils/501.html``.
+    :arg error_template: The template to use when ElasticSearch isn't
+        working properly, is missing an index, or something along
+        those lines.
+
+        Defaults to ``elasticutils/503.html``.
+
+
+    Examples::
+
+        # This creates a home_view and decorates it to use the
+        # default templates.
+
+        @es_required_or_50x()
+        def home_view(request):
+            ...
+
+
+        # This creates a search_view and overrides the templates
+
+        @es_required_or_50x(disabled_template='search/es_disabled.html',
+                            error_template('search/es_down.html')
+        def search_view(request):
+            ...
+
     """
-    def wrap(f):
-        @wraps(f)
+    def wrap(fun):
+        @wraps(fun)
         def wrapper(request, *args, **kw):
-            from django.shortcuts import render
-            if settings.ES_DISABLED:
-                response = render(request, 'elasticutils/501.html',
-                                  {'msg': disabled_msg})
+            if getattr(settings, 'ES_DISABLED', False):
+                response = render(request, disabled_template)
                 response.status_code = 501
                 return response
-            else:
-                try:
-                    return f(request, *args, **kw)
-                except exceptions.ElasticSearchException as error:
-                    response = render(request, 'elasticutils/503.html',
-                            {'msg': error_msg, 'error': error})
-                    response.status_code = 503
-                    return response
+
+            try:
+                return fun(request, *args, **kw)
+
+            except (pyes.urllib3.MaxRetryException,
+                    pyes.exceptions.IndexMissingException,
+                    pyes.exceptions.ElasticSearchException) as exc:
+                response = render(request, error_template, {'error': exc})
+                response.status_code = 503
+                return response
 
         return wrapper
 
