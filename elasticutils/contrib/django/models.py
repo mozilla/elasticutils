@@ -141,6 +141,13 @@ class Indexable(object):
         :arg id_: the Django ORM model instance id---this is used to
             convert an ES search result back to the Django ORM model
             instance from the db. It should be an integer.
+
+            .. Note::
+
+               If you don't provide an ``id_``, then ElasticSearch
+               will make up an id for your document and it'll look like
+               a character name from a Lovecraft novel.
+
         :arg bulk: Whether or not this is part of a bulk indexing.  If
             this is, you must provide an ES with the `es` argument,
             too.
