@@ -157,6 +157,13 @@ class Indexable(object):
 
         :raises ValueError: if `bulk` is True, but `es` is None.
 
+        .. Note::
+
+           After you add things to the index, make sure to refresh the
+           index by calling ``refresh_index()``---it doesn't happen
+           automatically.
+
+
         TODO: add example.
 
         """
