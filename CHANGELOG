@@ -79,6 +79,10 @@ Version 0.6: in development
 
   See documentation for more details.
 
+* Fixed ``elasticutils.contrib.django.es_required_or_50x``.
+
+  It works better now.
+
 
 Version 0.5: in development
 ===========================
