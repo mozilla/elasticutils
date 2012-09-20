@@ -21,20 +21,25 @@ def index_objects(model, ids, **kw):
             tasks.index_objects.delay(sender, [instance.id])
 
     """
-    if settings.ES_DISABLED:
+    if getattr(settings, 'ES_DISABLED', False):
         return
+
     es = get_es()
-    log.info('Indexing objects %s-%s. [%s]' % (ids[0], ids[-1], len(ids)))
+    log.debug('Indexing objects %s-%s. [%s]' % (ids[0], ids[-1], len(ids)))
     qs = model.objects.filter(id__in=ids)
     for item in qs:
-        model.index(item.fields(), bulk=True, id=item.id)
+        model.index(item.fields(), bulk=True, id_=item.id)
+
     es.flush_bulk(forced=True)
+    model.refresh_index(es=es)
 
 
 @task
 def unindex_objects(model, ids, **kw):
-    if settings.ES_DISABLED:
+    if getattr(settings, 'ES_DISABLED', False):
         return
-    for id in ids:
-        log.info('Removing object [%s.%d] from search index.' % (model, id))
-        elasticutils.get_es().delete(model._get_index(), model._meta.db_table, id)
+
+    es = get_es()
+    for id_ in ids:
+        log.debug('Removing object [%s.%d] from search index.' % (model, id_))
+        model.unindex(id=id_, es=es)
