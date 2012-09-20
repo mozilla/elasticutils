@@ -113,7 +113,7 @@ def es_required_or_50x(disabled_template='elasticutils/501.html',
     HTTP 503
       Returned when any of the following exceptions are thrown:
 
-      * pyes.urllib3.MaxRetryException: Connection problems with ES.
+      * pyes.urllib3.MaxRetryError: Connection problems with ES.
       * pyes.exceptions.IndexMissingException: When the index is
         missing.
       * pyes.exceptions.ElasticSearchException: Various other
@@ -163,7 +163,7 @@ def es_required_or_50x(disabled_template='elasticutils/501.html',
             try:
                 return fun(request, *args, **kw)
 
-            except (pyes.urllib3.MaxRetryException,
+            except (pyes.urllib3.MaxRetryError,
                     pyes.exceptions.IndexMissingException,
                     pyes.exceptions.ElasticSearchException) as exc:
                 response = render(request, error_template, {'error': exc})
