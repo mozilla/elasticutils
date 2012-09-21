@@ -2,6 +2,10 @@
 What's new in ElasticUtils
 ==========================
 
+.. contents::
+   :local:
+
+
 Version 0.6: in development
 ===========================
 
@@ -84,8 +88,8 @@ Version 0.6: in development
   It works better now.
 
 
-Version 0.5: in development
-===========================
+Version 0.5: Released September 4th, 2012
+=========================================
 
 **API-breaking changes:**
 
