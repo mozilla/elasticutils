@@ -193,10 +193,8 @@ def _boosted_value(name, action, key, value, boost):
         # Note: Most queries use 'value' for the key name except Text
         # queries which use 'query'. So we have to do some switcheroo
         # for that.
-        return {
-            name: {
-                'boost': boost,
-                'query' if action == 'text' else 'value': value}}
+        value_key = 'query' if action in ['text', 'text_phrase'] else 'value'
+        return {name: {'boost': boost, value_key: value}}
     return {name: value}
 
 
