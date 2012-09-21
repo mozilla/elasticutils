@@ -174,6 +174,15 @@ class QueryTest(ElasticTestCase):
         eq_(f2.filters, {'not': {'filter': {'term': {'fielda': 'boat'}}}})
 
     def test_boost(self):
+        """Boosted queries shouldn't raise a SearchPhaseExecutionException."""
+        # Note: There isn't an assertion here--we just want to make
+        # sure that it runs without throwing an exception.
+        q1 = (self.get_s()
+                  .boost(foo=4.0)
+                  .query(foo='car', foo__text='car', foo__text_phrase='car'))
+        list(q1)
+
+    def test_boost_overrides(self):
         def _get_queries(search):
             # The stuff we want is buried in the search and it's in
             # the 'must' list where each item in the list is a dict
