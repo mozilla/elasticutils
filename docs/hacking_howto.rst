@@ -25,9 +25,11 @@ Run::
     $ . ./venv/bin/activate
     $ pip install -r requirements-dev.txt
 
+If you want to work on the contrib.django bits, you also need to do::
 
-This sets up all the required dependencies for development of
-ElasticUtils.
+    $ pip install -r requirements-django.txt
+
+This sets up all the required dependencies for development of ElasticUtils.
 
 .. Note::
 
