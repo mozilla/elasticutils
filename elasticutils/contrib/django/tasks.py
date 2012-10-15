@@ -28,7 +28,8 @@ def index_objects(model, ids, **kw):
     log.debug('Indexing objects %s-%s. [%s]' % (ids[0], ids[-1], len(ids)))
     qs = model.objects.filter(id__in=ids)
     for item in qs:
-        model.index(item.fields(), bulk=True, id_=item.id, es=es)
+        model.index(model.extract_document(item.id, item),
+                    bulk=True, id_=item.id, es=es)
 
     es.flush_bulk(forced=True)
     model.refresh_index(es=es)
