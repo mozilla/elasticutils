@@ -42,10 +42,10 @@ Version 0.6: in development
 
   This is a big change.
 
-  In ElasticUtils v0.4, `S` could take a type and that type was a
-  model. This is now completely different.
+  Up through ElasticUtils v0.5, `S` could take a type and that type was
+  a model. This is now completely different.
 
-  In ElasticUtils v0.5 and later, `S` takes a `MappingType`. A
+  In ElasticUtils v0.6 and later, `S` takes a `MappingType`. A
   `MappingType` can be related to a model, but it itself should not be
   a model. This allows us to return search results as a list of
   `MappingType` instances which can do things rather than forcing you
@@ -59,9 +59,9 @@ Version 0.6: in development
 
 * **By default, results are now DefaultMappingType.**
 
-  In ElasticUtils v0.4, if the `S` was untyped and you didn't specify
-  either ``values_dict`` or ``values_list``, then the results would
-  come back as a list of dicts.
+  In ElasticUtils v0.4 and v0.5, if the `S` was untyped and you didn't
+  specify either ``values_dict`` or ``values_list``, then the results
+  would come back as a list of dicts.
 
   In ElasticUtils v0.5, if the `S` is untyped and you didn't specify
   either ``values_dict`` or ``values_list``, then the results would
