@@ -72,6 +72,16 @@ file:
    run queries for other models in `main_index` because that's the
    default.
 
+   Example 3::
+
+       ES_INDEXES = {'default': ['main_index'],
+                     'splugs': ['splugs_index']}
+
+   FIXME: The API allows for this. Pretty sure it should query
+   multiple indexes, but we have no tests for that and I haven't
+   tested it, either.
+
+
 .. data:: ES_TIMEOUT
 
    Defines the timeout for the `ES` connection.  This defaults to 5

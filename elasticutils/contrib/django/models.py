@@ -44,7 +44,12 @@ class DjangoMappingType(MappingType):
 
         """
         indexes = settings.ES_INDEXES
-        return indexes.get(cls.get_mapping_type_name()) or indexes['default']
+        index = indexes.get(cls.get_mapping_type_name()) or indexes['default']
+        if not (isinstance(index, basestring)):
+            # FIXME - not sure what to do here, but we only want one
+            # index and somehow this isn't one index.
+            index = index[0]
+        return index
 
     @classmethod
     def get_mapping_type_name(cls):

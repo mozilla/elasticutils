@@ -204,15 +204,22 @@ class S(elasticutils.S):
         return hits
 
     def get_es(self, default_builder=None):
+        """Returns the ES to use."""
         # Override the default_builder with the Django one
         return super(S, self).get_es(default_builder=get_es)
 
     def get_indexes(self, default_indexes=None):
+        """Returns the list of indexes to act on."""
         doctype = self.type.get_mapping_type_name()
         indexes = (settings.ES_INDEXES.get(doctype) or
                    settings.ES_INDEXES['default'])
+        if isinstance(indexes, basestring):
+            indexes = [indexes]
         return super(S, self).get_indexes(default_indexes=indexes)
 
     def get_doctypes(self, default_doctypes=None):
-        doctype = self.type.get_mapping_type_name()
-        return super(S, self).get_doctypes(default_doctypes=doctype)
+        """Returns the doctypes (or mapping type names) to use."""
+        doctypes = self.type.get_mapping_type_name()
+        if isinstance(doctypes, basestring):
+            doctypes = [doctypes]
+        return super(S, self).get_doctypes(default_doctypes=doctypes)
