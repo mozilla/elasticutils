@@ -35,6 +35,55 @@ class STest(TestCase):
         with self.assertRaises(TypeError):
             S()
 
+    @requires_django
+    def test_get_indexes(self):
+        """Test get_indexes always returns a list of strings."""
+        from django.conf import settings
+        from elasticutils.contrib.django import S
+
+        # Pulls it from ES_INDEXES (list of strings).
+        s = S(FakeModel)
+        eq_(s.get_indexes(), ['elasticutilstest'])
+
+        # Pulls it from ES_INDEXES (string).
+        old_indexes = settings.ES_INDEXES
+        try:
+            settings.ES_INDEXES = {'default': 'elasticutilstest'}
+
+            s = S(FakeModel)
+            eq_(s.get_indexes(), ['elasticutilstest'])
+        finally:
+            settings.ES_INDEXES = old_indexes
+
+        # Pulls from indexes.
+        s = S(FakeModel).indexes('footest')
+        eq_(s.get_indexes(), ['footest'])
+
+        s = S(FakeModel).indexes('footest', 'footest2')
+        eq_(s.get_indexes(), ['footest', 'footest2'])
+
+        s = S(FakeModel).indexes('footest').indexes('footest2')
+        eq_(s.get_indexes(), ['footest2'])
+
+    @requires_django
+    def test_get_doctypes(self):
+        """Test get_doctypes always returns a list of strings."""
+        from elasticutils.contrib.django import S
+
+        # Pulls from ._meta.db_table.
+        s = S(FakeModel)
+        eq_(s.get_doctypes(), ['fake'])
+
+        # Pulls from doctypes.
+        s = S(FakeModel).doctypes('footype')
+        eq_(s.get_doctypes(), ['footype'])
+
+        s = S(FakeModel).doctypes('footype', 'footype2')
+        eq_(s.get_doctypes(), ['footype', 'footype2'])
+
+        s = S(FakeModel).doctypes('footype').doctypes('footype2')
+        eq_(s.get_doctypes(), ['footype2'])
+
 
 class ESTest(TestCase):
     @requires_django

@@ -622,6 +622,7 @@ class S(object):
         return self._results_cache
 
     def get_es(self, default_builder=get_es):
+        """Returns the ES object to use."""
         # The last one overrides earlier ones.
         for action, value in reversed(self.steps):
             if action == 'es_builder':
@@ -633,15 +634,17 @@ class S(object):
         return default_builder()
 
     def get_indexes(self, default_indexes=DEFAULT_INDEXES):
+        """Returns the list of indexes to act on."""
         for action, value in reversed(self.steps):
             if action == 'indexes':
-                return value
+                return list(value)
         return default_indexes
 
     def get_doctypes(self, default_doctypes=DEFAULT_DOCTYPES):
+        """Returns the list of doctypes to use."""
         for action, value in reversed(self.steps):
             if action == 'doctypes':
-                return value
+                return list(value)
         return default_doctypes
 
     def raw(self):

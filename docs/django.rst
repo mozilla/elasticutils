@@ -72,6 +72,12 @@ file:
    run queries for other models in `main_index` because that's the
    default.
 
+   Example 3::
+
+       ES_INDEXES = {'default': ['main_index'],
+                     'splugs': ['splugs_index']}
+
+
 .. data:: ES_TIMEOUT
 
    Defines the timeout for the `ES` connection.  This defaults to 5
