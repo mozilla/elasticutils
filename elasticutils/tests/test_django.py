@@ -25,7 +25,7 @@ try:
     from elasticutils.contrib.django import (
         S, F, get_es, InvalidFieldActionError)
     from elasticutils.tests.django_utils import (
-        FakeDjangoMappingType, FakeDjangoMappingTypeWithIndexes, FakeModel)
+        FakeDjangoMappingType, FakeModel)
 except ImportError:
     SKIP_TESTS = True
 
@@ -39,7 +39,7 @@ def requires_django(fun):
     return _requires_django
 
 
-class STest(TestCase):
+class TestS(TestCase):
     @requires_django
     def test_require_mapping_type(self):
         """The Django S requires a mapping type."""
@@ -71,7 +71,7 @@ class STest(TestCase):
         eq_(s.get_indexes(), ['footest', 'footest2'])
 
         s = S(FakeDjangoMappingType).indexes('footest').indexes('footest2')
-        eq_(s.get_indexes(), ['footest', 'footest2'])
+        eq_(s.get_indexes(), ['footest2'])
 
     @requires_django
     def test_get_doctypes(self):
@@ -88,7 +88,7 @@ class STest(TestCase):
         eq_(s.get_doctypes(), ['footype', 'footype2'])
 
         s = S(FakeDjangoMappingType).doctypes('footype').doctypes('footype2')
-        eq_(s.get_doctypes(), ['footype', 'footype2'])
+        eq_(s.get_doctypes(), ['footype2'])
 
 
 class ESTest(TestCase):
