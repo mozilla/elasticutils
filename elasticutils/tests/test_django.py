@@ -89,11 +89,10 @@ class QueryTest(ElasticTestCase):
         try:
             es.delete_index_if_exists(cls.index_name)
         except pyes.exceptions.IndexMissingException:
-            # TODO: No clue why this is throwing an IndexMissingException
-            # because I thought the whole point of delete_index_if_exists
-            # is that it _didn't_ throw an exception if the index was
-            # missing.
+            # pyes 0.15 throws an IndexMissingException despite the
+            # fact that the method should allow for that.
             pass
+
         data1 = FakeModel(id=1, foo='bar', tag='awesome', width='2')
         data2 = FakeModel(id=2, foo='barf', tag='boring', width='7')
         data3 = FakeModel(id=3, foo='car', tag='awesome', width='5')

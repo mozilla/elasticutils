@@ -1,3 +1,4 @@
+import pyes
 from nose.tools import eq_
 
 from elasticutils import F, S, InvalidFieldActionError
@@ -12,7 +13,12 @@ class HasDataTestCase(ElasticTestCase):
             return
 
         es = cls.get_es()
-        es.delete_index_if_exists(cls.index_name)
+        try:
+            es.delete_index_if_exists(cls.index_name)
+        except pyes.exceptions.IndexMissingException:
+            # pyes 0.15 throws an IndexMissingException despite the
+            # fact that the method should allow for that.
+            pass
 
         data1 = FakeModel(id=1, foo='bar', tag='awesome', width='2')
         data2 = FakeModel(id=2, foo='barf', tag='boring', width='7')
