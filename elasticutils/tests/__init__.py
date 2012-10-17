@@ -69,7 +69,12 @@ class ElasticTestCase(TestCase):
     @classmethod
     def create_index(cls):
         es = cls.get_es()
-        es.delete_index_if_exists(cls.index_name)
+        try:
+            es.delete_index_if_exists(cls.index_name)
+        except pyes.exceptions.IndexMissingException:
+            # pyes 0.15 throws an IndexMissingException despite the
+            # fact that the method should allow for that.
+            pass
         es.create_index(cls.index_name)
 
     @classmethod
