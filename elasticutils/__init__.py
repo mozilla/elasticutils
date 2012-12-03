@@ -654,11 +654,9 @@ class S(object):
         """
         qs = self._build_query()
         es = self.get_es()
-        try:
-            hits = es.search(qs, self.get_indexes(), self.get_doctypes())
-        except Exception:
-            log.error(qs)
-            raise
+
+        hits = es.search(qs, self.get_indexes(), self.get_doctypes())
+
         log.debug('[%s] %s' % (hits['took'], qs))
         return hits
 
@@ -779,12 +777,9 @@ class MLT(object):
         if self.s:
             kwargs['body'] = self.s._build_query()
 
-        try:
-            hits = es._send_request('GET', path, **kwargs)
-            log.debug(hits)
-        except Exception:
-            log.error(kwargs)
-            raise
+        hits = es._send_request('GET', path, **kwargs)
+        log.debug(hits)
+
         log.debug('[%s] %s' % (hits['took'], kwargs))
         return hits
 
