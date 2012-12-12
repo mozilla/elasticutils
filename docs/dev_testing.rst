@@ -5,23 +5,21 @@ Running and writing tests
 Running the tests
 =================
 
-If you don't have Django installed, you can run the tests with::
+You can run the tests with::
 
-    nosetests
+    ./run_tests.py
 
-It will skip the Django tests.
-
-If you do have Django installed, then you need to specify
-``DJANGO_SETTINGS_MODULE``. Run the tests like this::
-
-    DJANGO_SETTINGS_MODULE=test_settings nosetests
+If you have Django installed, this will run the Django-specific tests. If you
+don't, then the test runner will skip the Django-specific tests.
 
 
 .. Note::
 
    If you need to adjust the settings, copy ``test_settings.py`` to a
-   new file (like ``test_settings_local.py``), edit the file, and pass
-   that in as the value for ``DJANGO_SETTINGS_MODULE``.
+   new file (like ``test_settings_local.py``), edit the file, and specify that
+   as the value for the environment variable ``DJANGO_SETTINGS_MODULE``.
+
+       DJANGO_SETTINGS_MODULE=test_settings_local ./run_tests.py
 
    This is helpful if you need to change the value of ``ES_HOSTS`` to
    match the ip address or port that elasticsearch is listening on.
