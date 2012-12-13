@@ -42,7 +42,7 @@ class MoreLikeThisTest(ElasticTestCase):
         doc_type = self.get_s().get_doctypes()[0]
         es = self.get_s().get_es()
 
-        mlt = MLT(1, fields=['foo'], index=index, doctype=doc_type,
+        mlt = MLT(1, mlt_fields=['foo'], index=index, doctype=doc_type,
                   es=es, min_term_freq=1, min_doc_freq=1)
         eq_(len(mlt), 4)
 

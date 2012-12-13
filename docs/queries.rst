@@ -1045,8 +1045,6 @@ The S class
 
        .. automethod:: elasticutils.S.es
 
-       .. automethod:: elasticutils.S.es_builder
-
        .. automethod:: elasticutils.S.indexes
 
        .. automethod:: elasticutils.S.doctypes

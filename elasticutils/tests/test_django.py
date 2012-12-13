@@ -3,7 +3,6 @@ from unittest import TestCase
 
 from nose import SkipTest
 from nose.tools import eq_
-import pyes.exceptions
 
 from elasticutils.tests import ElasticTestCase, facet_counts_dict
 
@@ -89,35 +88,6 @@ class TestS(TestCase):
 
         s = S(FakeDjangoMappingType).doctypes('footype').doctypes('footype2')
         eq_(s.get_doctypes(), ['footype2'])
-
-
-class ESTest(TestCase):
-    @requires_django
-    def test_get_es_defaults(self):
-        """Test that the ES has the correct defaults."""
-        es = get_es()
-        eq_(es.timeout, settings.ES_TIMEOUT)
-        # dump_curl defaults to False, but if dump_curl is Falsey,
-        # then pyes.es.ES sets its dump_curl attribute to None.
-        eq_(es.dump_curl, None)
-        eq_(es.default_indexes, [settings.ES_INDEXES['default']])
-
-    @requires_django
-    def test_get_es_overriding_defaults(self):
-        """Test that overriding defaults works."""
-        class Dumper(object):
-            def write(self, val):
-                print val
-
-        d = Dumper()
-
-        es = get_es(timeout=20,
-                    dump_curl=d,
-                    default_indexes=['joe'])
-
-        eq_(es.timeout, 20)
-        eq_(es.dump_curl, d)
-        eq_(es.default_indexes, ['joe'])
 
 
 class QueryTest(ElasticTestCase):

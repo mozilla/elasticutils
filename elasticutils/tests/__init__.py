@@ -1,7 +1,8 @@
+import time
 from unittest import TestCase
 
 from nose import SkipTest
-import pyes
+import pyelasticsearch
 
 from elasticutils import get_es, S
 
@@ -19,6 +20,9 @@ class ElasticTestCase(TestCase):
     """
     index_name = 'elasticutilstest'
     mapping_type_name = 'elasticutilsmappingtype'
+    es_settings = {
+        'urls': ['http://localhost:9200']
+        }
 
     skip_tests = False
 
@@ -31,8 +35,8 @@ class ElasticTestCase(TestCase):
         """
         # Note: TestCase has no setup_class
         try:
-            get_es().collect_info()
-        except pyes.urllib3.MaxRetryError:
+            get_es().health()
+        except pyelasticsearch.exceptions.ConnectionError:
             cls.skip_tests = True
 
     @classmethod
@@ -56,7 +60,7 @@ class ElasticTestCase(TestCase):
 
     @classmethod
     def get_es(cls):
-        return get_es(default_indexes=[cls.index_name])
+        return get_es(**cls.es_settings)
 
     @classmethod
     def get_s(cls, mapping_type=None):
@@ -64,16 +68,16 @@ class ElasticTestCase(TestCase):
             s = S(mapping_type)
         else:
             s = S()
-        return s.indexes(cls.index_name).doctypes(cls.mapping_type_name)
+        return (s.es(**cls.es_settings)
+                 .indexes(cls.index_name)
+                 .doctypes(cls.mapping_type_name))
 
     @classmethod
     def create_index(cls):
         es = cls.get_es()
         try:
-            es.delete_index_if_exists(cls.index_name)
-        except pyes.exceptions.IndexMissingException:
-            # pyes 0.15 throws an IndexMissingException despite the
-            # fact that the method should allow for that.
+            es.delete_index(cls.index_name)
+        except pyelasticsearch.exceptions.ElasticHttpNotFoundError:
             pass
         es.create_index(cls.index_name)
 
@@ -87,16 +91,19 @@ class ElasticTestCase(TestCase):
         if create_index:
             cls.create_index()
 
+        # TODO: change this to a bulk index
         for item in data:
-            es.index(item, index, doctype, bulk=True, id=item['id'])
+            es.index(index, doctype, item, id=item['id'])
 
-        es.flush_bulk(forced=True)
         cls.refresh()
 
     @classmethod
     def cleanup_index(cls):
         es = cls.get_es()
-        es.delete_index_if_exists(cls.index_name)
+        try:
+            es.delete_index(cls.index_name)
+        except pyelasticsearch.exceptions.ElasticHttpNotFoundError:
+            pass
 
     @classmethod
     def refresh(cls, timesleep=0):
@@ -105,10 +112,12 @@ class ElasticTestCase(TestCase):
         This refreshes the index specified by `self.index_name`.
 
         :arg timesleep: int; number of seconds to sleep after telling
-            ES to refresh
+            ElasticSearch to refresh
 
         """
-        cls.get_es().refresh(cls.index_name, timesleep=timesleep)
+        cls.get_es().refresh(cls.index_name)
+        if timesleep:
+            time.sleep(timesleep)
 
 
 def facet_counts_dict(qs, field):

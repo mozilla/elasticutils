@@ -2,8 +2,8 @@ import copy
 import logging
 from operator import itemgetter
 
-from pyes import ES
-from pyes import VERSION as PYES_VERSION
+from pyelasticsearch import ElasticSearch
+from pyelasticsearch import __version__ as PYELASTICSEARCH_VERSION
 
 from elasticutils._version import __version__
 
@@ -11,20 +11,30 @@ from elasticutils._version import __version__
 log = logging.getLogger('elasticutils')
 
 
-DEFAULT_HOSTS = ['localhost:9200']
+DEFAULT_URLS = ['http://localhost:9200']
+DEFAULT_DOCTYPES = None
+DEFAULT_INDEXES = None
 DEFAULT_TIMEOUT = 5
-DEFAULT_DOCTYPES = ['document']
-DEFAULT_INDEXES = ['default']
-DEFAULT_DUMP_CURL = None
+DEFAULT_MAX_RETRIES = 0
 
 
-class InvalidFieldActionError(Exception):
+class ElasticUtilsError(Exception):
+    """Base class for ElasticUtils errors."""
+    pass
+
+
+class InvalidFieldActionError(ElasticUtilsError):
     """Raise this when the field action doesn't exist"""
     pass
 
 
-class InvalidFacetType(Exception):
+class InvalidFacetType(ElasticUtilsError):
     """Raise when _type is unrecognized."""
+    pass
+
+
+class BadSearch(ElasticUtilsError):
+    """Raise when there is something wrong with the search."""
     pass
 
 
@@ -34,64 +44,37 @@ def _split(s):
     return s, None
 
 
-def get_es(hosts=None, default_indexes=None, timeout=None, dump_curl=None,
+def get_es(urls=None, timeout=DEFAULT_TIMEOUT, max_retries=DEFAULT_MAX_RETRIES,
            **settings):
-    """Create an ES object and return it.
+    """Create an ElasticSearch object and return it.
 
-    :arg hosts: list of uris; ES hosts to connect to, defaults to
-        ``['localhost:9200']``
-    :arg default_indexes: list of strings; the default indexes to use,
-        defaults to 'default'
+    :arg urls: list of uris; ElasticSearch hosts to connect to,
+        defaults to ``['http://localhost:9200']``
     :arg timeout: int; the timeout in seconds, defaults to 5
-    :arg dump_curl: function or None; function that dumps curl output,
-        see docs, defaults to None
-    :arg settings: other settings to pass into `pyes.es.ES`
+    :arg max_retries: int; the number of other servers to try, in
+        series, after a request times out or a connection
+        fails. defaults to 0.
+    :arg settings: other settings to pass into ElasticSearch
+        constructor See
+        `<http://pyelasticsearch.readthedocs.org/en/latest/api/>`_ for
+        more details.
 
     Examples:
 
     >>> es = get_es()
-
-
-    >>> es = get_es(hosts=['localhost:9200'])
-
-
-    >>> es = get_es(timeout=30)  # good for indexing
-
-
-    >>> es = get_es(default_indexes=['sumo_prod_20120627']
-
-
-    >>> class CurlDumper(object):
-    ...     def write(self, text):
-    ...         print text
-    ...
-    >>> es = get_es(dump_curl=CurlDumper())
+    >>> es = get_es(urls=['http://localhost:9200'])
+    >>> es = get_es(urls=['http://localhost:9200'], timeout=10, max_retries=3)
 
     """
     # Cheap way of de-None-ifying things
-    hosts = hosts or DEFAULT_HOSTS
-    default_indexes = default_indexes or DEFAULT_INDEXES
-    timeout = timeout if timeout is not None else DEFAULT_TIMEOUT
-    dump_curl = dump_curl or DEFAULT_DUMP_CURL
+    urls = urls or DEFAULT_URLS
 
-    if not isinstance(default_indexes, list):
-        default_indexes = [default_indexes]
+    # v0.7: Check for 'hosts' instead of 'urls'. Take this out in v1.0.
+    if 'hosts' in settings:
+        raise DeprecationWarning('"hosts" is deprecated in favor of "urls".')
 
-    es = ES(hosts,
-            default_indexes=default_indexes,
-            timeout=timeout,
-            dump_curl=dump_curl,
-            **settings)
-
-    # pyes 0.15 does this lame thing where it ignores dump_curl in
-    # the ES constructor and always sets it to None. So what we do
-    # is set it manually after the ES has been created and
-    # defaults['dump_curl'] is truthy. This might not work for all
-    # values of dump_curl.
-    if PYES_VERSION[0:2] == (0, 15) and dump_curl is not None:
-        es.dump_curl = dump_curl
-
-    return es
+    return ElasticSearch(urls, timeout=timeout, max_retries=max_retries,
+                         **settings)
 
 
 def _process_filters(filters):
@@ -269,46 +252,17 @@ class S(object):
         return new
 
     def es(self, **settings):
-        """Return a new S with specified ES settings.
+        """Return a new S with specified ElasticSearch settings.
 
-        This allows you to configure the ES that gets used to execute
-        the search.
+        This allows you to configure the ElasticSearch that gets used
+        to execute the search.
 
-        :arg settings: the settings you'd use to build the ES---same
-            as what you'd pass to :py:func:`get_es`.
+        :arg settings: the settings you'd use to build the
+            ElasticSearch---same as what you'd pass to
+            :py:func:`get_es`.
 
         """
         return self._clone(next_step=('es', settings))
-
-    def es_builder(self, builder_function):
-        """Return a new S with specified ES builder.
-
-        When you do something with an S that causes it to execute a
-        search, then it will call the specified builder function with
-        the S instance. The builder function will return an ES object
-        that the S will use to execute the search with.
-
-        :arg builder_function: function; takes an S instance and returns
-            an ES
-
-        This is handy for caching ES instances. For example, you could
-        create a builder that caches ES instances thread-local::
-
-            from threading import local
-            _local = local()
-
-            def thread_local_builder(searcher):
-                if not hasattr(_local, 'es'):
-                    _local.es = get_es()
-                return _local.es
-
-            searcher = S.es_builder(thread_local_builder)
-
-        This is also handy for building ES instances with
-        configuration defined in a config file.
-
-        """
-        return self._clone(next_step=('es_builder', builder_function))
 
     def indexes(self, *indexes):
         """
@@ -347,8 +301,8 @@ class S(object):
         """
         Return a new S instance that returns DictSearchResults.
 
-        :arg fields: the list of fields to have in the results.
-            By default, this won't specify fields and thus ES
+        :arg fields: the list of fields to have in the results.  By
+            default, this won't specify fields and thus ElasticSearch
             will return everything.
 
         """
@@ -425,7 +379,7 @@ class S(object):
         """
         # TODO: Implement `limit` kwarg if useful.
         # TODO: Once oedipus is no longer needed in SUMO, support ranked lists
-        # of before_match and after_match tags. ES can highlight more
+        # of before_match and after_match tags. ElasticSearch can highlight more
         # significant stuff brighter.
         return self._clone(next_step=('highlight', (fields, kwargs)))
 
@@ -522,7 +476,7 @@ class S(object):
                 else:
                     highlight_fields |= set(value[0])
                 highlight_options.update(value[1])
-            elif action in ('es_builder', 'es', 'indexes', 'doctypes', 'boost'):
+            elif action in ('es', 'indexes', 'doctypes', 'boost'):
                 # Ignore these--we use these elsewhere, but want to
                 # make sure lack of handling it here doesn't throw an
                 # error.
@@ -653,16 +607,29 @@ class S(object):
         return self._results_cache
 
     def get_es(self, default_builder=get_es):
-        """Returns the ES object to use."""
-        # The last one overrides earlier ones.
-        for action, value in reversed(self.steps):
-            if action == 'es_builder':
-                # es_builder overrides es
-                return value(self)
-            elif action == 'es':
-                return get_es(**value)
+        """Returns the ElasticSearch object to use.
 
-        return default_builder()
+        :arg default_builder: The function that takes a bunch of
+            arguments and generates a pyelasticsearch ElasticSearch
+            object.
+
+        .. Note::
+
+           If you desire special behavior regarding building the
+           ElasticSearch object for this S, subclass S and override
+           this method.
+
+        """
+        # .es() calls are incremental, so we go through them all and
+        # update bits that are specified.
+        args = {}
+        for action, value in self.steps:
+            if action == 'es':
+                args.update(**value)
+
+        # TODO: store the ElasticSearch on the S if we've already
+        # created one since we don't need to do it multiple times.
+        return default_builder(**args)
 
     def get_indexes(self, default_indexes=DEFAULT_INDEXES):
         """Returns the list of indexes to act on."""
@@ -697,7 +664,16 @@ class S(object):
         qs = self._build_query()
         es = self.get_es()
 
-        hits = es.search(qs, self.get_indexes(), self.get_doctypes())
+        index = self.get_indexes()
+        doc_type = self.get_doctypes()
+
+        if doc_type and not index:
+            raise BadSearch(
+                'You must specify an index if you are specifying doctypes.')
+
+        hits = es.search(qs,
+                         index=self.get_indexes(),
+                         doc_type=self.get_doctypes())
 
         log.debug('[%s] %s' % (hits['took'], qs))
         return hits
@@ -738,21 +714,21 @@ class MLT(object):
     >>> num_related_documents = list(mlt)
 
     """
-    def __init__(self, id_, s=None, fields=None, index=None, doctype=None,
-                 es=None, **query_params):
+    def __init__(self, id_, s=None, mlt_fields=None, index=None,
+                 doctype=None, es=None, **query_params):
         """
         When the MLT is evaluated, it generates a list of dict results.
 
         :arg id_: The id of the document we want to find more like.
-        :arg s: An instance of an S. The query is passed in the body of
-            the more like this request.
-        :arg fields: A list of fields to use for more like this.
+        :arg s: An instance of an S. Allows you to pass in a query which
+            will be used as the body of the more-like-this request.
+        :arg mlt_fields: A list of fields to look at for more like this.
         :arg index: The index to use. Falls back to the first index
-            listed in s.
+            listed in s.get_indexes().
         :arg doctype: The doctype to use. Falls back to the first
-            doctype listed in s.
-        :arg es: The ES object to use. If you don't provide one, then it
-            will create one for you.
+            doctype listed in s.get_doctypes().
+        :arg es: `The ElasticSearch` object to use. If you don't
+            provide one, then it will create one for you.
         :arg query_params: Any additional query parameters for the
             more like this call.
 
@@ -767,6 +743,12 @@ class MLT(object):
             raise ValueError(
                 'Either you must provide a valid s or index and doc_type')
 
+        # v0.7: Check for the deprecated 'fields' argument and raise
+        # an error. Take this out for v1.0.
+        if 'fields' in query_params:
+            raise DeprecationWarning(
+                '"fields" argument is deprecated for "mlt_fields"')
+
         self.s = s
         if s is not None:
             # If an index or doctype isn't given, we use the first one
@@ -780,7 +762,7 @@ class MLT(object):
             self.type = None
 
         self.id = id_
-        self.fields = fields
+        self.mlt_fields = mlt_fields
         self.es = es
         self.query_params = query_params
         self._results_cache = None
@@ -792,11 +774,13 @@ class MLT(object):
         return len(self._do_search())
 
     def get_es(self):
-        """Returns an ES
+        """Returns an `ElasticSearch`.
 
-        * If there's an s, then it returns that ES.
-        * If the es was provided in the constructor, then it returns that ES.
-        * Otherwise, it creates a new ES and returns that.
+        * If there's an s, then it returns that `ElasticSearch`.
+        * If the es was provided in the constructor, then it returns
+          that `ElasticSearch`.
+        * Otherwise, it creates a new `ElasticSearch` and returns
+          that.
 
         Override this if that behavior isn't correct for you.
 
@@ -813,22 +797,16 @@ class MLT(object):
         """
         es = self.get_es()
 
-        kwargs = {}
-        path = es._make_path([self.index, self.doctype, self.id, '_mlt'])
-
         params = dict(self.query_params)
+        mlt_fields = self.mlt_fields or params.pop('mlt_fields', [])
 
-        if self.fields and 'mlt_fields' not in params:
-            params['mlt_fields'] = ','.join(self.fields)
-        kwargs['params'] = params
+        body = self.s._build_query() if self.s else ''
 
-        if self.s:
-            kwargs['body'] = self.s._build_query()
+        hits = es.more_like_this(self.index, self.doctype, self.id, mlt_fields,
+                                 body, **params)
 
-        hits = es._send_request('GET', path, **kwargs)
         log.debug(hits)
 
-        log.debug('[%s] %s' % (hits['took'], kwargs))
         return hits
 
     def _do_search(self):
@@ -895,7 +873,7 @@ class ListSearchResults(SearchResults):
 
 
 def _convert_results_to_dict(r):
-    """Takes a results from ES and returns fields."""
+    """Takes a results from ElasticSearch and returns fields."""
     if 'fields' in r:
         return r['fields']
     if '_source' in r:
@@ -919,7 +897,7 @@ class ObjectSearchResults(SearchResults):
 
 def decorate_with_metadata(obj, hit):
     """Return obj decorated with hit-scope metadata."""
-    # ES id
+    # ElasticSearch id
     obj._id = hit.get('_id', 0)
     # Source data
     obj._source = hit.get('_source', {})

@@ -4,19 +4,20 @@ With `test_utils` you can use this testcase.
 from django.conf import settings
 
 import test_utils
-import pyes.exceptions
+import pyelasticsearch
 from elasticutils import get_es
 from nose import SkipTest
 
 
-class ESTestCase(test_utils.TestCase):
+class ElasticSearchTestCase(test_utils.TestCase):
     """
-    ESTestCase turns ElasticSearch on, shuts it down at the end of the tests.
+    ElasticSearchTestCase turns ElasticSearch on, shuts it down at the
+    end of the tests.
     """
     @classmethod
     def setUpClass(cls):
-        super(ESTestCase, cls).setUpClass()
-        if not (hasattr(settings, 'ES_HOSTS') and settings.ES_HOSTS):
+        super(ElasticSearchTestCase, cls).setUpClass()
+        if not (hasattr(settings, 'ES_URLS') and settings.ES_URLS):
             raise SkipTest
         cls.old_ES_DISABLED = settings.ES_DISABLED
         settings.__dict__['ES_DISABLED'] = False
@@ -24,16 +25,16 @@ class ESTestCase(test_utils.TestCase):
         cls.es = get_es()
         for index in settings.ES_INDEXES.values():
             try:
-                cls.es.delete_index_if_exists(index)
-            except pyes.exceptions.IndexMissingException:
+                cls.es.delete_index(index)
+            except pyelasticsearch.exceptions.ElasticHttpNotFoundError:
                 pass
 
     @classmethod
     def tearDownClass(cls):
         for index in settings.ES_INDEXES.values():
             try:
-                cls.es.delete_index_if_exists(index)
-            except pyes.exceptions.IndexMissingException:
+                cls.es.delete_index(index)
+            except pyelasticsearch.exceptions.ElasticHttpNotFoundError:
                 pass
         settings.__dict__['ES_DISABLED'] = cls.old_ES_DISABLED
-        super(ESTestCase, cls).tearDownClass()
+        super(ElasticSearchTestCase, cls).tearDownClass()

@@ -1,9 +1,7 @@
 import logging
 from functools import wraps
-from threading import local
 
-import pyes
-from pyes.es import thrift_enable
+import pyelasticsearch
 
 import elasticutils
 from elasticutils import F, InvalidFieldActionError
@@ -14,86 +12,46 @@ try:
 except ImportError:
     pass
 
-try:
-    from statsd import statsd
-except ImportError:
-    statsd = None
-
 
 log = logging.getLogger('elasticutils')
 
 
-_local = local()
-_local.disabled = {}
-
-
 def get_es(**overrides):
-    """Return an ES object using settings from settings.py
+    """Return a pyelasticsearch ElasticSearch object using settings
+    from ``settings.py``.
 
-    :arg overrides: Allows you to override defaults to create the ES.
+    :arg overrides: Allows you to override defaults to create the
+    ElasticSearch object.
 
-    Things you can override:
+    You can override any of the arguments listed in :ref:`get_es`.
 
-    * default_indexes
-    * timeout
-    * dump_curl
-
-    Values for these correspond with the arguments to pyes.es.ES.
-
-    For example, if you wanted to create an ES for indexing with a timeout
-    of 30 seconds, you'd do:
+    For example, if you wanted to create an ElasticSearch with a
+    longer timeout to a different cluster, you'd do:
 
     >>> from elasticutils.contrib.django import get_es
-    >>> es = get_es(timeout=30)
+    >>> es = get_es(urls=['http://some_other_cluster:9200'], timeout=30)
 
-    If you wanted to create an ES for debugging that dumps curl
-    commands to stdout, you could do:
-
-    >>> class CurlDumper(object):
-    ...     def write(self, s):
-    ...         print s
-    ...
-    >>> from elasticutils.contrib.django import get_es
-    >>> es = get_es(dump_curl=CurlDumper())
     """
-    if overrides or not hasattr(_local, 'es'):
-        defaults = {
-            'default_indexes': [settings.ES_INDEXES['default']],
-            'timeout': getattr(settings, 'ES_TIMEOUT', 5),
-            'dump_curl': getattr(settings, 'ES_DUMP_CURL', False)
-            }
+    defaults = {
+        'urls': settings.ES_URLS,
+        'timeout': getattr(settings, 'ES_TIMEOUT', 5)
+        }
 
-        defaults.update(overrides)
-        if (not thrift_enable and
-            not settings.ES_HOSTS[0].split(':')[1].startswith('92')):
-            raise ValueError('ES_HOSTS is not set to a valid port starting '
-                             'with 9200-9299 range. Other ports are valid '
-                             'if using pythrift.')
-        es = elasticutils.get_es(settings.ES_HOSTS, **defaults)
-
-        # Cache the es if there weren't any overrides.
-        if not overrides:
-            _local.es = es
-    else:
-        es = _local.es
-
-    return es
+    defaults.update(overrides)
+    return elasticutils.get_es(**defaults)
 
 
 def es_required(fun):
     """Wrap a callable and return None if ES_DISABLED is False.
 
     This also adds an additional `es` argument to the callable
-    giving you an ES to use.
+    giving you an ElasticSearch to use.
 
     """
     @wraps(fun)
     def wrapper(*args, **kw):
         if getattr(settings, 'ES_DISABLED', False):
-            # Log once.
-            if fun.__name__ not in _local.disabled:
-                log.debug('Search disabled for %s.' % fun)
-                _local.disabled[fun.__name__] = 1
+            log.debug('Search disabled for %s.' % fun)
             return
 
         return fun(*args, es=get_es(), **kw)
@@ -113,11 +71,9 @@ def es_required_or_50x(disabled_template='elasticutils/501.html',
     HTTP 503
       Returned when any of the following exceptions are thrown:
 
-      * pyes.urllib3.MaxRetryError: Connection problems with ES.
-      * pyes.exceptions.IndexMissingException: When the index is
-        missing.
-      * pyes.exceptions.ElasticSearchException: Various other
-        ElasticSearch related errors.
+      * pyelasticsearch.exceptions.ConnectionError
+      * pyelasticsearch.exceptions.ElasticHttpNotFoundError
+      * pyelasticsearch.exceptions.Timeout
 
       Template variables:
 
@@ -163,9 +119,9 @@ def es_required_or_50x(disabled_template='elasticutils/501.html',
             try:
                 return fun(request, *args, **kw)
 
-            except (pyes.urllib3.MaxRetryError,
-                    pyes.exceptions.IndexMissingException,
-                    pyes.exceptions.ElasticSearchException) as exc:
+            except (pyelasticsearch.exceptions.ConnectionError,
+                    pyelasticsearch.exceptions.ElasticHttpNotFoundError,
+                    pyelasticsearch.exceptions.Timeout) as exc:
                 response = render(request, error_template, {'error': exc})
                 response.status_code = 503
                 return response
@@ -178,9 +134,7 @@ def es_required_or_50x(disabled_template='elasticutils/501.html',
 class S(elasticutils.S):
     """S that's more Django-focused
 
-    * uses an ES that's based on settings
-    * if statsd is installed, calls statsd.timing with how long
-      it took to do the query
+    * creates ElasticSearch objects based on ``settings.py`` settings
 
     """
     def __init__(self, mapping_type):
@@ -197,16 +151,14 @@ class S(elasticutils.S):
         """
         return super(S, self).__init__(mapping_type)
 
-    def raw(self):
-        hits = super(S, self).raw()
-        if statsd:
-            statsd.timing('search', hits['took'])
-        return hits
+    def get_es(self, default_builder=get_es):
+        """Returns the pyelasticsearch ElasticSearch object to use.
 
-    def get_es(self, default_builder=None):
-        """Returns the ES to use."""
-        # Override the default_builder with the Django one
-        return super(S, self).get_es(default_builder=get_es)
+        This uses the django get_es builder by default which takes
+        into account settings in ``settings.py``.
+
+        """
+        return super(S, self).get_es(default_builder=default_builder)
 
     def get_indexes(self, default_indexes=None):
         """Returns the list of indexes to act on."""

@@ -91,15 +91,15 @@ class Indexable(object):
 
         Override this to return a mapping for this doctype.
 
-        :returns: dict representing the ES mapping or None if you
-            want ES to infer it. defaults to None.
+        :returns: dict representing the ElasticSearch mapping or None
+            if you want ElasticSearch to infer it. defaults to None.
 
         """
         return None
 
     @classmethod
     def extract_document(cls, obj_id, obj=None):
-        """Extracts the ES index document for this instance
+        """Extracts the ElasticSearch index document for this instance
 
         This must be implemented.
 
@@ -132,8 +132,7 @@ class Indexable(object):
         return model.objects.order_by('id').values_list('id', flat=True)
 
     @classmethod
-    def index(cls, document, id_=None, bulk=False, force_insert=False,
-              es=None):
+    def index(cls, document, id_=None, force_insert=False, es=None):
         """Adds or updates a document to the index
 
         :arg document: Python dict of key/value pairs representing
@@ -144,8 +143,8 @@ class Indexable(object):
                This must be serializable into JSON.
 
         :arg id_: the Django ORM model instance id---this is used to
-            convert an ES search result back to the Django ORM model
-            instance from the db. It should be an integer.
+            convert an ElasticSearch search result back to the Django
+            ORM model instance from the db. It should be an integer.
 
             .. Note::
 
@@ -153,35 +152,30 @@ class Indexable(object):
                will make up an id for your document and it'll look like
                a character name from a Lovecraft novel.
 
-        :arg bulk: Whether or not this is part of a bulk indexing.  If
-            this is, you must provide an ES with the `es` argument,
-            too.
         :arg force_insert: TODO
-        :arg es: The ES to use. If you don't specify an ES, it'll
-            use `elasticutils.contrib.django.get_es()`.
 
-        :raises ValueError: if `bulk` is True, but `es` is None.
+        :arg es: The `ElasticSearch` to use. If you don't specify an
+            `ElasticSearch`, it'll use
+            `elasticutils.contrib.django.get_es()`.
 
         .. Note::
 
-           After you add things to the index, make sure to refresh the
-           index by calling ``refresh_index()``---it doesn't happen
-           automatically.
-
-
-        TODO: add example.
+           If you need the documents available for searches
+           immediately, make sure to refresh the index by calling
+           ``refresh_index()``.
 
         """
-        if bulk and es is None:
-            raise ValueError('bulk is True, but es is None')
-
         if es is None:
             es = get_es()
 
         es.index(
-            document, index=cls.get_index(),
-            doc_type=cls.get_mapping_type_name(),
-            id=id_, bulk=bulk, force_insert=force_insert)
+            cls.get_index(),
+            cls.get_mapping_type_name(),
+            document,
+            id=id_,
+            force_insert=force_insert)
+
+    # TODO: Add support for bulk_indexing.
 
     @classmethod
     def unindex(cls, id_, es=None):
