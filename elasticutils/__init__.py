@@ -288,7 +288,7 @@ class S(object):
                     _local.es = get_es()
                 return _local.es
 
-            searcher = S.es_builder(thread_local_builder)
+            searcher = S().es_builder(thread_local_builder)
 
         This is also handy for building ES instances with
         configuration defined in a config file.
