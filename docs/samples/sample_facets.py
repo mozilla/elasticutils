@@ -5,18 +5,26 @@ some behavior with facets.
 """
 
 from elasticutils import get_es, S
- 
- 
-HOST = 'localhost:9200'
+
+from pyelasticsearch.exceptions import ElasticHttpNotFoundError
+
+
+URL = 'http://localhost:9200'
 INDEX = 'fooindex'
 DOCTYPE = 'testdoc'
  
+
+# This creates a pyelasticsearch ElasticSearch object which we can use
+# to do all our indexing.
+es = get_es(urls=[URL])
  
-es = get_es(hosts=HOST, default_indexes=[INDEX])
- 
-# This uses pyes ES.delete_index_if_exists to delete the index if it
-# exists.
-es.delete_index_if_exists(INDEX)
+# First, delete the index.
+try:
+    es.delete_index(INDEX)
+except ElasticHttpNotFoundError:
+    # Getting this here means the index doesn't exist, so there's
+    # nothing to delete.
+    pass
  
 # Define the mapping for the doctype 'testdoc'. It's got an id field,
 # a title which is analyzed, and two fields that are lists of tags, so
@@ -37,12 +45,12 @@ mapping = {
         }
     }
  
-# This uses pyes ES.create_index.
+# This uses pyelasticsearch ElasticSearch.create_index.
 es.create_index(INDEX, settings={'mappings': mapping})
 
- 
+
 # This indexes a series of documents each is a Python dict.
-for mem in [
+documents = [
     {'id': 1,
      'title': 'Deleting cookies',
      'topics': ['cookies', 'privacy'],
@@ -62,9 +70,10 @@ for mem in [
     {'id': 5,
      'title': 'Flash',
      'topics': ['flash'],
-     'product': ['Firefox']},]:
+     'product': ['Firefox']}
+    ]
 
-    es.index(mem, INDEX, DOCTYPE, id=mem['id'])
+es.bulk_index(INDEX, DOCTYPE, documents, id_field='id')
 
 # ElasticSearch will refresh the indexes and make those documents
 # available for querying in a second or so (it's configurable in
@@ -74,10 +83,7 @@ es.refresh(INDEX)
 
 # Let's build a basic S that looks at the right instance of
 # ElasticSearch, index, and doctype.
-basic_s = (S().es(hosts=[HOST])
-              .indexes(INDEX)
-              .doctypes(DOCTYPE)
-              .values_dict())
+basic_s = S().es(urls=[URL]).indexes(INDEX).doctypes(DOCTYPE).values_dict()
  
 # Now let's see facet counts for all the products.
 s = basic_s.facet('product')
@@ -146,4 +152,3 @@ print basic_s.facet('topics').facet_counts()
 #
 # Moral of the story is that you want fields you facet on to be
 # analyzed as keyword fields or not analyzed at all.
-
