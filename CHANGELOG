@@ -6,6 +6,165 @@ What's new in ElasticUtils
    :local:
 
 
+Version 0.7: in development
+===========================
+
+.. Note::
+
+   This is a *big* change. We switched from pyes to pyelasticsearch. In
+   doing that, we changed a handful of signatures, nixed some
+   functionality that didn't make any sense any more, and cleaned a
+   bunch of things up.
+
+   If this terrifies you, read through these notes carefully and/or
+   stay with v0.6.
+
+**API-breaking changes:**
+
+* **pyelasticsearch v0.3 or later now required.**
+
+  ElasticUtils now requires pyelasticsearch v0.3 or later and its
+  requirements.
+
+* **elasticutils.PYES_VERSION is removed.**
+
+  Since we're not using pyes, we removed `elasticutils.PYES_VERSION`.
+
+* **ElasticUtils no longer supports thrift.**
+
+  Pretty sure we did a lousy job of supporting it before---it was all
+  in the pyes code and we had no tests for it.
+
+* **get_es() signatures have changed.**
+
+  * takes urls now instead of hosts
+  * dump_curl argument is now gone
+  * default_indexes argument is gone
+  * new max_retries argument added
+
+  The arguments correspond with pyelasticsearch `ElasticSearch`
+  object.
+
+  ElasticUtils uses HTTP urls for connecting to ElasticSearch now.
+  Previously, you'd do::
+
+      get_es(hosts=['localhost:9200'])        # Old way
+
+  Now you do::
+
+      get_es(urls=['http://localhost:9200'])  # New way
+
+  The dump_curl argument was helpful for debugging, but we don't
+  really need it anymore. See the :ref:`debugging-chapter` for better
+  debugging methods.
+
+  Will now raise a `DeprecationWarning` if you pass in `hosts`
+  argument.
+
+* **S searches all indexes and doctypes by default.**
+
+  Previously, if you did::
+
+      S()
+
+  it'd search an index named "default" for doctypes "document". That
+  was dumb. Now it searches all indexes and all doctypes by default.
+
+* **S.es_builder is gone.**
+
+  ``es_builder()`` was there to get around problems with pyes' ES
+  class. The pyelasticsearch `ElasticSearch` class is more
+  straight-forward, so we don't need to do circus shenanigans.
+
+  You can probably do what you need to with either the ``es()``
+  transform or by subclassing `S` and overriding the ``get_es()``
+  method.
+
+* **MLT arguments changed.**
+
+  The `fields` argument in the constructor was renamed to `mlt_fields`
+  to be in line with ElasticSearch API names.
+
+  Will now raise a `DeprecationWarning` if you pass in `fields`
+  argument.
+
+* **Django: changed settings.**
+
+  Changed ES_HOSTS setting to ES_URLS. This is both a name and a value
+  change. ES_URLS takes a list of strings each is an http url. You'll
+  neex to update your settings files from::
+
+      ES_HOSTS = ['localhost:9200']        # Old way
+
+  to::
+
+      ES_URLS = ['http://localhost:9200']  # New way
+
+  ES_DUMP_CURL is gone.
+
+* **Django: removed the statsd code.**
+
+* **Django: ESTestCase was renamed to ElasticTestCase.**
+
+* **Django: Indexable.index() method no longer has bulk argument.**
+
+  The Indexable.index() method no longer does bulk indexing. The
+  way pyes did this was kind of squirrely and caused issues if you
+  didn't have the order of operations correct.
+
+  Now Indexable.index() only indexes a single document.
+
+  TODO: Need a way to do bulk indexing.
+
+* **pyes -> pyelasticsearch changes.**
+
+  If you called ``.get_es()`` and got a pyes `ES` object and did
+  things with that (create index, create mappings, delete indexes,
+  indexing, cluster health, ...), you're going to need to make
+  some changes.
+
+  You can either:
+
+  1. rewrite that code to use pyelasticsearch `ElasticSearch`
+     equivalents, or
+
+  2. write and use your own ``get_es()`` function that returns
+     a pyes `ES` object
+
+  Rewriting shouldn't be too hard. The pyelasticsearch documentation
+  is pretty good and for most things, there's a 1-to-1 translation.
+
+**Changes:**
+
+* **pyes is no longer a requirement.**
+
+  We no longer use pyes so you can remove it from your requirements.
+
+* **Django: es_required_or_50x handles different exceptions.**
+
+  Previously it handled:
+
+  * pyes.urllib3.MaxRetryError
+  * pyes.exceptions.IndexMissingException
+  * pyes.exceptions.ElasticSearchException
+
+  We're not using pyes anymore, so now it handles:
+
+  * pyelasticsearch.exceptions.ConnectionError
+  * pyelasticsearch.exceptions.ElasticHttpNotFoundError
+  * pyelasticsearch.exceptions.Timeout
+
+  You probably don't need to do anything about this, but it's good to
+  know.
+
+* **elasticutils.PYELASTICSEARCH_VERSION is added.**
+
+  You can see which version of pyelasticsearch is in use by doing::
+
+      from elasticutils import PYELASTICSEARCH_VERSION
+      print PYELASTICSEARCH_VERSION
+
+
 Version 0.6: Released January 17th, 2013
 ========================================
 

@@ -1,18 +1,21 @@
-=============
-Getting an ES
-=============
+.. _es-chapter:
 
-ElasticUtils uses `pyes` which comes with a handy `ES` object. This
-lets you work with ElasticSearch outside of what ElasticUtils can do.
+===============================
+Getting an ElasticSearch object
+===============================
 
-To access this, you use `get_es()` which builds an `ES`.
+ElasticUtils uses `pyelasticsearch` which comes with a handy
+`ElasticSearch` object. This lets you work with ElasticSearch outside
+of what ElasticUtils can do.
+
+To access this, you use `get_es()` which builds an `ElasticSearch`
+object.
+
 
 .. autofunction:: elasticutils.get_es
 
 
-.. Warning::
+.. seealso::
 
-   ElasticUtils works with ``pyes`` 0.15 and 0.16. The API for later
-   versions of pyes has changed too much and won't work with
-   ElasticUtils. We're planning to switch to something different in
-   the future.
+   http://pyelasticsearch.readthedocs.org/en/latest/api/
+     pyelasticsearch ElasticSearch documentation.

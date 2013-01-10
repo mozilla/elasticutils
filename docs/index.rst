@@ -4,9 +4,9 @@
 ElasticUtils
 ============
 
-ElasticUtils is a Python library that gives you a Django queryset-like
-API for `elasticsearch <http://elasticsearch.org/>`_ as well as some
-other tools for making it easier to integrate elasticsearch into your
+ElasticUtils is a Python library that gives you a chainable search API
+for `ElasticSearch <http://elasticsearch.org/>`_ as well as some other
+tools to make it easier to integrate ElasticSearch into your
 application.
 
 :Version:       |release|

@@ -14,15 +14,16 @@ ElasticSearch simple.
 
 For example::
 
-   q = (S().filter(product='firefox')
+   q = (S().es(urls=['http://localhost:9200'])
+           .indexes('addon_index')
+           .doctypes('addon')
+           .filter(product='firefox')
            .filter(version='4.0', platform='all')
+           .query(title='Example')
            .facet(products={'field': 'product', 'global': True})
            .facet(versions={'field': 'version'})
            .facet(platforms={'field': 'platform'})
-           .facet(types={'field': 'type'})
-           .doctypes('addon')
-           .indexes('addon_index')
-           .query(title='Example'))
+           .facet(types={'field': 'type'}))
 
 
 The ElasticSearch REST API curl would look like this::
@@ -88,16 +89,31 @@ the `ElasticSearch JSON`.
 All about S
 ===========
 
-Basic untyped S
----------------
+What is S?
+----------
 
-`S` is the class that you instantiate to create a search. For example::
+`S` is the class that you instantiate to define an ElasticSearch
+search. For example::
 
     searcher = S()
 
+This creates an `S` with using the defaults:
 
-`S` has a bunch of methods that all return a new `S` with additional
-accumulated search criteria.
+* uses an `ElasticSearch` object configured to connect to
+  ``http://localhost:9200`` -- call ``.es()`` to specify
+  connection parameters
+* searches across all indexes -- call ``.indexes()`` to specify
+  indexes
+* searches across all doctypes -- call ``.doctypes()`` to specify
+  doctypes
+
+
+Chainable
+---------
+
+`S` has methods that return a new `S` instance with the additional
+specified criteria. In this way `S` is chainable and you can reuse `S`
+objects for your searches.
 
 For example::
 
@@ -114,18 +130,19 @@ all.
 
 `s2` has a query.
 
-`s3` has everything in `s2` plus a ``awesome=True`` filter.
+`s3` has everything in `s2` with a ``awesome=True`` filter.
 
 `s4` has everything in `s2` with a ``awesome=False`` filter.
 
-When you create an `S` with no type, it's called an "untyped S". If
-you don't specify ``.values_dict`` or ``.values_list``, then your
+
+Untyped S and Typed S
+---------------------
+
+When you create an `S` with no type, it's called an "untyped S".
+
+If you don't specify ``.values_dict`` or ``.values_list``, then your
 search results are in the form of a sequence of `DefaultMappingType`
 instances. More about this in :ref:`queries-mapping-type`.
-
-
-Typed S
--------
 
 You can also construct a `typed S` which is an `S` with a
 `MappingType` subclass. For example::
@@ -142,17 +159,74 @@ You can also construct a `typed S` which is an `S` with a
             return 'mymappingtype'
 
 
-    results = S(MyMappingType).query(title__text='plugins')
+    results = (S(MyMappingType).es(urls=['http://localhost:9200'])
+                               .query(title__text='plugins'))
 
 
 ``results`` will be an iterable of `MyMappingType` instances---one for
 each search result.
 
 
+Slicing
+-------
+
+`S` supports slicing allowing you to get back only the results you're
+looking for.
+
+For example::
+
+    some_s = S()
+
+    results = some_s[:10]    # returns first 10 results
+    results = some_s[10:20]  # returns results 10 through 19
+
+The slicing is chainable, too::
+
+    some_s = S()[:10]
+
+    first_ten_pitchers = some_s.filter(position='pitcher')
+    first_ten_catchers = some_s.filter(position='catcher')
+
+
+.. Note::
+
+   The slice happens on the ElasticSearch side---it doesn't pull all
+   the results back and then slice them in Python. Ew.
+
+
+ElasticSearch connection, index and doctypes
+============================================
+
+`S` will generate an `ElasticSearch` object that connects to
+``http://localhost:9200`` by default. That's usually not what you
+want. You can use the ``es()`` method to specify the arguments used to
+create the ElasticSearch object.
+
+For example::
+
+    ES_URLS = ['http://localhost:9200']
+
+    q = S().es(urls=ES_URLS)
+    q = S().es(urls=ES_URLS, timeout=10)
+
+See :ref:`es-chapter` for the list of arguments you can pass in.
+
+An `untyped S` will search all indexes and all doctypes by default. If
+that's not what you want, then you should use the ``indexes()`` and
+``doctypes()`` methods.
+
+For example::
+
+    q = S().indexes('someindex').doctypes('sometype')
+
+If you're using a `typed S`, then you can specify the indexes and
+doctypes in the `MappingType` subclass.
+
+
 Match All
 =========
 
-By default ``S()`` with no filters or queries specified will do a
+By default, ``S()`` with no filters or queries specified will do a
 ``match_all`` query in ElasticSearch.
 
 .. seealso::

@@ -30,6 +30,5 @@ From git
 Do::
 
     $ git clone git://github.com/mozilla/elasticutils.git
-
-For other ways to clone, see
-`<https://github.com/mozilla/elasticutils>`_.
+    $ cd elasticutils
+    $ python setup.py install

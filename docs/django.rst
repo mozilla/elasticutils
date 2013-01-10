@@ -28,21 +28,12 @@ file:
    `es_required` will return and log a warning. This is useful while
    developing, so you don't have to have ElasticSearch running.
 
-.. data:: ES_DUMP_CURL
+.. data:: ES_URLS
 
-   If set to a file path all the requests that `ElasticUtils` makes
-   will be dumped into the designated file.
+   This is a list of ElasticSearch urls. In development this will look
+   like::
 
-   If set to a class instance, calls the ``.write()`` method with
-   the curl equivalents.
-
-   See :ref:`django-debugging` for more details.
-
-.. data:: ES_HOSTS
-
-   This is a list of ES hosts. In development this will look like::
-
-       ES_HOSTS = ['127.0.0.1:9200']
+       ES_URLS = ['http://localhost:9200']
 
 .. data:: ES_INDEXES
 
@@ -84,23 +75,15 @@ file:
 
 .. data:: ES_TIMEOUT
 
-   Defines the timeout for the `ES` connection.  This defaults to 5
-   seconds.
+   Defines the timeout for the `ElasticSearch` connection.  This
+   defaults to 5 seconds.
 
 
-ES
-==
+ElasticSearch
+=============
 
-The `get_es()` in the Django contrib will helpfully cache your ES
-objects thread-local.
-
-It is built with the settings from your `django.conf.settings`.
-
-.. Note::
-
-   `get_es()` only caches the `ES` if you don't pass in any override
-   arguments. If you pass in override arguments, it doesn't cache it
-   and instead creates a new one.
+The `get_es()` in the Django contrib will use Django settings listed
+above to build the ElasticSearch object.
 
 
 Using with Django ORM models
@@ -198,8 +181,8 @@ explicitly specifying `.get_mapping()`.
         def get_mapping(cls):
             """Returns an ElasticSearch mapping."""
             return {
-                # The id is an integer, so store it as such. ES would have
-                # inferred this just fine.
+                # The id is an integer, so store it as such. ElasticSearch
+                # would have inferred this just fine.
                 'id': {'type': 'integer'},
 
                 # The name is a name---so we shouldn't analyze it
@@ -293,60 +276,25 @@ Writing tests
 
 :Requirements: Django, test_utils, nose
 
-In `elasticutils.contrib.django.estestcase`, is `ESTestCase` which can
-be subclassed in your app's test cases.
+In `elasticutils.contrib.django.estestcase`, is
+`ElasticSearchTestCase` which can be subclassed in your app's test
+cases.
 
 It does the following:
 
-* If `ES_HOSTS` is empty it raises a `SkipTest`.
-* `self.es` is available from the `ESTestCase` class and any subclasses.
+* If `ES_URLS` is empty it raises a `SkipTest`.
+* `self.es` is available from the `ElasticSearchTestCase` class and
+  any subclasses.
 * At the end of the test case the index is wiped.
 
 Example::
 
-    from elasticutils.djangolib import ESTestCase
+    from elasticutils.djangolib import ElasticSearchTestCase
 
 
-    class TestQueries(ESTestCase):
+    class TestQueries(ElasticSearchTestCase):
         def test_query(self):
             ...
 
         def test_locked_filters(self):
             ...
-
-
-.. _django-debugging:
-
-Debugging
-=========
-
-You can set the ``settings.ES_DUMP_CURL`` to a few different things
-all of which can be helpful in debugging ElasticUtils.
-
-1. a file path
-
-   This will cause PyES to write the curl equivalents of the commands
-   it's sending to ElasticSearch to a file.
-
-   Example setting::
-
-       ES_DUMP_CURL = '/var/log/es_curl.log'
-
-
-   .. Note::
-
-      The file is not closed until the process ends. Because of that,
-      you don't see much in the file until it's done.
-
-
-2. a class instance that has a ``.write()`` method
-
-   PyES will call the ``.write()`` method with the curl equivalent and
-   then you can do whatever you want with it.
-
-   For example, this writes curl equivalent output to stdout::
-
-        class CurlDumper(object):
-            def write(self, s):
-                print s
-        ES_DUMP_CURL = CurlDumper()

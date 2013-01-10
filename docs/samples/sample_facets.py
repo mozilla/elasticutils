@@ -1,7 +1,7 @@
 """
-This is a sample program that uses PyES ES to create an index, create
-a mapping, and index some data. Then it uses ElasticUtils S to show
-some behavior with facets.
+This is a sample program that uses pyelasticsearch ElasticSearch
+object to create an index, create a mapping, and index some data. Then
+it uses ElasticUtils S to show some behavior with facets.
 """
 
 from elasticutils import get_es, S
