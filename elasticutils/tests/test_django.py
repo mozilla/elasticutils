@@ -236,3 +236,61 @@ class QueryTest(ElasticTestCase):
         list_ = list(res)
 
         eq_(repr(list_), repr(res))
+
+
+class IndexableTest(ElasticTestCase):
+    index_name = 'elasticutilstest'
+
+    @classmethod
+    def get_es(cls):
+        return get_es()
+
+    @classmethod
+    def setup_class(cls):
+        super(IndexableTest, cls).setup_class()
+        if cls.skip_tests or SKIP_TESTS:
+            return
+
+    def setUp(self):
+        super(IndexableTest, self).setUp()
+        IndexableTest.create_index()
+
+    def tearDown(self):
+        super(IndexableTest, self).tearDown()
+        IndexableTest.cleanup_index()
+
+    @requires_django
+    def test_index(self):
+        document = {'id': 1, 'name': 'odin skullcrusher'}
+
+        # Generate the FakeModel in our "database"
+        FakeModel(**document)
+
+        # Index the document with .index()
+        FakeDjangoMappingType.index(document, id_=document['id'])
+
+        IndexableTest.refresh()
+
+        # Query it to make sure it's there.
+        eq_(len(S(FakeDjangoMappingType).query(name__prefix='odin')), 1)
+
+    @requires_django
+    def test_bulk_index(self):
+        documents = [
+            {'id': 1, 'name': 'odin skullcrusher'},
+            {'id': 2, 'name': 'heimdall kneebiter'},
+            {'id': 3, 'name': 'erik rose'}
+            ]
+
+        # Generate the FakeModel in our "database"
+        for doc in documents:
+            FakeModel(**doc)
+
+        # Index the document with .index()
+        FakeDjangoMappingType.bulk_index(documents, id_field='id')
+
+        IndexableTest.refresh()
+
+        # Query it to make sure they're there.
+        eq_(len(S(FakeDjangoMappingType).query(name__prefix='odin')), 1)
+        eq_(len(S(FakeDjangoMappingType).query(name__prefix='erik')), 1)
