@@ -27,8 +27,7 @@ setup(
     author='Mozilla Foundation and contributors',
     license='BSD',
     packages=find_packages(),
-    # TODO: Fix this
-    install_requires=['pyelasticsearch>=0.2'],
+    install_requires=['pyelasticsearch>=0.3'],
     include_package_data=True,
     classifiers=[
         'Development Status :: 4 - Beta',
