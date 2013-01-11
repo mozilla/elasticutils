@@ -40,7 +40,6 @@ Version 0.7: in development
   * takes urls now instead of hosts
   * dump_curl argument is now gone
   * default_indexes argument is gone
-  * new max_retries argument added
 
   The arguments correspond with pyelasticsearch `ElasticSearch`
   object.

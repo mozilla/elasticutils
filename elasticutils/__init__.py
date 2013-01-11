@@ -15,7 +15,6 @@ DEFAULT_URLS = ['http://localhost:9200']
 DEFAULT_DOCTYPES = None
 DEFAULT_INDEXES = None
 DEFAULT_TIMEOUT = 5
-DEFAULT_MAX_RETRIES = 0
 
 
 class ElasticUtilsError(Exception):
@@ -44,16 +43,49 @@ def _split(s):
     return s, None
 
 
-def get_es(urls=None, timeout=DEFAULT_TIMEOUT, max_retries=DEFAULT_MAX_RETRIES,
-           **settings):
-    """Create an ElasticSearch object and return it.
+def _build_key(urls, timeout, **settings):
+    # Order the settings by key and then turn it into a string with
+    # repr. There are a lot of edge cases here, but the worst that
+    # happens is that the key is different and so you get a new
+    # ElasticSearch. We'll probably have to tweak this.
+    settings = sorted(settings.items(), key=lambda item: item[0])
+    settings = repr([(k, v) for k, v in settings])
+
+    # pyelasticsearch allows urls to be a string, so we make sure to
+    # account for that when converting whatever it is into a tuple.
+    if isinstance(urls, basestring):
+        urls = (urls,)
+    else:
+        urls = tuple(urls)
+
+    # Generate a tuple of all the bits and return that as the key
+    # because that's hashable.
+    key = (urls, timeout, settings)
+    return key
+
+
+_cached_elasticsearch = {}
+
+
+def get_es(urls=None, timeout=DEFAULT_TIMEOUT, force_new=False, **settings):
+    """Create a pyelasticsearch `ElasticSearch` object and return it.
+
+    This will aggressively re-use `ElasticSearch` objects with the following
+    rules:
+
+    1. if you pass the same argument values to `get_es()`, then it will return
+       the same `ElasticSearch` object
+    2. if you pass different argument values to `get_es()`, then it will return
+       different `ElasticSearch` object
+    3. it caches each `ElasticSearch` object that gets created
+    4. if you pass in `force_new=True`, then you are guaranteed to get a
+       fresh `ElasticSearch` object AND that object will not be cached
 
     :arg urls: list of uris; ElasticSearch hosts to connect to,
         defaults to ``['http://localhost:9200']``
     :arg timeout: int; the timeout in seconds, defaults to 5
-    :arg max_retries: int; the number of other servers to try, in
-        series, after a request times out or a connection
-        fails. defaults to 0.
+    :arg force_new: Forces get_es() to generate a new ElasticSearch object
+        rather than pulling it from cache.
     :arg settings: other settings to pass into ElasticSearch
         constructor See
         `<http://pyelasticsearch.readthedocs.org/en/latest/api/>`_ for
@@ -62,9 +94,10 @@ def get_es(urls=None, timeout=DEFAULT_TIMEOUT, max_retries=DEFAULT_MAX_RETRIES,
     Examples:
 
     >>> es = get_es()
+    >>> es = get_es()                # Returns cached ElasticSearch object
+    >>> es = get_es(force_new=True)  # Returns a new ElasticSearch object
     >>> es = get_es(urls=['http://localhost:9200'])
     >>> es = get_es(urls=['http://localhost:9200'], timeout=10, max_retries=3)
-
     """
     # Cheap way of de-None-ifying things
     urls = urls or DEFAULT_URLS
@@ -73,8 +106,20 @@ def get_es(urls=None, timeout=DEFAULT_TIMEOUT, max_retries=DEFAULT_MAX_RETRIES,
     if 'hosts' in settings:
         raise DeprecationWarning('"hosts" is deprecated in favor of "urls".')
 
-    return ElasticSearch(urls, timeout=timeout, max_retries=max_retries,
-                         **settings)
+    if not force_new:
+        key = _build_key(urls, timeout, **settings)
+        if key in _cached_elasticsearch:
+            return _cached_elasticsearch[key]
+
+    es = ElasticSearch(urls, timeout=timeout, **settings)
+
+    if not force_new:
+        # We don't need to rebuild the key here since we built it in
+        # the previous if block, so it's in the namespace. Having said
+        # that, this is a little ew.
+        _cached_elasticsearch[key] = es
+
+    return es
 
 
 def _process_filters(filters):
