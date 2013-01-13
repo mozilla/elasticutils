@@ -73,7 +73,7 @@ Version 0.7: in development
 
   ``es_builder()`` was there to get around problems with pyes' ES
   class. The pyelasticsearch `ElasticSearch` class is more
-  straight-forward, so we don't need to do circus shenanigans.
+  straightforward, so we don't need to do circus shenanigans.
 
   You can probably do what you need to with either the ``es()``
   transform or by subclassing `S` and overriding the ``get_es()``
@@ -107,13 +107,20 @@ Version 0.7: in development
 
 * **Django: Indexable.index() method no longer has bulk argument.**
 
-  The Indexable.index() method no longer does bulk indexing. The
+  The `Indexable.index()` method no longer does bulk indexing. The
   way pyes did this was kind of squirrely and caused issues if you
   didn't have the order of operations correct.
 
-  Now Indexable.index() only indexes a single document.
+  Now `Indexable.index()` only indexes a single document.
 
-  TODO: Need a way to do bulk indexing.
+  But wait...
+
+* **Django: Indexable now has bulk_index() .**
+
+  pyes would keep track of all the things you wanted to bulk index
+  and then at some point push them all. Instead of doing it under the
+  hood, we added a separate `bulk_index()` method and now you control
+  how many items get indexed in bulk in one pass.
 
 * **pyes -> pyelasticsearch changes.**
 
