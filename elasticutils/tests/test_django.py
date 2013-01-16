@@ -122,10 +122,6 @@ class ESTest(TestCase):
 
 class QueryTest(ElasticTestCase):
     @classmethod
-    def get_es(cls):
-        return get_es()
-
-    @classmethod
     def setup_class(cls):
         super(QueryTest, cls).setup_class()
         if cls.skip_tests or SKIP_TESTS:
