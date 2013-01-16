@@ -11,7 +11,7 @@ Version 0.6: in development
 
 **API-breaking changes:**
 
-* **values_dict no longer always includes id.**
+* **S.values_dict no longer always includes id.**
 
   ``values_dict`` no longer always includes an 'id' field in the
   fields list if you don't specify it.
@@ -24,7 +24,7 @@ Version 0.6: in development
 
       S().values_dict('name', 'number')
 
-* **values_list no longer always includes id.**
+* **S.values_list no longer always includes id.**
 
   ``values_list`` no longer always includes an 'id' field in the
   fields list if you don't specify it.
@@ -86,6 +86,12 @@ Version 0.6: in development
 * Fixed ``elasticutils.contrib.django.es_required_or_50x``.
 
   It works better now.
+
+* **prefix filter support.**
+
+  ElasticUtils supports prefix filters. You can do this now::
+
+      S().filter(name__prefix='odin')
 
 
 Version 0.5: Released September 4th, 2012

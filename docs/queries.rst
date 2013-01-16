@@ -272,13 +272,14 @@ style field for 'korean'. This is how we find Korean Taco Trucks.
 As with ``query()``, ``filter()`` allow for you to specify field
 actions for the filters:
 
-================  ====================
-field action      elasticsearch filter
-================  ====================
-in                Terms filter
-gt, gte, lt, lte  Range filter
-(no action)       Term filter
-================  ====================
+===================  ====================
+field action         elasticsearch filter
+===================  ====================
+in                   Terms filter
+gt, gte, lt, lte     Range filter
+prefix, startswith   Prefix filter
+(no action)          Term filter
+===================  ====================
 
 
 .. seealso::
@@ -291,6 +292,9 @@ gt, gte, lt, lte  Range filter
 
    http://www.elasticsearch.org/guide/reference/query-dsl/range-filter.html
      ElasticSearch docs for range filter
+
+   http://www.elasticsearch.org/guide/reference/query-dsl/prefix-filter.html
+     ElasticSearch docs for prefix filter
 
    http://www.elasticsearch.org/guide/reference/query-dsl/term-filter.html
      ElasticSearch docs for term filter
