@@ -137,8 +137,9 @@ Version 0.7: in development
   2. write and use your own ``get_es()`` function that returns
      a pyes `ES` object
 
-  Rewriting shouldn't be too hard. The pyelasticsearch documentation
-  is pretty good and for most things, there's a 1-to-1 translation.
+  Rewriting shouldn't be too hard. The `pyelasticsearch documentation
+  <https://pyelasticsearch.readthedocs.org/en/latest/>`_ is pretty good
+  and for most things, there's a 1-to-1 translation.
 
 **Changes:**
 
