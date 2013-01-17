@@ -122,6 +122,16 @@ Version 0.7: in development
   hood, we added a separate `bulk_index()` method and now you control
   how many items get indexed in bulk in one pass.
 
+* **Django: Indexable.refresh_index no longer takes a timeout argument.**
+
+  pyelasticsearch `ElasticSearch.refresh` doesn't take a timesleep
+  argument, so we don't need that anymore.
+
+* **Django: Indexable `es` argument defaults to Indexable.get_es() now.**
+
+  Previously it defaulted to `elasticsearch.contrib.django.get_es()`. Now
+  it defaults to `Indexable.get_es()` class method making it more flexible.
+
 * **pyes -> pyelasticsearch changes.**
 
   If you called ``.get_es()`` and got a pyes `ES` object and did

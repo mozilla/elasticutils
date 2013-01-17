@@ -275,6 +275,10 @@ class IndexableTest(DjangoElasticTestCase):
         IndexableTest.cleanup_index()
 
     @require_django_or_skip
+    def test_refresh(self):
+        FakeDjangoMappingType.refresh_index()
+
+    @require_django_or_skip
     def test_index(self):
         document = {'id': 1, 'name': 'odin skullcrusher'}
 

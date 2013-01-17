@@ -84,6 +84,16 @@ class Indexable(object):
     """
 
     @classmethod
+    def get_es(cls):
+        """Returns an ElasticSearch object
+
+        Override this if you need special functionality.
+        :returns: a pyelasticsearch `ElasticSearch` instance
+
+        """
+        return get_es()
+
+    @classmethod
     def get_mapping(cls):
         """Returns the mapping for this mapping type.
 
@@ -155,8 +165,7 @@ class Indexable(object):
         :arg force_insert: TODO
 
         :arg es: The `ElasticSearch` to use. If you don't specify an
-            `ElasticSearch`, it'll use
-            `elasticutils.contrib.django.get_es()`.
+            `ElasticSearch`, it'll use `cls.get_es()`.
 
         .. Note::
 
@@ -166,7 +175,7 @@ class Indexable(object):
 
         """
         if es is None:
-            es = get_es()
+            es = cls.get_es()
 
         es.index(
             cls.get_index(),
@@ -190,8 +199,7 @@ class Indexable(object):
             id. This defaults to 'id'.
 
         :arg es: The `ElasticSearch` to use. If you don't specify an
-            `ElasticSearch`, it'll use
-            `elasticutils.contrib.django.get_es()`.
+            `ElasticSearch`, it'll use `cls.get_es()`.
 
         .. Note::
 
@@ -201,7 +209,7 @@ class Indexable(object):
 
         """
         if es is None:
-            es = get_es()
+            es = cls.get_es()
 
         es.bulk_index(cls.get_index(),
                       cls.get_mapping_type_name(),
@@ -212,22 +220,32 @@ class Indexable(object):
     def unindex(cls, id_, es=None):
         """Removes a particular item from the search index.
 
-        TODO: document this better.
+        :arg id_: The ElasticSearch id for the document to remove from
+            the index.
+
+        :arg es: The `ElasticSearch` to use. If you don't specify an
+            `ElasticSearch`, it'll use `cls.get_es()`.
 
         """
         if es is None:
-            es = get_es()
+            es = cls.get_es()
 
         es.delete(cls.get_index(), cls.get_mapping_type_name(), id_)
 
     @classmethod
-    def refresh_index(cls, timesleep=0, es=None):
+    def refresh_index(cls, es=None):
         """Refreshes the index.
 
-        TODO: document this better.
+        ElasticSearch will update the index periodically automatically. If you
+        need to see the documents you just indexed in your search results
+        right now, you should call `refresh_index` as soon as you're done
+        indexing. This is particularly helpful for unit tests.
+
+        :arg es: The `ElasticSearch` to use. If you don't specify an
+            `ElasticSearch`, it'll use `cls.get_es()`.
 
         """
         if es is None:
-            es = get_es()
+            es = cls.get_es()
 
-        es.refresh(cls.get_index(), timesleep=timesleep)
+        es.refresh(cls.get_index())
