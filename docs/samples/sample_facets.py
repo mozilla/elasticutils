@@ -14,7 +14,8 @@ DOCTYPE = 'testdoc'
  
 es = get_es(hosts=HOST, default_indexes=[INDEX])
  
-# This uses pyes ES.delete_index_if_exists.
+# This uses pyes ES.delete_index_if_exists to delete the index if it
+# exists.
 es.delete_index_if_exists(INDEX)
  
 # Define the mapping for the doctype 'testdoc'. It's got an id field,
@@ -65,11 +66,18 @@ for mem in [
 
     es.index(mem, INDEX, DOCTYPE, id=mem['id'])
 
-# After indexing, you need to refresh the index. 
+# ElasticSearch will refresh the indexes and make those documents
+# available for querying in a second or so (it's configurable in
+# ElasticSearch), but we want them available right now, so we refresh
+# the index.
 es.refresh(INDEX)
 
-# Let's build a basic S with the important things in it.
-basic_s = S().indexes(INDEX).doctypes(DOCTYPE).values_dict()
+# Let's build a basic S that looks at the right instance of
+# ElasticSearch, index, and doctype.
+basic_s = (S().es(hosts=[HOST])
+              .indexes(INDEX)
+              .doctypes(DOCTYPE)
+              .values_dict())
  
 # Now let's see facet counts for all the products.
 s = basic_s.facet('product')
@@ -90,7 +98,7 @@ print s.query(title__text='cookie').facet_counts()
 #    {u'count': 1, u'term': u'Firefox'}
 #    ]}
 
-# The facet_counts are affected by the query.
+# Note that the facet_counts are affected by the query.
 
 # Let's do a filter for 'flash' in the topic.
 print s.filter(topics='flash').facet_counts()
@@ -101,14 +109,18 @@ print s.filter(topics='flash').facet_counts()
 #    {u'count': 1, u'term': u'Boot2Gecko'}
 #    ]}
 
-# The facet_counts are NOT affected by filters.
+# Note that the facet_counts are NOT affected by filters.
 
-# Let's do a filter for 'flash' in the topic, and specify filtered=True.
+# Let's do a filter for 'flash' in the topic, and specify
+# filtered=True.
 print s.facet('product', filtered=True).filter(topics='flash').facet_counts()
 # Pretty-printed output:
 # {u'product': [
 #    {u'count': 1, u'term': u'Firefox'}
 #    ]}
+
+# Using filtered=True causes the facet_counts to be affected by the
+# filters.
 
 # We've done a bunch of faceting on a field that is not
 # analyzed. Let's look at what happens when we try to use facets on a
