@@ -87,7 +87,7 @@ Version 0.6: Released January 17th, 2013
 
   It works better now.
 
-* **prefix filter support.**
+* prefix filter support.
 
   ElasticUtils supports prefix filters. You can do this now::
 
