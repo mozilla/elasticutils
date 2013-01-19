@@ -15,7 +15,8 @@
 
    1. Run tests.
    2. Build docs.
-   3. Verify all that works.
+   3. Run sample programs in docs.
+   4. Verify all that works.
 
 5. Tag the release::
 
