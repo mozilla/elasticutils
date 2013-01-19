@@ -27,6 +27,7 @@ User's Guide
 
    changelog
    installation
+   quickstart
    queries
    mlt
    es
