@@ -2,7 +2,8 @@ from datetime import datetime, timedelta
 
 from nose.tools import eq_
 
-from elasticutils import F, InvalidFieldActionError, InvalidFacetType
+from elasticutils import (
+    F, InvalidFieldActionError, InvalidFacetType, SearchResults)
 from elasticutils.tests import ElasticTestCase, facet_counts_dict
 
 
@@ -214,6 +215,11 @@ class QueryTest(ElasticTestCase):
         #
         # Figured I'd mention that in case someone was looking at the
         # tests and was like, "Hey--this is missing!"
+
+    def test_execute(self):
+        qs = self.get_s()
+        res = qs.execute()
+        assert isinstance(res, SearchResults)
 
     def test_facet(self):
         qs = self.get_s().facet('tag')

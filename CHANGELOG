@@ -181,6 +181,11 @@ Version 0.7: in development
       from elasticutils import PYELASTICSEARCH_VERSION
       print PYELASTICSEARCH_VERSION
 
+* **S.execute added**
+
+  This allows you to explicitly execute a search and get back a
+  `SearchResults` instance.
+
 
 Version 0.6: Released January 17th, 2013
 ========================================

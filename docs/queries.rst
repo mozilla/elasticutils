@@ -983,11 +983,20 @@ result. For example::
 Results
 =======
 
-By default
-----------
+Lazy loading
+------------
 
-Results are lazy-loaded, so the query will not be made until you try
-to access an item or some other attribute requiring the data.
+The search won't execute until you do one of the following:
+
+1. use the `S` in an iterable context
+2. call the `.execute()`, `.count()` or `.facet_count()` methods
+
+Once you execute the search, then it will cache the results and
+further uses of that `S` will operate on the same results.
+
+
+Results by default
+------------------
 
 If you have a typed `S` (e.g. ``S(MappingType)``), then by default,
 results will be instances of that type.
@@ -1134,6 +1143,8 @@ The S class
        .. automethod:: elasticutils.S.get_doctypes
 
    **Methods that force evaluation**
+
+       .. automethod:: elasticutils.S.execute
 
        .. automethod:: elasticutils.S.count
 

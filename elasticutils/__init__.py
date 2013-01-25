@@ -723,6 +723,19 @@ class S(object):
         log.debug('[%s] %s' % (hits['took'], qs))
         return hits
 
+    def execute(self):
+        """
+        Executes the search. This returns a `SearchResults` object.
+
+        :returns: `SearchResults` instance
+
+        For example:
+
+        >>> s = S().query(name__prefix='Jimmy')
+        >>> results = s.execute()
+        """
+        return self._do_search()
+
     def __iter__(self):
         return iter(self._do_search())
 
@@ -752,7 +765,7 @@ class MLT(object):
     ElasticSearch request unless you force it to by iterating over it
     or getting the length of the search results.
 
-    For example::
+    For example:
 
     >>> mlt = MLT(2034, index='addons_index', doctype='addon')
     >>> num_related_documents = len(mlt)
