@@ -165,6 +165,18 @@ def _process_facets(facets, flags):
 class F(object):
     """
     Filter objects.
+
+    Makes it easier to create filters cumulatively using ``&`` (and),
+    ``|`` (or) and ``~`` (not) operations.
+
+    For example::
+
+        f = F()
+        f &= F(price='Free')
+        f |= F(style='Mexican')
+
+    creates a filter "price = 'Free' or style = 'Mexican'".
+
     """
     def __init__(self, **filters):
         """Creates an F
@@ -337,7 +349,27 @@ class S(object):
         Return a new S instance that returns ListSearchResults.
 
         :arg fields: the list of fields to have in the results.
-            By default this is at least ``['id']``.
+
+            With no arguments, returns a list of tuples of all the
+            data for that document.
+
+            With arguments, returns a list of tuples where the fields
+            in the tuple are in the order specified.
+
+        For example:
+
+        >>> list(S().values_list())
+        [(1, 'fred', 40), (2, 'brian', 30), (3, 'james', 45)]
+        >>> list(S().values_list('id', 'name'))
+        [(1, 'fred'), (2, 'brian'), (3, 'james')]
+        >>> list(S().values_list('name', 'id')
+        [('fred', 1), ('brian', 2), ('james', 3)]
+
+        .. Note::
+
+           If you don't specify fields, the data comes back in an
+           arbitrary order. It's probably best to specify fields or
+           use ``values_dict``.
 
         """
         return self._clone(next_step=('values_list', fields))
@@ -346,9 +378,20 @@ class S(object):
         """
         Return a new S instance that returns DictSearchResults.
 
-        :arg fields: the list of fields to have in the results.  By
-            default, this won't specify fields and thus ElasticSearch
-            will return everything.
+        :arg fields: the list of fields to have in the results.
+
+            With no arguments, this returns a list of dicts with all
+            the fields.
+
+            With arguments, it returns a list of dicts with the
+            specified fields.
+
+        For example:
+
+        >>> list(S().values_dict())
+        [{'id': 1, 'name': 'fred', 'age': 40}, ...]
+        >>> list(S().values_dict('id', 'name')
+        [{'id': 1, 'name': 'fred'}, ...]
 
         """
         return self._clone(next_step=('values_dict', fields))
@@ -879,6 +922,35 @@ class MLT(object):
 
 
 class SearchResults(object):
+    """
+    After executing a search, this is the class that manages the
+    results.
+
+    :property type: the mapping type of the S that created this
+        SearchResults instance
+    :property took: the amount of time the search took
+    :property count: the total results
+    :property results: the raw ElasticSearch search response
+    :property fields: the list of fields specified by values_list
+        or values_dict
+
+    When you iterate over this object, it returns the individual
+    search results in the shape you asked for (object, tuple, dict,
+    etc) in the order returned by ElasticSearch.
+
+    Example::
+
+        s = S().query(bio__text='archaeologist')
+        results = s.execute()
+
+        # Shows how long the search took
+        print results.took
+
+        # Shows the raw ElasticSearch response
+        print results.results
+
+    """
+
     def __init__(self, type, results, fields):
         self.type = type
         self.took = results.get('took', 0)
@@ -906,6 +978,10 @@ class TupleResult(tuple):
 
 
 class DictSearchResults(SearchResults):
+    """
+    SearchResults subclass that returns a results in the form of a
+    dict.
+    """
     def set_objects(self, hits):
         key = 'fields' if self.fields else '_source'
         self.objects = [decorate_with_metadata(DictResult(r[key]), r)
@@ -913,6 +989,10 @@ class DictSearchResults(SearchResults):
 
 
 class ListSearchResults(SearchResults):
+    """
+    SearchResults subclass that returns a results in the form of a
+    tuple.
+    """
     def set_objects(self, hits):
         if self.fields:
             getter = itemgetter(*self.fields)
@@ -979,10 +1059,28 @@ class MappingType(object):
 
     To extend this class:
 
-    1. implement ``get_index``.
+    1. implement ``get_indexes``.
     2. implement ``get_mapping_type_name``.
-    3. if this ties back to a model, implement ``get_model``
-       and possibly also ``get_object``.
+    3. if this ties back to a model, implement ``get_model`` and
+       possibly also ``get_object``.
+
+    For example::
+
+        class ContactType(MappingType):
+            @classmethod
+            def get_indexes(cls):
+                return 'contacts_index'
+
+            @classmethod
+            def get_mapping_type_name(cls):
+                return 'contact_type'
+
+            @classmethod
+            def get_model(cls):
+                return ContactModel
+
+            def get_object(self):
+                return self.get_model().get(id=self._id)
 
     """
     def __init__(self):
@@ -1028,6 +1126,10 @@ class MappingType(object):
         """
         return self.get_model().get(id=self._id)
 
+
+    # TODO: Should this be "get_indexes" or "get_index"? Probably
+    # the latter.
+
     @classmethod
     def get_indexes(cls):
         """Returns the indexes to use for this mapping type.
@@ -1035,12 +1137,13 @@ class MappingType(object):
         You can specify the indexes to use for this mapping type.
         This affects ``S`` built with this type.
 
-        By default, this is ["default"].
+        By default, raises NotImplementedError.
 
-        Override this if you want something different.
+        Override this to return the index this mapping type should
+        be indexed and searched in.
 
         """
-        return DEFAULT_INDEXES
+        raise NotImplementedError()
 
     @classmethod
     def get_mapping_type_name(cls):
@@ -1049,12 +1152,12 @@ class MappingType(object):
         You can specify the mapping type name (also sometimes called the
         document type) with this method.
 
-        By default, this is None.
+        By default, raises NotImplementedError.
 
-        Override this if you want something different.
+        Override this to return the mapping type name.
 
         """
-        return DEFAULT_DOCTYPES
+        raise NotImplementedError()
 
     @classmethod
     def get_model(cls):
