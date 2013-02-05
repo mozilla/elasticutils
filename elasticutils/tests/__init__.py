@@ -89,10 +89,10 @@ class ElasticTestCase(TestCase):
             es.delete_index(cls.index_name)
         except pyelasticsearch.exceptions.ElasticHttpNotFoundError:
             pass
-        if settings == None:
-            settings = {}
-        else:
+        if settings:
             settings = {'settings': settings}
+        else:
+            settings = {}
         es.create_index(cls.index_name, **settings)
 
     @classmethod
