@@ -20,7 +20,8 @@ class QueryTest(ElasticTestCase):
                 {'id': 2, 'foo': 'bart', 'tag': 'boring', 'width': '7'},
                 {'id': 3, 'foo': 'car', 'tag': 'awesome', 'width': '5'},
                 {'id': 4, 'foo': 'duck', 'tag': 'boat', 'width': '11'},
-                {'id': 5, 'foo': 'train car', 'tag': 'awesome', 'width': '7'}
+                {'id': 5, 'foo': 'train car', 'tag': 'awesome', 'width': '7'},
+                {'id': 6, 'foo': 'caboose', 'tag': 'end', 'width': None}
             ])
         cls.refresh()
 
@@ -29,7 +30,7 @@ class QueryTest(ElasticTestCase):
         eq_(len(self.get_s().query(foo='car')), 2)
 
     def test_q_all(self):
-        eq_(len(self.get_s()), 5)
+        eq_(len(self.get_s()), 6)
 
     def test_q_term(self):
         eq_(len(self.get_s().query(foo='car')), 2)
@@ -42,8 +43,8 @@ class QueryTest(ElasticTestCase):
         eq_(len(self.get_s().query(foo__text='car')), 2)
 
     def test_q_prefix(self):
-        eq_(len(self.get_s().query(foo__prefix='ca')), 2)
-        eq_(len(self.get_s().query(foo__startswith='ca')), 2)
+        eq_(len(self.get_s().query(foo__prefix='ca')), 3)
+        eq_(len(self.get_s().query(foo__startswith='ca')), 3)
 
     def test_q_text_phrase(self):
         # Doing a text query for the two words in either order kicks up
@@ -93,7 +94,7 @@ class QueryTest(ElasticTestCase):
         eq_(len(self.get_s().filter(F() & F(tag='awesome'))), 3)
         eq_(len(self.get_s().filter(F() | F() | F(tag='awesome'))), 3)
         eq_(len(self.get_s().filter(F() & F() & F(tag='awesome'))), 3)
-        eq_(len(self.get_s().filter(F())), 5)
+        eq_(len(self.get_s().filter(F())), 6)
 
     def test_filter(self):
         eq_(len(self.get_s().filter(tag='awesome')), 3)
@@ -120,10 +121,10 @@ class QueryTest(ElasticTestCase):
                                      F(tag='boring'))), 2)
 
     def test_filter_not(self):
-        eq_(len(self.get_s().filter(~F(tag='awesome'))), 2)
-        eq_(len(self.get_s().filter(~(F(tag='boring') | F(tag='boat')))), 3)
-        eq_(len(self.get_s().filter(~F(tag='boat')).filter(~F(foo='bar'))), 3)
-        eq_(len(self.get_s().filter(~F(tag='boat', foo='barf'))), 5)
+        eq_(len(self.get_s().filter(~F(tag='awesome'))), 3)
+        eq_(len(self.get_s().filter(~(F(tag='boring') | F(tag='boat')))), 4)
+        eq_(len(self.get_s().filter(~F(tag='boat')).filter(~F(foo='bar'))), 4)
+        eq_(len(self.get_s().filter(~F(tag='boat', foo='barf'))), 6)
 
     def test_filter_in(self):
         eq_(len(self.get_s().filter(foo__in=['car', 'bar'])), 3)
@@ -131,6 +132,9 @@ class QueryTest(ElasticTestCase):
     def test_filter_bad_field_action(self):
         with self.assertRaises(InvalidFieldActionError):
             len(self.get_s().filter(F(tag__faux='awesome')))
+
+    def test_filter_on_none(self):
+        eq_(len(self.get_s().filter(width=None)), 1)
 
     def test_f_mutation_with_and(self):
         """Make sure AND doesn't mutate operands."""
@@ -223,7 +227,8 @@ class QueryTest(ElasticTestCase):
 
     def test_facet(self):
         qs = self.get_s().facet('tag')
-        eq_(facet_counts_dict(qs, 'tag'), dict(awesome=3, boring=1, boat=1))
+        eq_(facet_counts_dict(qs, 'tag'),
+            dict(awesome=3, boring=1, boat=1, end=1))
 
     def test_filtered_facet(self):
         qs = self.get_s().query(foo='car').filter(width=5)
@@ -245,12 +250,12 @@ class QueryTest(ElasticTestCase):
 
         # facet applies to all of corpus
         eq_(facet_counts_dict(qs.facet('tag', global_=True), 'tag'),
-            dict(awesome=3, boring=1, boat=1))
+            dict(awesome=3, boring=1, boat=1, end=1))
 
     def test_facet_raw(self):
         qs = self.get_s().facet_raw(tags={'terms': {'field': 'tag'}})
         eq_(facet_counts_dict(qs, 'tags'),
-            dict(awesome=3, boring=1, boat=1))
+            dict(awesome=3, boring=1, boat=1, end=1))
 
         qs = (self.get_s()
               .query(foo='car')
@@ -265,7 +270,7 @@ class QueryTest(ElasticTestCase):
               .facet('tag')
               .facet_raw(tag={'terms': {'field': 'tag'}, 'global': True}))
         eq_(facet_counts_dict(qs, 'tag'),
-            dict(awesome=3, boring=1, boat=1))
+            dict(awesome=3, boring=1, boat=1, end=1))
 
     def test_order_by(self):
         res = self.get_s().filter(tag='awesome').order_by('-width')
