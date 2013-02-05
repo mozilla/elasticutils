@@ -87,92 +87,6 @@ class QueryTest(ElasticTestCase):
         with self.assertRaises(InvalidFieldActionError):
             len(self.get_s().query(foo__foo='awesome'))
 
-    def test_filter_empty_f(self):
-        eq_(len(self.get_s().filter(F() | F(tag='awesome'))), 3)
-        eq_(len(self.get_s().filter(F() & F(tag='awesome'))), 3)
-        eq_(len(self.get_s().filter(F() | F() | F(tag='awesome'))), 3)
-        eq_(len(self.get_s().filter(F() & F() & F(tag='awesome'))), 3)
-        eq_(len(self.get_s().filter(F())), 5)
-
-    def test_filter(self):
-        eq_(len(self.get_s().filter(tag='awesome')), 3)
-        eq_(len(self.get_s().filter(F(tag='awesome'))), 3)
-
-    def test_filter_and(self):
-        eq_(len(self.get_s().filter(tag='awesome', foo='bar')), 1)
-        eq_(len(self.get_s().filter(tag='awesome').filter(foo='bar')), 1)
-        eq_(len(self.get_s().filter(F(tag='awesome') & F(foo='bar'))), 1)
-
-    def test_filter_or(self):
-        eq_(len(self.get_s().filter(F(tag='awesome') | F(tag='boat'))), 4)
-
-    def test_filter_or_3(self):
-        eq_(len(self.get_s().filter(F(tag='awesome') | F(tag='boat') |
-                                     F(tag='boring'))), 5)
-        eq_(len(self.get_s().filter(or_={'foo': 'bar',
-                                          'or_': {'tag': 'boat',
-                                                  'width': '5'}
-                                          })), 3)
-
-    def test_filter_complicated(self):
-        eq_(len(self.get_s().filter(F(tag='awesome', foo='bar') |
-                                     F(tag='boring'))), 2)
-
-    def test_filter_not(self):
-        eq_(len(self.get_s().filter(~F(tag='awesome'))), 2)
-        eq_(len(self.get_s().filter(~(F(tag='boring') | F(tag='boat')))), 3)
-        eq_(len(self.get_s().filter(~F(tag='boat')).filter(~F(foo='bar'))), 3)
-        eq_(len(self.get_s().filter(~F(tag='boat', foo='barf'))), 5)
-
-    def test_filter_in(self):
-        eq_(len(self.get_s().filter(foo__in=['car', 'bar'])), 3)
-
-    def test_filter_bad_field_action(self):
-        with self.assertRaises(InvalidFieldActionError):
-            len(self.get_s().filter(F(tag__faux='awesome')))
-
-    def test_f_mutation_with_and(self):
-        """Make sure AND doesn't mutate operands."""
-        f1 = F(fielda='tag', fieldb='boat')
-        f2 = F(fieldc='car')
-
-        f1 & f2
-        # Should only contain f1 filters.
-        eq_(sorted(f1.filters['and']),
-            sorted([{'term': {'fielda': 'tag'}},
-                    {'term': {'fieldb': 'boat'}}]))
-
-        # Should only contain f2 filters.
-        eq_(f2.filters, {'term': {'fieldc': 'car'}})
-
-    def test_f_mutation_with_or(self):
-        """Make sure OR doesn't mutate operands."""
-        f1 = F(fielda='tag', fieldb='boat')
-        f2 = F(fieldc='car')
-
-        f1 | f2
-        # Should only contain f1 filters.
-        eq_(sorted(f1.filters['and']),
-            sorted([{'term': {'fielda': 'tag'}},
-                    {'term': {'fieldb': 'boat'}}]))
-
-        # Should only contain f2 filters.
-        eq_(f2.filters, {'term': {'fieldc': 'car'}})
-
-    def test_f_mutation_with_not(self):
-        """Make sure NOT doesn't mutate operands."""
-        f1 = F(fielda='tag')
-        f2 = ~f1
-
-        # Change f2 to see if it changes f1.
-        f2.filters['not']['filter']['term']['fielda'] = 'boat'
-
-        # Should only contain f1 filters.
-        eq_(f1.filters, {'term': {'fielda': 'tag'}})
-
-        # Should only contain f2 tweaked filter.
-        eq_(f2.filters, {'not': {'filter': {'term': {'fielda': 'boat'}}}})
-
     def test_boost(self):
         """Boosted queries shouldn't raise a SearchPhaseExecutionException."""
         # Note: There isn't an assertion here--we just want to make
@@ -359,6 +273,126 @@ class QueryTest(ElasticTestCase):
         # Set it back to no fields and no highlight.
         s = s.highlight(None)
         eq_(list(s)[0]._highlight, {})
+
+
+class FilterTest(ElasticTestCase):
+    @classmethod
+    def setup_class(cls):
+        super(FilterTest, cls).setup_class()
+        if cls.skip_tests:
+            return
+
+        cls.create_index(settings={
+                'mappings': {
+                    ElasticTestCase.mapping_type_name: {
+                        'properties': {
+                            'id': {'type': 'integer'},
+                            'foo': {'type': 'string'},
+                            'tag': {'type': 'string'},
+                            'width': {'type': 'string', 'null_value': True}
+                            }
+                        }
+                    }
+                })
+
+        cls.index_data([
+                {'id': 1, 'foo': 'bar', 'tag': 'awesome', 'width': '2'},
+                {'id': 2, 'foo': 'bart', 'tag': 'boring', 'width': '7'},
+                {'id': 3, 'foo': 'car', 'tag': 'awesome', 'width': '5'},
+                {'id': 4, 'foo': 'duck', 'tag': 'boat', 'width': '11'},
+                {'id': 5, 'foo': 'train car', 'tag': 'awesome', 'width': '7'},
+                {'id': 6, 'foo': 'caboose', 'tag': 'end', 'width': None}
+            ])
+        cls.refresh()
+
+    def test_filter_empty_f(self):
+        eq_(len(self.get_s().filter(F() | F(tag='awesome'))), 3)
+        eq_(len(self.get_s().filter(F() & F(tag='awesome'))), 3)
+        eq_(len(self.get_s().filter(F() | F() | F(tag='awesome'))), 3)
+        eq_(len(self.get_s().filter(F() & F() & F(tag='awesome'))), 3)
+        eq_(len(self.get_s().filter(F())), 6)
+
+    def test_filter(self):
+        eq_(len(self.get_s().filter(tag='awesome')), 3)
+        eq_(len(self.get_s().filter(F(tag='awesome'))), 3)
+
+    def test_filter_and(self):
+        eq_(len(self.get_s().filter(tag='awesome', foo='bar')), 1)
+        eq_(len(self.get_s().filter(tag='awesome').filter(foo='bar')), 1)
+        eq_(len(self.get_s().filter(F(tag='awesome') & F(foo='bar'))), 1)
+
+    def test_filter_or(self):
+        eq_(len(self.get_s().filter(F(tag='awesome') | F(tag='boat'))), 4)
+
+    def test_filter_or_3(self):
+        eq_(len(self.get_s().filter(F(tag='awesome') | F(tag='boat') |
+                                     F(tag='boring'))), 5)
+        eq_(len(self.get_s().filter(or_={'foo': 'bar',
+                                          'or_': {'tag': 'boat',
+                                                  'width': '5'}
+                                          })), 3)
+
+    def test_filter_complicated(self):
+        eq_(len(self.get_s().filter(F(tag='awesome', foo='bar') |
+                                     F(tag='boring'))), 2)
+
+    def test_filter_not(self):
+        eq_(len(self.get_s().filter(~F(tag='awesome'))), 3)
+        eq_(len(self.get_s().filter(~(F(tag='boring') | F(tag='boat')))), 4)
+        eq_(len(self.get_s().filter(~F(tag='boat')).filter(~F(foo='bar'))), 4)
+        eq_(len(self.get_s().filter(~F(tag='boat', foo='barf'))), 6)
+
+    def test_filter_in(self):
+        eq_(len(self.get_s().filter(foo__in=['car', 'bar'])), 3)
+
+    def test_filter_bad_field_action(self):
+        with self.assertRaises(InvalidFieldActionError):
+            len(self.get_s().filter(F(tag__faux='awesome')))
+
+    def test_filter_on_none(self):
+        eq_(len(self.get_s().filter(width=None)), 1)
+
+    def test_f_mutation_with_and(self):
+        """Make sure AND doesn't mutate operands."""
+        f1 = F(fielda='tag', fieldb='boat')
+        f2 = F(fieldc='car')
+
+        f1 & f2
+        # Should only contain f1 filters.
+        eq_(sorted(f1.filters['and']),
+            sorted([{'term': {'fielda': 'tag'}},
+                    {'term': {'fieldb': 'boat'}}]))
+
+        # Should only contain f2 filters.
+        eq_(f2.filters, {'term': {'fieldc': 'car'}})
+
+    def test_f_mutation_with_or(self):
+        """Make sure OR doesn't mutate operands."""
+        f1 = F(fielda='tag', fieldb='boat')
+        f2 = F(fieldc='car')
+
+        f1 | f2
+        # Should only contain f1 filters.
+        eq_(sorted(f1.filters['and']),
+            sorted([{'term': {'fielda': 'tag'}},
+                    {'term': {'fieldb': 'boat'}}]))
+
+        # Should only contain f2 filters.
+        eq_(f2.filters, {'term': {'fieldc': 'car'}})
+
+    def test_f_mutation_with_not(self):
+        """Make sure NOT doesn't mutate operands."""
+        f1 = F(fielda='tag')
+        f2 = ~f1
+
+        # Change f2 to see if it changes f1.
+        f2.filters['not']['filter']['term']['fielda'] = 'boat'
+
+        # Should only contain f1 filters.
+        eq_(f1.filters, {'term': {'fielda': 'tag'}})
+
+        # Should only contain f2 tweaked filter.
+        eq_(f2.filters, {'not': {'filter': {'term': {'fielda': 'boat'}}}})
 
 
 class FacetTest(ElasticTestCase):

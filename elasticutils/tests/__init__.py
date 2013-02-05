@@ -67,7 +67,7 @@ class ElasticTestCase(TestCase):
         return s.indexes(cls.index_name).doctypes(cls.mapping_type_name)
 
     @classmethod
-    def create_index(cls):
+    def create_index(cls, settings=None):
         es = cls.get_es()
         try:
             es.delete_index_if_exists(cls.index_name)
@@ -75,7 +75,12 @@ class ElasticTestCase(TestCase):
             # pyes 0.15 throws an IndexMissingException despite the
             # fact that the method should allow for that.
             pass
-        es.create_index(cls.index_name)
+        if settings:
+            settings = {'settings': settings}
+        else:
+            settings = {}
+
+        es.create_index(cls.index_name, **settings)
 
     @classmethod
     def index_data(cls, data, index=None, doctype=None, create_index=False):

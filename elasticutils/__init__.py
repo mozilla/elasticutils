@@ -104,9 +104,12 @@ def _process_filters(filters):
             key, val = f
             key, field_action = _split(key)
             if key == 'or_':
-                rv.append({'or':_process_filters(val.items())})
+                rv.append({'or': _process_filters(val.items())})
             elif field_action is None:
-                rv.append({'term': {key: val}})
+                if val is None:
+                    rv.append({'missing': {'field': key, "null_value": True}})
+                else:
+                    rv.append({'term': {key: val}})
             elif field_action in ('startswith', 'prefix'):
                 rv.append({'prefix': {key: val}})
             elif field_action == 'in':
