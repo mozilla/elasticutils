@@ -10,10 +10,14 @@ from elasticutils import get_es, S
 class ElasticTestCase(TestCase):
     """Superclass for ElasticSearch-using test cases.
 
-    :cvar index_name: string; name of the index to use
-    :cvar skip_tests: bool; if ElasticSearch isn't available, then
-        this is True and therefore tests should be skipped for this
-        class
+    :property index_name: name of the index to use
+    :property mapping_type_name: the mapping type name
+    :property es_settings: settings to use to build an ElasticSearch
+        object.
+    :property mapping: the mapping to use when creating an index
+    :property data: any data to add to the index in setup_class
+    :property skip_tests: if ElasticSearch isn't available, then this
+        is True and therefore tests should be skipped for this class
 
     For examples of usage, see the other ``test_*.py`` files.
 
@@ -23,7 +27,8 @@ class ElasticTestCase(TestCase):
     es_settings = {
         'urls': ['http://localhost:9200']
         }
-
+    mapping = {}
+    data = []
     skip_tests = False
 
     @classmethod
@@ -38,6 +43,11 @@ class ElasticTestCase(TestCase):
             get_es().health()
         except pyelasticsearch.exceptions.ConnectionError:
             cls.skip_tests = True
+
+        if cls.data:
+            cls.create_index(settings={'mappings': cls.mapping})
+            cls.index_data(cls.data)
+            cls.refresh()
 
     @classmethod
     def teardown_class(cls):
@@ -73,23 +83,24 @@ class ElasticTestCase(TestCase):
                  .doctypes(cls.mapping_type_name))
 
     @classmethod
-    def create_index(cls):
+    def create_index(cls, settings=None):
         es = cls.get_es()
         try:
             es.delete_index(cls.index_name)
         except pyelasticsearch.exceptions.ElasticHttpNotFoundError:
             pass
-        es.create_index(cls.index_name)
+        if settings == None:
+            settings = {}
+        else:
+            settings = {'settings': settings}
+        es.create_index(cls.index_name, **settings)
 
     @classmethod
-    def index_data(cls, data, index=None, doctype=None, create_index=False):
+    def index_data(cls, data, index=None, doctype=None):
         index = index or cls.index_name
         doctype = doctype or cls.mapping_type_name
 
         es = cls.get_es()
-
-        if create_index:
-            cls.create_index()
 
         # TODO: change this to a bulk index
         for item in data:
