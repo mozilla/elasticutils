@@ -17,7 +17,7 @@ def index_objects(model, ids, **kw):
 
         @receiver(dbsignals.post_save, sender=MyModel)
         def update_search_index(sender, instance, **kw):
-            from elasticutils import tasks
+            from elasticutils.contrib.django import tasks
             tasks.index_objects.delay(sender, [instance.id])
 
     """
