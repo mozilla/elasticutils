@@ -72,6 +72,7 @@ def es_required_or_50x(disabled_template='elasticutils/501.html',
       Returned when any of the following exceptions are thrown:
 
       * pyelasticsearch.exceptions.ConnectionError
+      * pyelasticsearch.exceptions.ElasticHttpError
       * pyelasticsearch.exceptions.ElasticHttpNotFoundError
       * pyelasticsearch.exceptions.Timeout
 
@@ -120,6 +121,7 @@ def es_required_or_50x(disabled_template='elasticutils/501.html',
                 return fun(request, *args, **kw)
 
             except (pyelasticsearch.exceptions.ConnectionError,
+                    pyelasticsearch.exceptions.ElasticHttpError,
                     pyelasticsearch.exceptions.ElasticHttpNotFoundError,
                     pyelasticsearch.exceptions.Timeout) as exc:
                 response = render(request, error_template, {'error': exc})
