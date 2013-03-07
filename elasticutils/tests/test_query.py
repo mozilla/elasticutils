@@ -424,6 +424,40 @@ class FacetTest(ElasticTestCase):
                         for item in qs.facet_counts()['created1']]
         eq_(sorted(facet_counts), [2, 3])
 
+    def test_facet_date_histogram(self):
+        """facet_raw with normal histogram works."""
+
+        FacetTest.create_index()
+        FacetTest.index_data([
+                {'id': 1, 'value': 1},
+                {'id': 2, 'value': 1},
+                {'id': 3, 'value': 1},
+                {'id': 4, 'value': 2},
+                {'id': 5, 'value': 2},
+                {'id': 6, 'value': 3},
+                {'id': 7, 'value': 3},
+                {'id': 8, 'value': 3},
+                {'id': 9, 'value': 4},
+            ])
+        FacetTest.refresh()
+
+        qs = (self.get_s()
+              .facet_raw(created1={
+                    'histogram': {
+                        'interval': 2, 'field': 'value'
+                        }
+                    }))
+
+        data = qs.facet_counts()
+        eq_(data, {
+                u'created1': [
+                    {u'key': 0, u'count': 3},
+                    {u'key': 2, u'count': 5},
+                    {u'key': 4, u'count': 1},
+                ]
+            })
+
+
     def test_invalid_field_type(self):
         """Invalid _type should raise InvalidFacetType."""
         FacetTest.create_index()
@@ -433,12 +467,14 @@ class FacetTest(ElasticTestCase):
             ])
         FacetTest.refresh()
 
-        # Note: This uses histogram. If we implement handling for
-        # that, then we need to pick another facet type to fail on or
-        # do the right thing and mock the test.
+        # Note: This uses a statistcal facet. If we implement handling
+        # for that, then we need to pick another facet type to fail on
+        # or do the right thing and mock the test.
+        # Note: This used to use a histogram facet, but that was
+        # implemented.
         self.assertRaises(
             InvalidFacetType,
             lambda: (self.get_s()
                      .facet_raw(created1={
-                        'histogram': {'field': 'age', 'interval': 10}})
+                        'statistical': {'field': 'age'}})
                      .facet_counts()))

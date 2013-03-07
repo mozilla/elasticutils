@@ -720,6 +720,8 @@ class S(object):
                 facets[key] = [v for v in val['ranges']]
             elif val['_type'] == 'date_histogram':
                 facets[key] = [v for v in val['entries']]
+            elif val['_type'] == 'histogram':
+                facets[key] = [v for v in val['entries']]
             else:
                 raise InvalidFacetType(
                     'Facet _type "%s". key "%s" val "%r"' %
