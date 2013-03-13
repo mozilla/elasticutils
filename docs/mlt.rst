@@ -30,9 +30,6 @@ criteria. For example::
     mlt = MLT(2034, s=s)
 
 
-You can specify which fields to use with the `fields` argument. If you
-don't, then ElasticSearch will use all the fields.
-
 You can specify additional parameters. See the `documentation on the
 moreLikeThis query
 <http://www.elasticsearch.org/guide/reference/query-dsl/mlt-query.html>`_.
