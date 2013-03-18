@@ -173,8 +173,11 @@ each search result.
 S can be sliced
 ---------------
 
-:py:class:`elasticutils.S` supports slicing allowing you to get back
-only the results you're looking for.
+By default ElasticSearch gives you the first 10 results.
+
+If you want something different than that, :py:class:`elasticutils.S`
+supports slicing allowing you to get back the specific results you're
+looking for.
 
 For example::
 
@@ -182,6 +185,7 @@ For example::
 
     results = some_s[:10]    # returns first 10 results
     results = some_s[10:20]  # returns results 10 through 19
+
 
 The slicing is chainable, too::
 
@@ -195,6 +199,12 @@ The slicing is chainable, too::
 
    The slice happens on the ElasticSearch side---it doesn't pull all
    the results back and then slice them in Python. Ew.
+
+
+.. seealso::
+
+   http://www.elasticsearch.org/guide/reference/api/search/from-size.html
+     ElasticSearch from / size documentation
 
 
 S is lazy
