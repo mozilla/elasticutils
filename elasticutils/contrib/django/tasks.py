@@ -21,6 +21,18 @@ def index_objects(mapping_type, ids, **kw):
             from elasticutils.contrib.django import tasks
             tasks.index_objects.delay(MyMappingType, [instance.id])
 
+
+    .. Warning::
+
+       This uses bulk indexing. If you pass in, say, 10,000 ids
+       then it will build a single list of 10,000 documents and
+       then bulk index them all at once.
+
+       Therefore, you want to do the chunking. If you have 10,000
+       documents to index, you should create `x` celery tasks with `y`
+       sized chunks each where `y` is whatever you think is an
+       appropriate number.
+
     """
     if settings.ES_DISABLED:
         return
