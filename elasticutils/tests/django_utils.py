@@ -28,6 +28,7 @@ class FakeModel(object):
     objects = Manager()
 
     def __init__(self, **kw):
+        self._doc = kw
         for key in kw:
             setattr(self, key, kw[key])
         _model_cache.append(self)
@@ -37,3 +38,11 @@ class FakeDjangoMappingType(DjangoMappingType, Indexable):
     @classmethod
     def get_model(cls):
         return FakeModel
+
+    @classmethod
+    def extract_document(cls, obj_id, obj=None):
+        if obj is None:
+            raise ValueError('I\'m a dumb mock object and I have no idea '
+                             'what to do with these args.')
+
+        return obj._doc

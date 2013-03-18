@@ -23,8 +23,10 @@ try:
 
     from elasticutils.contrib.django import (
         S, F, get_es, InvalidFieldActionError)
+    from elasticutils.contrib.django.tasks import (
+        index_objects, unindex_objects)
     from elasticutils.tests.django_utils import (
-        FakeDjangoMappingType, FakeModel)
+        FakeDjangoMappingType, FakeModel, reset_model_cache)
 except ImportError:
     SKIP_TESTS = True
 
@@ -313,3 +315,56 @@ class IndexableTest(DjangoElasticTestCase):
         # Query it to make sure they're there.
         eq_(len(S(FakeDjangoMappingType).query(name__prefix='odin')), 1)
         eq_(len(S(FakeDjangoMappingType).query(name__prefix='erik')), 1)
+
+
+def require_celery_or_skip(fun):
+    @wraps(fun)
+    def _require_celery_or_skip(*args, **kwargs):
+        try:
+            import celery
+        except ImportError:
+            raise SkipTest
+        return fun(*args, **kwargs)
+    return _require_celery_or_skip
+
+
+class TestTasks(DjangoElasticTestCase):
+    index_name = 'elasticutilstest'
+
+    @classmethod
+    def get_es(cls):
+        return get_es()
+
+    def setUp(self):
+        super(TestTasks, self).setUp()
+        if self.skip_tests or SKIP_TESTS:
+            return
+        TestTasks.create_index()
+        reset_model_cache()
+
+    def tearDown(self):
+        super(TestTasks, self).tearDown()
+        if self.skip_tests or SKIP_TESTS:
+            return
+        TestTasks.cleanup_index()
+
+    @require_celery_or_skip
+    def test_tasks(self):
+        documents = [
+            {'id': 1, 'name': 'odin skullcrusher'},
+            {'id': 2, 'name': 'heimdall kneebiter'},
+            {'id': 3, 'name': 'erik rose'}
+            ]
+
+        for doc in documents:
+            FakeModel(**doc)
+
+        # Test index_objects task
+        index_objects(FakeDjangoMappingType, [1, 2, 3])
+        FakeDjangoMappingType.refresh_index()
+        eq_(FakeDjangoMappingType.search().count(), 3)
+
+        # Test unindex_objects task
+        unindex_objects(FakeDjangoMappingType, [1, 2, 3])
+        FakeDjangoMappingType.refresh_index()
+        eq_(FakeDjangoMappingType.search().count(), 0)
