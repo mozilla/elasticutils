@@ -191,6 +191,11 @@ Version 0.7: in development
   This allows you to explicitly execute a search and get back a
   `SearchResults` instance.
 
+* **S.all added**
+
+  Allows you to get **all** the search results possible. This is
+  dangerous, so it's been documented with lots of warnings.
+
 
 Version 0.6: Released January 17th, 2013
 ========================================
