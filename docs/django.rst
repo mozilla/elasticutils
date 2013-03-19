@@ -276,20 +276,44 @@ Writing tests
 
 :Requirements: Django, test_utils, nose
 
+When writing test cases for your ElasticUtils-using code, you'll want
+to do a few things:
+
+1. Default ``ES_DISABLED`` to True. This way, the tests that kick off
+   creating data but aren't testing search-specific things don't
+   additionally index stuff. That'll save you a bunch of test time.
+
+2. When testing ElasticUtils things, override the settings and set
+   ``ES_DISABLED`` to False.
+
+3. Use an ``ElasticSearchTestCase`` that sets up the indexes before
+   tests run and tears them down after they run.
+
+4. When testing, make sure you use an index name that's unique. You
+   don't want to run your tests and have them affect your production
+   index.
+
 In `elasticutils.contrib.django.estestcase`, is
 `ElasticSearchTestCase` which can be subclassed in your app's test
-cases.
+cases. It's pretty basic. If it's not what you want, you should write
+your own or subclass it.
 
 It does the following:
 
-* If `ES_URLS` is empty it raises a `SkipTest`.
-* `self.es` is available from the `ElasticSearchTestCase` class and
-  any subclasses.
+* If ``ES_URLS`` is empty or nonexistent, it skips each individual
+  test.
+* If ElasticSearch specified by ``ES_URLS`` can't be connected to, then it
+  skips each individual test.
+* Overrides ``ES_DISABLED`` to True and ``ES_INDEXES`` to index names
+  that have "estest" appended to them so you're not stomping on
+  production indexes.
+* ``self.es`` is available from the ``ElasticSearchTestCase`` class
+  and any subclasses.
 * At the end of the test case the index is wiped.
 
-Example::
+Example usage::
 
-    from elasticutils.djangolib import ElasticSearchTestCase
+    from elasticutils.contrib.django.estestcaseimport ElasticSearchTestCase
 
 
     class TestQueries(ElasticSearchTestCase):
