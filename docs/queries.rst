@@ -213,8 +213,9 @@ S is lazy
 The search won't execute until you do one of the following:
 
 1. use the :py:class:`elasticutils.S` in an iterable context
-2. calling :py:func:`len` on an :py:class:`elasticutils.S`
+2. call :py:func:`len` on a :py:class:`elasticutils.S`
 3. call the :py:meth:`elasticutils.S.execute`,
+   :py:meth:`elasticutils.S.all`,
    :py:meth:`elasticutils.S.count` or
    :py:meth:`elasticutils.S.facet_counts` methods
 
@@ -1026,7 +1027,8 @@ That translates to::
 Counts: ``count``
 =================
 
-Total hits can be found by using :py:meth:`elasticutils.S.count()`. For example::
+Total hits can be found by using :py:meth:`elasticutils.S.count()`.
+For example::
 
     q = S().query(title='taco trucks')
     count = q.count()
@@ -1035,7 +1037,8 @@ Total hits can be found by using :py:meth:`elasticutils.S.count()`. For example:
 .. Note::
 
    Don't use Python's ``len`` built-in on the `S` instance if you want
-   the number of documents in your index that matches your search.
+   the total number of documents in your index that matches your
+   search.
 
    This::
 
@@ -1159,9 +1162,15 @@ The S class
 
    **Methods that force evaluation**
 
-       .. automethod:: elasticutils.S.execute
+       .. automethod:: elasticutils.S.__iter__
+
+       .. automethod:: elasticutils.S.__len__
+
+       .. automethod:: elasticutils.S.all
 
        .. automethod:: elasticutils.S.count
+
+       .. automethod:: elasticutils.S.execute
 
        .. automethod:: elasticutils.S.facet_counts
 

@@ -489,18 +489,6 @@ class S(object):
                 new.steps.append((key, vals))
         return new
 
-    def count(self):
-        """
-        Return the number of hits for the search as an integer.
-        """
-        if self._results_cache:
-            return self._results_cache.count
-        else:
-            return self[:0].raw()['hits']['total']
-
-    def __len__(self):
-        return len(self._do_search())
-
     def __getitem__(self, k):
         new = self._clone()
         # TODO: validate numbers and ranges
@@ -769,9 +757,79 @@ class S(object):
         log.debug('[%s] %s' % (hits['took'], qs))
         return hits
 
+    def count(self):
+        """
+        Executes search and returns number of results as an integer.
+
+        :returns: integer
+
+        For example:
+
+        >>> s = S().query(name__prefix='Jimmy')
+        >>> count = s.count()
+
+        """
+        if self._results_cache:
+            return self._results_cache.count
+        else:
+            return self[:0].raw()['hits']['total']
+
+    def __len__(self):
+        """
+        Executes search and returns the number of results you'd get.
+
+        Executes search and returns number of results as an integer.
+
+        :returns: integer
+
+        For example:
+
+        >>> s = S().query(name__prefix='Jimmy')
+        >>> count = len(s)
+        >>> results = s().execute()
+        >>> count = len(results)
+        True
+
+        .. Note::
+
+           This is very different than calling ``.count()``. If you
+           call ``.count()`` you get the total number of results
+           that ElasticSearch thinks matches your search. If you call
+           ``len(s)``, then you get the number of results you'd get
+           if you executed the search. This factors in slices and
+           default from and size values.
+
+        """
+        return len(self._do_search())
+
+    def all(self):
+        """
+        Executes search and returns ALL search results.
+
+        :returns: `SearchResults` instance
+
+        For example:
+
+        >>> s = S().query(name__prefix='Jimmy')
+        >>> all_results = s.all()
+
+        .. Warning::
+
+           This returns ALL search results. The way it does this is by
+           calling ``.count()`` first to figure out how many to return,
+           then by slicing by that size and returning a list of ALL
+           search results.
+
+           Don't use this if you've got 1000s of results!
+
+        """
+        count = self.count()
+        return self[:count].execute()
+
+
     def execute(self):
         """
-        Executes the search. This returns a `SearchResults` object.
+        Executes search and returns a `SearchResults` object.
 
         :returns: `SearchResults` instance
 
@@ -783,12 +841,34 @@ class S(object):
         return self._do_search()
 
     def __iter__(self):
+        """
+        Executes search and returns an iterator of results.
+
+        :returns: iterator of results
+
+        For example:
+
+        >>> s = S().query(name__prefix='Jimmy')
+        >>> for obj in s.execute():
+        ...     print obj['id']
+        ...
+
+        """
         return iter(self._do_search())
 
     def _raw_facets(self):
         return self._do_search().results.get('facets', {})
 
     def facet_counts(self):
+        """
+        Executes search and returns facet counts.
+
+        Example:
+
+        >>> s = S().query(name__prefix='Jimmy')
+        >>> facet_counts = s.facet_counts()
+
+        """
         facets = {}
         for key, val in self._raw_facets().items():
             if val['_type'] == 'terms':

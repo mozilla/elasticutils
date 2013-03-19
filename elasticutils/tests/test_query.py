@@ -123,9 +123,16 @@ class QueryTest(ElasticTestCase):
         # tests and was like, "Hey--this is missing!"
 
     def test_execute(self):
-        qs = self.get_s()
-        res = qs.execute()
-        assert isinstance(res, SearchResults)
+        assert isinstance(self.get_s().execute(), SearchResults)
+
+    def test_count(self):
+        assert isinstance(self.get_s().count(), int)
+
+    def test_len(self):
+        assert isinstance(len(self.get_s()), int)
+
+    def test_all(self):
+        assert isinstance(self.get_s().all(), SearchResults)
 
     def test_order_by(self):
         res = self.get_s().filter(tag='awesome').order_by('-width')
