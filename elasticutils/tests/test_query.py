@@ -360,7 +360,7 @@ class FacetNoDataTest(ElasticTestCase):
                         for item in qs.facet_counts()['created1']]
         eq_(sorted(facet_counts), [2, 3])
 
-    def test_facet_date_histogram(self):
+    def test_facet_normal_histogram(self):
         """facet_raw with normal histogram works."""
 
         FacetTest.create_index()
@@ -392,7 +392,6 @@ class FacetNoDataTest(ElasticTestCase):
                     {u'key': 4, u'count': 1},
                 ]
             })
-
 
     def test_invalid_field_type(self):
         """Invalid _type should raise InvalidFacetType."""
