@@ -313,7 +313,7 @@ It does the following:
 
 Example usage::
 
-    from elasticutils.contrib.django.estestcaseimport ElasticSearchTestCase
+    from elasticutils.contrib.django.estestcase import ElasticSearchTestCase
 
 
     class TestQueries(ElasticSearchTestCase):
