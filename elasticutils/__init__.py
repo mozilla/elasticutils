@@ -37,7 +37,7 @@ class BadSearch(ElasticUtilsError):
     pass
 
 
-def _split(s):
+def _split_field_action(s):
     if '__' in s:
         return s.rsplit('__', 1)
     return s, None
@@ -130,7 +130,7 @@ def _process_filters(filters):
                 rv.append(f.filters)
         else:
             key, val = f
-            key, field_action = _split(key)
+            key, field_action = _split_field_action(key)
             if key == 'or_':
                 rv.append({'or': _process_filters(val.items())})
             elif field_action is None:
@@ -631,7 +631,7 @@ class S(object):
         value = dict(value)
         or_ = value.pop('or_', [])
         for key, val in value.items():
-            field_name, field_action = _split(key)
+            field_name, field_action = _split_field_action(key)
 
             # Boost by name__action overrides boost by name.
             boost = self.field_boosts.get(key)
