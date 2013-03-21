@@ -9,11 +9,20 @@ from elasticutils import F, InvalidFieldActionError
 try:
     from django.conf import settings
     from django.shortcuts import render
+    from django.utils.decorators import decorator_from_middleware_with_args
 except ImportError:
     pass
 
 
 log = logging.getLogger('elasticutils')
+
+
+ES_EXCEPTIONS = (
+    pyelasticsearch.exceptions.ConnectionError,
+    pyelasticsearch.exceptions.ElasticHttpError,
+    pyelasticsearch.exceptions.ElasticHttpNotFoundError,
+    pyelasticsearch.exceptions.Timeout
+)
 
 
 def get_es(**overrides):
@@ -58,12 +67,8 @@ def es_required(fun):
     return wrapper
 
 
-def es_required_or_50x(disabled_template='elasticutils/501.html',
-                       error_template='elasticutils/503.html'):
-    """Wrap a Django view and handle ElasticSearch errors.
-
-    This wraps a Django view and returns 501 or 503 status codes and
-    pages if things go awry.
+class ESExceptionMiddleware(object):
+    """Middleware to handle ElasticSearch errors.
 
     HTTP 501
       Returned when ``ES_DISABLED`` is True.
@@ -80,57 +85,65 @@ def es_required_or_50x(disabled_template='elasticutils/501.html',
 
       * error: A string version of the exception thrown.
 
-    :arg disabled_template: The template to use when ES_DISABLED is
-        True.
+    :arg disabled_template: The template to use when ES_DISABLED is True.
 
         Defaults to ``elasticutils/501.html``.
+
     :arg error_template: The template to use when ElasticSearch isn't
         working properly, is missing an index, or something along
         those lines.
 
         Defaults to ``elasticutils/503.html``.
 
-
-    Examples::
-
-        # This creates a home_view and decorates it to use the
-        # default templates.
-
-        @es_required_or_50x()
-        def home_view(request):
-            ...
-
-
-        # This creates a search_view and overrides the templates
-
-        @es_required_or_50x(disabled_template='search/es_disabled.html',
-                            error_template('search/es_down.html')
-        def search_view(request):
-            ...
-
     """
-    def wrap(fun):
-        @wraps(fun)
-        def wrapper(request, *args, **kw):
-            if getattr(settings, 'ES_DISABLED', False):
-                response = render(request, disabled_template)
-                response.status_code = 501
-                return response
 
-            try:
-                return fun(request, *args, **kw)
+    def __init__(self, disabled_template=None, error_template=None):
+        self.disabled_template = (
+            disabled_template or 'elasticutils/501.html')
+        self.error_template = (
+            error_template or 'elasticutils/503.html')
 
-            except (pyelasticsearch.exceptions.ConnectionError,
-                    pyelasticsearch.exceptions.ElasticHttpError,
-                    pyelasticsearch.exceptions.ElasticHttpNotFoundError,
-                    pyelasticsearch.exceptions.Timeout) as exc:
-                response = render(request, error_template, {'error': exc})
-                response.status_code = 503
-                return response
+    def process_request(self, request):
+        if getattr(settings, 'ES_DISABLED', False):
+            response = render(request, self.disabled_template)
+            response.status_code = 501
+            return response
 
-        return wrapper
+    def process_exception(self, request, exception):
+        if issubclass(exception.__class__, ES_EXCEPTIONS):
+            response = render(request, self.error_template,
+                              {'error': exception})
+            response.status_code = 503
+            return response
 
-    return wrap
+
+"""
+The following decorator wraps a Django view and handles ElasticSearch errors.
+
+This wraps a Django view and returns 501 or 503 status codes and
+pages if things go awry.
+
+See the above middleware for explanation of the arguments.
+
+Examples::
+
+    # This creates a home_view and decorates it to use the
+    # default templates.
+
+    @es_required_or_50x()
+    def home_view(request):
+        ...
+
+
+    # This creates a search_view and overrides the templates
+
+    @es_required_or_50x(disabled_template='search/es_disabled.html',
+                        error_template('search/es_down.html')
+    def search_view(request):
+        ...
+
+"""
+es_required_or_50x = decorator_from_middleware_with_args(ESExceptionMiddleware)
 
 
 class S(elasticutils.S):
