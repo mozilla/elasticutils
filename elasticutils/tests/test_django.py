@@ -252,13 +252,6 @@ class QueryTest(DjangoElasticTestCase):
         res = S(FakeDjangoMappingType).filter(tag='awesome').order_by('-width')
         eq_([d.id for d in res], [5, 3, 1])
 
-    @require_django_or_skip
-    def test_repr(self):
-        res = S(FakeDjangoMappingType)[:2]
-        list_ = list(res)
-
-        eq_(repr(list_), repr(res))
-
 
 class IndexableTest(DjangoElasticTestCase):
     index_name = 'elasticutilstest'

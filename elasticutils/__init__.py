@@ -37,12 +37,6 @@ class BadSearch(ElasticUtilsError):
     pass
 
 
-def _split_field_action(s):
-    if '__' in s:
-        return s.rsplit('__', 1)
-    return s, None
-
-
 def _build_key(urls, timeout, **settings):
     # Order the settings by key and then turn it into a string with
     # repr. There are a lot of edge cases here, but the worst that
@@ -70,34 +64,41 @@ _cached_elasticsearch = {}
 def get_es(urls=None, timeout=DEFAULT_TIMEOUT, force_new=False, **settings):
     """Create a pyelasticsearch `ElasticSearch` object and return it.
 
-    This will aggressively re-use `ElasticSearch` objects with the following
-    rules:
+    This will aggressively re-use `ElasticSearch` objects with the
+    following rules:
 
-    1. if you pass the same argument values to `get_es()`, then it will return
-       the same `ElasticSearch` object
-    2. if you pass different argument values to `get_es()`, then it will return
-       different `ElasticSearch` object
+    1. if you pass the same argument values to `get_es()`, then it
+       will return the same `ElasticSearch` object
+    2. if you pass different argument values to `get_es()`, then it
+       will return different `ElasticSearch` object
     3. it caches each `ElasticSearch` object that gets created
-    4. if you pass in `force_new=True`, then you are guaranteed to get a
-       fresh `ElasticSearch` object AND that object will not be cached
+    4. if you pass in `force_new=True`, then you are guaranteed to get
+       a fresh `ElasticSearch` object AND that object will not be
+       cached
 
     :arg urls: list of uris; ElasticSearch hosts to connect to,
         defaults to ``['http://localhost:9200']``
     :arg timeout: int; the timeout in seconds, defaults to 5
-    :arg force_new: Forces get_es() to generate a new ElasticSearch object
-        rather than pulling it from cache.
+    :arg force_new: Forces get_es() to generate a new ElasticSearch
+        object rather than pulling it from cache.
     :arg settings: other settings to pass into ElasticSearch
         constructor See
         `<http://pyelasticsearch.readthedocs.org/en/latest/api/>`_ for
         more details.
 
-    Examples:
+    Examples::
 
-    >>> es = get_es()
-    >>> es = get_es()                # Returns cached ElasticSearch object
-    >>> es = get_es(force_new=True)  # Returns a new ElasticSearch object
-    >>> es = get_es(urls=['http://localhost:9200'])
-    >>> es = get_es(urls=['http://localhost:9200'], timeout=10, max_retries=3)
+        # Returns cached ElasticSearch object
+        es = get_es()
+
+        # Returns a new ElasticSearch object
+        es = get_es(force_new=True)
+
+        es = get_es(urls=['http://localhost:9200'])
+
+        es = get_es(urls=['http://localhost:9200'], timeout=10,
+                    max_retries=3)
+
     """
     # Cheap way of de-None-ifying things
     urls = urls or DEFAULT_URLS
@@ -122,6 +123,22 @@ def get_es(urls=None, timeout=DEFAULT_TIMEOUT, force_new=False, **settings):
     return es
 
 
+def split_field_action(s):
+    """Takes a string and splits it into field and action
+
+    Example::
+
+    >>> split_field_action('foo__bar')
+    'foo', 'bar'
+    >>> split_field_action('foo')
+    'foo', None
+
+    """
+    if '__' in s:
+        return s.rsplit('__', 1)
+    return s, None
+
+
 def _process_filters(filters):
     rv = []
     for f in filters:
@@ -130,7 +147,7 @@ def _process_filters(filters):
                 rv.append(f.filters)
         else:
             key, val = f
-            key, field_action = _split_field_action(key)
+            key, field_action = split_field_action(key)
             if key == 'or_':
                 rv.append({'or': _process_filters(val.items())})
             elif field_action is None:
@@ -197,6 +214,9 @@ class F(object):
         else:
             self.filters = {}
 
+    def __repr__(self):
+        return repr(self.filters)
+
     def _combine(self, other, conn='and'):
         """
         OR and AND will create a new F, with the filters from both F
@@ -238,10 +258,6 @@ class F(object):
         else:
             f.filters = {'not': {'filter': self_filters}}
         return f
-
-
-# Number of results to show before truncating when repr(S)
-REPR_OUTPUT_SIZE = 20
 
 
 def _boosted_value(name, action, key, value, boost):
@@ -296,10 +312,13 @@ class S(object):
         self._results_cache = None
 
     def __repr__(self):
-        data = list(self)[:REPR_OUTPUT_SIZE + 1]
-        if len(data) > REPR_OUTPUT_SIZE:
-            data[-1] = "...(remaining elements truncated)..."
-        return repr(data)
+        try:
+            return '<S {0}>'.format(repr(self._build_query()))
+        except RuntimeError:
+            # This happens when you're debugging _build_query and try
+            # to repr the instance you're calling it on. Then that
+            # calls _build_query and ...
+            return repr(self.steps)
 
     def _clone(self, next_step=None):
         new = self.__class__(self.type)
@@ -414,8 +433,27 @@ class S(object):
 
     def filter(self, *filters, **kw):
         """
-        Return a new S instance with filter args combined with
-        existing set.
+        existing set with AND.
+
+        :arg filters: this will be instances of F
+        :arg kw: this will be in the form of ``field__action=value``
+
+        Examples::
+
+        >>> s = S().filter(foo='bar')
+        >>> s = S().filter(F(foo='bar'))
+        >>> s = S().filter(foo='bar', bat='baz')
+        >>> s = S().filter(foo='bar').filter(bat='baz')
+
+        By default, everything is combined using AND. If you provide
+        multiple filters in a single filter call, those are ANDed
+        together. If you provide multiple filters in multiple filter
+        calls, those are ANDed together.
+
+        If you want something different, use the F class which supports
+        ``&`` (and), ``|`` (or) and ``~`` (not) operators. Then call
+        filter once with the resulting F instance.
+
         """
         return self._clone(next_step=('filter', list(filters) + kw.items()))
 
@@ -631,7 +669,7 @@ class S(object):
         value = dict(value)
         or_ = value.pop('or_', [])
         for key, val in value.items():
-            field_name, field_action = _split_field_action(key)
+            field_name, field_action = split_field_action(key)
 
             # Boost by name__action overrides boost by name.
             boost = self.field_boosts.get(key)

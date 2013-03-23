@@ -138,12 +138,6 @@ class QueryTest(ElasticTestCase):
         res = self.get_s().filter(tag='awesome').order_by('-width')
         eq_([d['id'] for d in res], [5, 3, 1])
 
-    def test_repr(self):
-        res = self.get_s()[:2]
-        list_ = list(res)
-
-        eq_(repr(list_), repr(res))
-
     def test_explain(self):
         qs = self.get_s().query(foo='car')
 
