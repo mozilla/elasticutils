@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from nose.tools import eq_
 
 from elasticutils import (
-    F, InvalidFieldActionError, InvalidFacetType, SearchResults)
+    S, F, InvalidFieldActionError, InvalidFacetType, SearchResults)
 from elasticutils.tests import ElasticTestCase, facet_counts_dict
 
 
@@ -182,11 +182,34 @@ class FilterTest(ElasticTestCase):
         ]
 
     def test_filter_empty_f(self):
-        eq_(len(self.get_s().filter(F() | F(tag='awesome'))), 3)
-        eq_(len(self.get_s().filter(F() & F(tag='awesome'))), 3)
-        eq_(len(self.get_s().filter(F() | F() | F(tag='awesome'))), 3)
-        eq_(len(self.get_s().filter(F() & F() & F(tag='awesome'))), 3)
-        eq_(len(self.get_s().filter(F())), 6)
+        s = self.get_s().filter(F())
+        eq_(s._build_query(), {})
+        eq_(s.count(), 6)
+
+    def test_filter_empty_f_or_f(self):
+        s = self.get_s().filter(F() | F(tag='awesome'))
+        eq_(s._build_query(), {'filter': {'term': {'tag': 'awesome'}}})
+        eq_(s.count(), 3)
+
+    def test_filter_empty_f_and_f(self):
+        s = self.get_s().filter(F() & F(tag='awesome'))
+        eq_(s._build_query(), {'filter': {'term': {'tag': 'awesome'}}})
+        eq_(s.count(), 3)
+
+    def test_filter_empty_f_or_empty_f_or_f(self):
+        s = self.get_s().filter(F() | F() | F(tag='awesome'))
+        eq_(s._build_query(), {'filter': {'term': {'tag': 'awesome'}}})
+        eq_(s.count(), 3)
+
+    def test_filter_empty_f_and_empty_f_and_f(self):
+        s = self.get_s().filter(F() & F() & F(tag='awesome'))
+        eq_(s._build_query(), {'filter': {'term': {'tag': 'awesome'}}})
+        eq_(s.count(), 3)
+
+    def test_filter_empty_f_not(self):
+        s = self.get_s().filter(~F())
+        eq_(s._build_query(), {})
+        eq_(s.count(), 6)
 
     def test_filter(self):
         eq_(len(self.get_s().filter(tag='awesome')), 3)
@@ -198,25 +221,94 @@ class FilterTest(ElasticTestCase):
         eq_(len(self.get_s().filter(F(tag='awesome') & F(foo='bar'))), 1)
 
     def test_filter_or(self):
-        eq_(len(self.get_s().filter(F(tag='awesome') | F(tag='boat'))), 4)
+        s = self.get_s().filter(F(tag='awesome') | F(tag='boat'))
+        eq_(s.count(), 4)
 
     def test_filter_or_3(self):
-        eq_(len(self.get_s().filter(F(tag='awesome') | F(tag='boat') |
-                                     F(tag='boring'))), 5)
-        eq_(len(self.get_s().filter(or_={'foo': 'bar',
-                                          'or_': {'tag': 'boat',
-                                                  'width': '5'}
-                                          })), 3)
+        s = self.get_s().filter(F(tag='awesome') | F(tag='boat') |
+                                F(tag='boring'))
+        eq_(s._build_query(), {
+                'filter': {
+                    'or': [
+                        {'term': {'tag': 'awesome'}},
+                        {'term': {'tag': 'boat'}},
+                        {'term': {'tag': 'boring'}}
+                    ]
+                }
+        })
+        eq_(s.count(), 5)
+
+        # This is kind of a crazy case.
+        s = self.get_s().filter(or_={'foo': 'bar',
+                                     'or_': {'tag': 'boat', 'width': 5}})
+        eq_(s._build_query(), {
+                'filter': {
+                    'or': [
+                        {'or': [
+                                {'term': {'width': 5}},
+                                {'term': {'tag': 'boat'}}
+                        ]},
+                        {'term': {'foo': 'bar'}}
+                    ]
+                }
+        })
+        eq_(s.count(), 3)
 
     def test_filter_complicated(self):
         eq_(len(self.get_s().filter(F(tag='awesome', foo='bar') |
                                      F(tag='boring'))), 2)
 
     def test_filter_not(self):
-        eq_(len(self.get_s().filter(~F(tag='awesome'))), 3)
-        eq_(len(self.get_s().filter(~(F(tag='boring') | F(tag='boat')))), 4)
-        eq_(len(self.get_s().filter(~F(tag='boat')).filter(~F(foo='bar'))), 4)
-        eq_(len(self.get_s().filter(~F(tag='boat', foo='barf'))), 6)
+        s = self.get_s().filter(~F(tag='awesome'))
+        eq_(s._build_query(), {
+                'filter': {
+                    'not': {
+                        'filter': {'term': {'tag': 'awesome'}}
+                    }
+                }
+        })
+        eq_(s.count(), 3)
+
+        s = self.get_s().filter(~(F(tag='boring') | F(tag='boat')))
+        eq_(s._build_query(), {
+                'filter': {
+                    'not': {
+                        'filter': {
+                            'or': [
+                                {'term': {'tag': 'boring'}},
+                                {'term': {'tag': 'boat'}}
+                            ]
+                        }
+                    }
+                }
+        })
+        eq_(s.count(), 4)
+
+        s = self.get_s().filter(~F(tag='boat')).filter(~F(foo='bar'))
+        eq_(s._build_query(), {
+                'filter': {
+                    'and': [
+                        {'not': {'filter': {'term': {'tag': 'boat'}}}},
+                        {'not': {'filter': {'term': {'foo': 'bar'}}}}
+                    ]
+                }
+        })
+        eq_(s.count(), 4)
+
+        s = self.get_s().filter(~F(tag='boat', foo='barf'))
+        eq_(s._build_query(), {
+                'filter': {
+                    'not': {
+                        'filter': {
+                            'and': [
+                                {'term': {'foo': 'barf'}},
+                                {'term': {'tag': 'boat'}}
+                            ]
+                        }
+                    }
+                }
+        })
+        eq_(s.count(), 6)
 
     def test_filter_in(self):
         eq_(len(self.get_s().filter(foo__in=['car', 'bar'])), 3)
@@ -235,12 +327,11 @@ class FilterTest(ElasticTestCase):
 
         f1 & f2
         # Should only contain f1 filters.
-        eq_(sorted(f1.filters['and']),
-            sorted([{'term': {'fielda': 'tag'}},
-                    {'term': {'fieldb': 'boat'}}]))
+        eq_(sorted(f1.filters[0]['and']),
+            sorted([('fielda', 'tag'), ('fieldb', 'boat')]))
 
         # Should only contain f2 filters.
-        eq_(f2.filters, {'term': {'fieldc': 'car'}})
+        eq_(f2.filters, [('fieldc', 'car')])
 
     def test_f_mutation_with_or(self):
         """Make sure OR doesn't mutate operands."""
@@ -249,12 +340,11 @@ class FilterTest(ElasticTestCase):
 
         f1 | f2
         # Should only contain f1 filters.
-        eq_(sorted(f1.filters['and']),
-            sorted([{'term': {'fielda': 'tag'}},
-                    {'term': {'fieldb': 'boat'}}]))
+        eq_(sorted(f1.filters[0]['and']),
+            sorted([('fielda', 'tag'), ('fieldb', 'boat')]))
 
         # Should only contain f2 filters.
-        eq_(f2.filters, {'term': {'fieldc': 'car'}})
+        eq_(f2.filters, [('fieldc', 'car')])
 
     def test_f_mutation_with_not(self):
         """Make sure NOT doesn't mutate operands."""
@@ -262,13 +352,26 @@ class FilterTest(ElasticTestCase):
         f2 = ~f1
 
         # Change f2 to see if it changes f1.
-        f2.filters['not']['filter']['term']['fielda'] = 'boat'
+        f2.filters[0]['not']['filter'] = [('fielda', 'boat')]
 
         # Should only contain f1 filters.
-        eq_(f1.filters, {'term': {'fielda': 'tag'}})
+        eq_(f1.filters, [('fielda', 'tag')])
 
         # Should only contain f2 tweaked filter.
-        eq_(f2.filters, {'not': {'filter': {'term': {'fielda': 'boat'}}}})
+        eq_(f2.filters, [{'not': {'filter': [('fielda', 'boat')]}}])
+
+    def test_funkyfilter(self):
+        """Test implementing filter processors"""
+        class FunkyS(S):
+            def process_filter_funkyfilter(self, key, val, field_action):
+                return {'funkyfilter': {'field': key, 'value': val}}
+
+        s = FunkyS().filter(foo__funkyfilter='bar')
+        eq_(s._build_query(), {
+                'filter': {
+                    'funkyfilter': {'field': 'foo', 'value': 'bar'}
+                }
+        })
 
 
 class FacetTest(ElasticTestCase):

@@ -139,34 +139,6 @@ def split_field_action(s):
     return s, None
 
 
-def _process_filters(filters):
-    rv = []
-    for f in filters:
-        if isinstance(f, F):
-            if f.filters:
-                rv.append(f.filters)
-        else:
-            key, val = f
-            key, field_action = split_field_action(key)
-            if key == 'or_':
-                rv.append({'or': _process_filters(val.items())})
-            elif field_action is None:
-                if val is None:
-                    rv.append({'missing': {'field': key, "null_value": True}})
-                else:
-                    rv.append({'term': {key: val}})
-            elif field_action in ('startswith', 'prefix'):
-                rv.append({'prefix': {key: val}})
-            elif field_action == 'in':
-                rv.append({'in': {key: val}})
-            elif field_action in ('gt', 'gte', 'lt', 'lte'):
-                rv.append({'range': {key: {field_action: val}}})
-            else:
-                raise InvalidFieldActionError(
-                    '%s is not a valid field action' % field_action)
-    return rv
-
-
 def _process_facets(facets, flags):
     rv = {}
     for fieldname in facets:
@@ -197,6 +169,9 @@ class F(object):
 
     creates a filter "price = 'Free' or style = 'Mexican'".
 
+    :property filters: a list of the filters in this F; filters are
+        either a dict or (key, val) tuple
+
     """
     def __init__(self, **filters):
         """Creates an F
@@ -205,17 +180,14 @@ class F(object):
             valid
 
         """
-        if filters:
-            items = _process_filters(filters.items())
-            if len(items) > 1:
-                self.filters = {'and': items}
-            else:
-                self.filters = items[0]
+        filters = filters.items()
+        if len(filters) > 1:
+            self.filters = [{'and': filters}]
         else:
-            self.filters = {}
+            self.filters = filters
 
     def __repr__(self):
-        return repr(self.filters)
+        return '<F {0}>'.format(self.filters)
 
     def _combine(self, other, conn='and'):
         """
@@ -231,14 +203,14 @@ class F(object):
             f.filters = other_filters
         elif not other.filters:
             f.filters = self_filters
-        elif conn in self.filters:
+        elif conn in self.filters[0]:
             f.filters = self_filters
-            f.filters[conn].append(other_filters)
-        elif conn in other.filters:
+            f.filters[0][conn].extend(other_filters)
+        elif conn in other.filters[0]:
             f.filters = other_filters
-            f.filters[conn].append(self_filters)
+            f.filters[0][conn].extend(self_filters)
         else:
-            f.filters = {conn: [self_filters, other_filters]}
+            f.filters = [{conn: self_filters + other_filters}]
 
         return f
 
@@ -251,12 +223,14 @@ class F(object):
     def __invert__(self):
         f = F()
         self_filters = copy.deepcopy(self.filters)
-        if (len(self_filters) < 2
+        if len(self_filters) == 0:
+            f.filters = []
+        elif (len(self_filters) < 2
             and 'not' in self_filters
             and 'filter' in self_filters['not']):
             f.filters = self_filters['not']['filter']
         else:
-            f.filters = {'not': {'filter': self_filters}}
+            f.filters = [{'not': {'filter': self_filters}}]
         return f
 
 
@@ -295,6 +269,24 @@ class S(object):
     search request until it's forced to evaluate by either iterating
     over it, calling ``.count``, doing ``len(s)``, or calling
     ``.facet_count``.
+
+    **Adding filter support**
+
+    You can add support for filters that S doesn't have support for by
+    subclassing S with a method called ``process_filter_ACTION``.
+    This method takes a key, value and an action.
+
+    For example::
+
+        claass FunkyS(S):
+            def process_filter_funkyfilter(self, key, val, action):
+                return {'funkyfilter': {'field': key, 'value': val}}
+
+
+    Then you can use that just like other actions::
+
+        s = FunkyS().filter(F(foo__funkyfilter='bar'))
+        s = FunkyS().filter(foo__funkyfilter='bar')
 
     """
     def __init__(self, type_=None):
@@ -433,6 +425,7 @@ class S(object):
 
     def filter(self, *filters, **kw):
         """
+        Return a new S instance with filter args combined with
         existing set with AND.
 
         :arg filters: this will be instances of F
@@ -453,6 +446,12 @@ class S(object):
         If you want something different, use the F class which supports
         ``&`` (and), ``|`` (or) and ``~`` (not) operators. Then call
         filter once with the resulting F instance.
+
+        See the documentation on :py:class:`elasticutils.F` for more
+        details on composing filters with F.
+
+        See the documentation on :py:class:`elasticutils.S` for adding
+        support for additional actions.
 
         """
         return self._clone(next_step=('filter', list(filters) + kw.items()))
@@ -581,7 +580,7 @@ class S(object):
             elif action == 'demote':
                 demote = (value[0], self._process_queries(value[1]))
             elif action == 'filter':
-                filters.extend(_process_filters(value))
+                filters.extend(self._process_filters(value))
             elif action == 'facet':
                 # value here is a (args, kwargs) tuple
                 facets.update(_process_facets(*value))
@@ -663,6 +662,73 @@ class S(object):
                'order': 'score'}
         ret.update(options)
         return ret
+
+    def _process_filters(self, filters):
+        """Takes a list of filters and returns ES JSON API
+
+        :arg filters: list of F, (key, val) tuples, or dicts
+
+        :returns: list of ES JSON API filters
+
+        """
+        rv = []
+        for f in filters:
+            if isinstance(f, F):
+                if f.filters:
+                    rv.extend(self._process_filters(f.filters))
+                    continue
+
+            elif isinstance(f, dict):
+                key = f.keys()[0]
+                val = f[key]
+                key = key.strip('_')
+
+                if key not in ('or', 'and', 'not', 'filter'):
+                    raise InvalidFieldActionError(
+                        '%s is not a valid connector' % f.keys()[0])
+
+                if 'filter' in val:
+                    filter_filters = self._process_filters(val['filter'])
+                    if len(filter_filters) == 1:
+                        filter_filters = filter_filters[0]
+                    rv.append({key: {'filter': filter_filters}})
+                else:
+                    rv.append({key: self._process_filters(val)})
+
+            else:
+                key, val = f
+                key, field_action = split_field_action(key)
+                handler_name = 'process_filter_{0}'.format(field_action)
+
+                if field_action and hasattr(self, handler_name):
+                    rv.append(getattr(self, handler_name)(
+                            key, val, field_action))
+
+                elif key.strip('_') in ('or', 'and', 'not'):
+                    connector = key.strip('_')
+                    rv.append({connector: self._process_filters(val.items())})
+
+                elif field_action is None:
+                    if val is None:
+                        rv.append({'missing': {
+                                    'field': key, "null_value": True}})
+                    else:
+                        rv.append({'term': {key: val}})
+
+                elif field_action in ('startswith', 'prefix'):
+                    rv.append({'prefix': {key: val}})
+
+                elif field_action == 'in':
+                    rv.append({'in': {key: val}})
+
+                elif field_action in ('gt', 'gte', 'lt', 'lte'):
+                    rv.append({'range': {key: {field_action: val}}})
+
+                else:
+                    raise InvalidFieldActionError(
+                        '%s is not a valid field action' % field_action)
+
+        return rv
 
     def _process_queries(self, value):
         rv = []
