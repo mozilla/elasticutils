@@ -12,6 +12,12 @@ Project details
 Code:
     http://github.com/mozilla/elasticutils
 
+    Our unit tests are run by Travis CI every time we commit to the
+    master branch.
+
+    .. image:: https://secure.travis-ci.org/mozilla/elasticutils.png?branch=master
+       :target: http://travis-ci.org/mozilla/elasticutils
+
 Documentation:
     http://elasticutils.rtfd.org
 
