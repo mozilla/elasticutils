@@ -11,7 +11,8 @@ try:
     from django.shortcuts import render
     from django.utils.decorators import decorator_from_middleware_with_args
 except ImportError:
-    pass
+    def decorator_from_middleware_with_args(func):
+        return func
 
 
 log = logging.getLogger('elasticutils')
