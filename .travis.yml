@@ -14,7 +14,7 @@ notifications:
 install:
     - virtualenv .
     - ./bin/pip install -r requirements-dev.txt
-    - [ $DJANGO = "true" ] && bin/pip install -r requirements-django.txt || echo
+    - "[ $DJANGO = true ] && bin/pip install -r requirements-django.txt || echo"
 
 script:
     - ./bin/python run_tests.py
