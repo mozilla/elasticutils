@@ -33,6 +33,11 @@ try:
 except ImportError:
     SKIP_TESTS = True
 
+    def override_settings(*args, **kw):
+        def wrapper(func):
+            return func
+        return wrapper
+
 
 def require_django_or_skip(fun):
     @wraps(fun)
@@ -370,6 +375,8 @@ class MiddlewareTest(DjangoElasticTestCase):
 
     def setUp(self):
         super(MiddlewareTest, self).setUp()
+        if self.skip_tests or SKIP_TESTS:
+            return
 
         def view(request, exc):
             raise exc
@@ -377,12 +384,14 @@ class MiddlewareTest(DjangoElasticTestCase):
         self.func = view
         self.fake_request = RequestFactory().get('/')
 
+    @require_django_or_skip
     def test_exceptions(self):
         for exc in ES_EXCEPTIONS:
             response = ESExceptionMiddleware().process_exception(
                 self.fake_request, exc(Exception))
             eq_(response.status_code, 503)
 
+    @require_django_or_skip
     @override_settings(ES_DISABLED=True)
     def test_es_disabled(self):
         response = ESExceptionMiddleware().process_request(self.fake_request)
@@ -393,6 +402,8 @@ class DecoratorTest(DjangoElasticTestCase):
 
     def setUp(self):
         super(DecoratorTest, self).setUp()
+        if self.skip_tests or SKIP_TESTS:
+            return
 
         @es_required_or_50x()
         def view(request, exc):
@@ -401,11 +412,13 @@ class DecoratorTest(DjangoElasticTestCase):
         self.func = view
         self.fake_request = RequestFactory().get('/')
 
+    @require_django_or_skip
     def test_exceptions(self):
         for exc in ES_EXCEPTIONS:
             response = self.func(self.fake_request, exc(Exception))
             eq_(response.status_code, 503)
 
+    @require_django_or_skip
     @override_settings(ES_DISABLED=True)
     def test_es_disabled(self):
         response = self.func(self.fake_request)
