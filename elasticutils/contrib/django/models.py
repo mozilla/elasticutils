@@ -11,7 +11,7 @@ class DjangoMappingType(MappingType):
 
     """
     def get_object(self):
-        return self.get_model().get(pk=self._id)
+        return self.get_model().objects.get(pk=self._id)
 
     @classmethod
     def get_model(cls):
