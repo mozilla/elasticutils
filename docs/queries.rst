@@ -250,25 +250,54 @@ documentation for details.
 Mapping types
 =============
 
-:py:class:`elasticutils.MappingType` lets you specify the instance
-type for search results you get back from ElasticSearch searches. You
-can additionally relate a MappingType to a database model allowing you
-to link documents in the ElasticSearch index back to database objects
-in a lazy-loading way.
-
-Creating a MappingType lets you specify the index and doctype easily.
-It also lets you tie business logic to your search results.
+:py:class:`elasticutils.MappingType` gives you a way to centralize
+concerns regarding documents you're storing in your ElasticSearch
+index. When you do searches with MappingTypes, you get back those
+results as an iterable of MappingTypes by default.
 
 For example, say you had a description field and wanted to have a
-truncated version of it::
+truncated version of it. You could do it this way::
 
     class MyMappingType(MappingType):
+
+        # ... missing code here
+
         def description_truncated(self):
             return self.description[:100]
 
-    res = list(S(MyMappingType).query(description__text='stormy night'))[0]
+    results = S(MyMappingType).query(description__text='stormy night')
 
-    print res.description_truncated()
+    print list(results)[0].description_truncated()
+
+
+You can relate a MappingType to a database model allowing you to link
+documents in the ElasticSearch index back to their origins in a
+lazy-loading way. This is done by subclassing MappingType and
+implementing the ``get_object()`` method. You can then access the
+origin using the ``object`` property.
+
+For example::
+
+    class MyMappingType(MappingType):
+
+        # ... missing code here
+
+        def get_object(self):
+            return self.get_model().objects.get(pk=self._id)
+
+    results = S(MyMappingType).filter(height__gte=72)[:1]
+
+    first = list(results)[0]
+
+    # This prints "height" which comes from the ElasticSearch
+    # document
+    print first.height
+
+    # This prints "height" which comes from the database data
+    # that the ElasticSearch document is based on. This is the
+    # first time ``.object`` is used, so it does the db hit
+    # here.
+    print first.object.height
 
 
 The most basic MappingType is the DefaultMappingType which is returned
@@ -578,8 +607,8 @@ That translates to::
 
 But, that's kind of icky looking.
 
-So, we've also got an :py:meth:`elasticutils.F` class that makes this sort of thing
-easier.
+So, we've also got an :py:meth:`elasticutils.F` class that makes this
+sort of thing easier.
 
 You can do the previous example with ``F`` like this::
 
@@ -618,7 +647,7 @@ That translates to::
    }
 
 
-F supports ``&`` (and), ``|`` (or), and ``~`` (not) operations.
+F supports ``&`` (and), ``|`` (or) and ``~`` (not) operations.
 
 Additionally, you can create an empty F and build it incrementally::
 
@@ -634,6 +663,13 @@ Additionally, you can create an empty F and build it incrementally::
 If neither `some_crazy_thing` or `some_other_crazy_thing` are
 ``True``, then F will be empty. That's ok because empty filters are
 ignored.
+
+.. Note::
+
+   If ElasticUtils doesn't have support for filters you need, you can
+   subclass :py:class:`elasticutils.S` and add ``process_filter_X``
+   methods. See the documentation for :py:class:`elasticutils.S` for
+   more details.
 
 
 Query-time field boosting: ``boost``

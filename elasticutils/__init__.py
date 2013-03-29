@@ -1293,7 +1293,8 @@ class MappingType(object):
         """Returns the model instance
 
         This gets called when someone uses the ``.object`` attribute
-        which triggers lazy-loading of the object.
+        which triggers lazy-loading of the object this document is
+        based on.
 
         If this MappingType is associated with a model, then by
         default, it calls::
