@@ -32,7 +32,14 @@ from elasticutils import get_es
 
 
 def testify(indexes):
-    return [(k, v + '_eutest') for k, v in indexes.items()]
+    """Returns indexes with '_eutest' suffix.
+    
+    :arg indexes: dict of mapping type name -> index name
+    
+    :returns: dict with ``_eutest`` appended to all index names
+    
+    """
+    return dict([(k, v + '_eutest') for k, v in indexes.items()])
 
 
 class ElasticSearchTestCase(TestCase):
@@ -81,7 +88,7 @@ class ElasticSearchTestCase(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        if not cls._skip_test:
+        if not cls._skip_tests:
             for index in settings.ES_INDEXES.values():
                 try:
                     cls.es.delete_index(index)
