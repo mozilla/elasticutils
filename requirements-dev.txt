@@ -7,5 +7,3 @@ nose
 
 # Sphinx for documentation
 Sphinx
-
-
