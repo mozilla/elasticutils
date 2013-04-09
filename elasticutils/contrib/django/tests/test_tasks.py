@@ -4,24 +4,22 @@ from elasticutils.contrib.django import get_es
 from elasticutils.contrib.django.tasks import index_objects, unindex_objects
 from elasticutils.contrib.django.tests import (
     FakeDjangoMappingType, FakeModel, reset_model_cache)
-from elasticutils.tests import ElasticTestCase
+from elasticutils.contrib.django.estestcase import ElasticSearchTestCase
 
 
-class TestTasks(ElasticTestCase):
-    index_name = 'elasticutilstest'
-
+class TestTasks(ElasticSearchTestCase):
     @classmethod
     def get_es(cls):
         return get_es()
 
     def setUp(self):
         super(TestTasks, self).setUp()
-        TestTasks.create_index()
+        TestTasks.create_index(FakeDjangoMappingType.get_index())
         reset_model_cache()
 
     def tearDown(self):
         super(TestTasks, self).tearDown()
-        TestTasks.cleanup_index()
+        TestTasks.cleanup_index(FakeDjangoMappingType.get_index())
 
     def test_tasks(self):
         documents = [

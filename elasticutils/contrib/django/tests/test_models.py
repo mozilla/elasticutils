@@ -3,23 +3,21 @@ from nose.tools import eq_
 from elasticutils.contrib.django import S, get_es
 from elasticutils.contrib.django.tests import (
     FakeDjangoMappingType, FakeModel)
-from elasticutils.tests import ElasticTestCase
+from elasticutils.contrib.django.estestcase import ElasticSearchTestCase
 
 
-class IndexableTest(ElasticTestCase):
-    index_name = 'elasticutilstest'
-
+class IndexableTest(ElasticSearchTestCase):
     @classmethod
     def get_es(cls):
         return get_es()
 
     def setUp(self):
         super(IndexableTest, self).setUp()
-        IndexableTest.create_index()
+        IndexableTest.create_index(FakeDjangoMappingType.get_index())
 
     def tearDown(self):
         super(IndexableTest, self).tearDown()
-        IndexableTest.cleanup_index()
+        IndexableTest.cleanup_index(FakeDjangoMappingType.get_index())
 
     def test_refresh(self):
         FakeDjangoMappingType.refresh_index()
@@ -33,7 +31,7 @@ class IndexableTest(ElasticTestCase):
         # Index the document with .index()
         FakeDjangoMappingType.index(document, id_=document['id'])
 
-        IndexableTest.refresh()
+        self.refresh(FakeDjangoMappingType.get_index())
 
         # Query it to make sure it's there.
         eq_(len(S(FakeDjangoMappingType).query(name__prefix='odin')), 1)
@@ -52,7 +50,7 @@ class IndexableTest(ElasticTestCase):
         # Index the document with .index()
         FakeDjangoMappingType.bulk_index(documents, id_field='id')
 
-        IndexableTest.refresh()
+        self.refresh(FakeDjangoMappingType.get_index())
 
         # Query it to make sure they're there.
         eq_(len(S(FakeDjangoMappingType).query(name__prefix='odin')), 1)

@@ -11,7 +11,10 @@ class QueryTest(ElasticSearchTestCase):
     def setUpClass(cls):
         super(QueryTest, cls).setUpClass()
 
-        cls.create_index()
+        index = FakeDjangoMappingType.get_index()
+        doctype = FakeDjangoMappingType.get_mapping_type_name()
+
+        cls.create_index(index)
 
         data = [
             {'id': 1, 'foo': 'bar', 'tag': 'awesome', 'width': '2'},
@@ -20,15 +23,13 @@ class QueryTest(ElasticSearchTestCase):
             {'id': 4, 'foo': 'duck', 'tag': 'boat', 'width': '11'},
             {'id': 5, 'foo': 'train car', 'tag': 'awesome', 'width': '7'}
             ]
-        cls.index_data(data,
-                       index=FakeDjangoMappingType.get_index(),
-                       doctype=FakeDjangoMappingType.get_mapping_type_name())
+        cls.index_data(data, index=index, doctype=doctype)
 
         # Generate all the FakeModels in our "database"
         for args in data:
             FakeModel(**args)
 
-        cls.refresh()
+        cls.refresh(index)
 
     def test_q(self):
         eq_(len(S(FakeDjangoMappingType).query(foo='bar')), 1)

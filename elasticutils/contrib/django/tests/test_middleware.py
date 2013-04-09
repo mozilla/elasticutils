@@ -5,10 +5,10 @@ from django.test.utils import override_settings
 
 from elasticutils.contrib.django import (
     ES_EXCEPTIONS, ESExceptionMiddleware, es_required_or_50x)
-from elasticutils.tests import ElasticTestCase
+from elasticutils.contrib.django.estestcase import ElasticSearchTestCase
 
 
-class MiddlewareTest(ElasticTestCase):
+class MiddlewareTest(ElasticSearchTestCase):
     def setUp(self):
         super(MiddlewareTest, self).setUp()
 
@@ -30,7 +30,7 @@ class MiddlewareTest(ElasticTestCase):
         eq_(response.status_code, 501)
 
 
-class DecoratorTest(ElasticTestCase):
+class DecoratorTest(ElasticSearchTestCase):
     def setUp(self):
         super(DecoratorTest, self).setUp()
 

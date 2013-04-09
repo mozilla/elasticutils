@@ -34,12 +34,18 @@ from elasticutils import get_es
 def testify(indexes):
     """Returns indexes with '_eutest' suffix.
     
-    :arg indexes: dict of mapping type name -> index name
+    :arg indexes: dict of mapping type name -> index name(s)
     
     :returns: dict with ``_eutest`` appended to all index names
     
     """
-    return dict([(k, v + '_eutest') for k, v in indexes.items()])
+    ret = {}
+    for k, v in indexes.items():
+        if isinstance(v, basestring):
+            ret[k] = v + '_eutest'
+        elif isinstance(v, (list, tuple)):
+            ret[k] = [v_item + '_eutest' for v_item in v]
+    return ret
 
 
 class ElasticSearchTestCase(TestCase):
@@ -56,13 +62,21 @@ class ElasticSearchTestCase(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        """Sets up the environment for ES tests
+
+        * pings the ES server---if this fails, it marks all the tests
+          for skipping
+        * fixes settings
+        * deletes the test index if there is one
+
+        """
         super(ElasticSearchTestCase, cls).setUpClass()
         if not getattr(settings, 'ES_URLS', None):
             cls.skip_tests = True
             return
 
         try:
-            get_es().health()
+            cls.get_es().health()
         except (Timeout, ConnectionError):
             cls.skip_tests = True
             return
@@ -74,61 +88,92 @@ class ElasticSearchTestCase(TestCase):
         cls._old_es_indexes = settings.ES_INDEXES
         settings.ES_INDEXES = testify(settings.ES_INDEXES)
 
+        # This is here in case the previous test run failed and didn't
+        # clean up after itself.
+        for index in settings.ES_INDEXES.values():
+            try:
+                cls.get_es().delete_index(index)
+            except ElasticHttpNotFoundError:
+                pass
+
     def setUp(self):
+        """Skips the test if this class is skipping tests."""
         if self.skip_tests:
             return skip_this_test()
         super(ElasticSearchTestCase, self).setUp()
 
     @classmethod
     def tearDownClass(cls):
-        if not cls.skip_tests:
-            for index in settings.ES_INDEXES.values():
-                try:
-                    cls.es.delete_index(index)
-                except ElasticHttpNotFoundError:
-                    pass
+        """Tears down environment
 
-        # Restor settings
-        settings.ES_DISABLED = cls._old_es_disabled
-        settings.ES_INDEXES = cls._old_es_indexes
+        * unfixes settings
+        * deletes the test index
+
+        """
+        if not cls.skip_tests:
+            # If we didn't skip these tests, we need to do some
+            # cleanup.
+            for index in settings.ES_INDEXES.values():
+                cls.cleanup_index(index)
+
+            # Restore settings
+            settings.ES_DISABLED = cls._old_es_disabled
+            settings.ES_INDEXES = cls._old_es_indexes
 
         super(ElasticSearchTestCase, cls).tearDownClass()
 
     @classmethod
-    def create_index(cls):
-        cls.cleanup_index()
+    def get_es(cls):
+        """Returns an ES
 
-        for index in settings.ES_INDEXES.values():
-            try:
-                cls.es.create_index(cls.index_name)
-            except ElasticHttpNotFoundError:
-                pass
-
-    @classmethod
-    def index_data(cls, data, index=None, doctype=None):
-        index = index or cls.index_name
-        doctype = doctype or cls.mapping_type_name
-
-        # TODO: change this to a bulk index
-        for item in data:
-            cls.es.index(index, doctype, item, id=item['id'])
-
-        cls.refresh()
-
-    @classmethod
-    def cleanup_index(cls):
-        for index in settings.ES_INDEXES.values():
-            try:
-                cls.es.delete_index(index)
-            except ElasticHttpNotFoundError:
-                pass
-
-    @classmethod
-    def refresh(cls):
-        """Refresh index after indexing.
-
-        This refreshes the index specified by `self.index_name`.
+        Override this if you need different settings for your
+        ES.
 
         """
-        cls.es.refresh(cls.index_name)
-        cls.es.health(wait_for_status='yellow')
+        return get_es()
+
+    @classmethod
+    def create_index(cls, index, settings=None):
+        """Creates index with given settings
+
+        :arg index: the name of the index to create
+        :arg settings: dict of settings to set in `create_index` call
+
+        """
+        settings = settings or {}
+
+        cls.get_es().create_index(index, **settings)
+
+    @classmethod
+    def index_data(cls, documents, index, doctype, id_field='id'):
+        """Bulk indexes given data.
+
+        This does a refresh after the data is indexed.
+
+        :arg documents: list of python dicts each a document to index
+        :arg index: name of the index
+        :arg doctype: mapping type name
+        :arg id_field: the field the document id is stored in in the
+            document
+
+        """
+        cls.get_es().bulk_index(index, doctype, documents, id_field)
+        cls.refresh(index)
+
+    @classmethod
+    def cleanup_index(cls, index):
+        try:
+            cls.get_es().delete_index(index)
+        except ElasticHttpNotFoundError:
+            pass
+
+    @classmethod
+    def refresh(cls, index):
+        """Refresh index after indexing.
+
+        :arg index: the name of the index to refresh. use ``_all``
+            to refresh all of them
+
+        """
+        cls.get_es().refresh(index)
+        cls.get_es().health(wait_for_status='yellow')

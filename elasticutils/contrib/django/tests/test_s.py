@@ -14,7 +14,6 @@ class TestS(TestCase):
 
     def test_get_indexes(self):
         """Test get_indexes always returns a list of strings."""
-
         # Pulls it from ES_INDEXES (list of strings).
         s = S(FakeDjangoMappingType)
         eq_(s.get_indexes(), ['elasticutilstest'])
