@@ -1316,16 +1316,12 @@ class MappingType(object):
         """
         return self.get_model().get(id=self._id)
 
-
-    # TODO: Should this be "get_indexes" or "get_index"? Probably
-    # the latter.
-
     @classmethod
-    def get_indexes(cls):
-        """Returns the indexes to use for this mapping type.
+    def get_index(cls):
+        """Returns the index to use for this mapping type.
 
-        You can specify the indexes to use for this mapping type.
-        This affects ``S`` built with this type.
+        You can specify the index to use for this mapping type.  This
+        affects ``S`` built with this type.
 
         By default, raises NotImplementedError.
 

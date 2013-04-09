@@ -87,6 +87,11 @@ Version 0.7: in development
   Will now raise a `DeprecationWarning` if you pass in `fields`
   argument.
 
+* **MappingType get_indexes renamed to get_index.**
+
+  `MappingType` had a method called `get_indexes`. This is now
+  `get_index` because it should return a single index name.
+
 * **Django: changed settings.**
 
   Changed ES_HOSTS setting to ES_URLS. This is both a name and a value

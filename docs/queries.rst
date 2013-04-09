@@ -344,7 +344,7 @@ Specifying indexes to search: ``indexes``
 An `untyped S` will search all indexes by default.
 
 A `typed S` will search the index returned by the
-:py:meth:`elasticutils.MappingType.get_indexes()` method.
+:py:meth:`elasticutils.MappingType.get_index()` method.
 
 If that's not what you want, use the
 :py:meth:`elasticutils.S.indexes()` method.
@@ -1222,7 +1222,16 @@ The MappingType class
 ---------------------
 
 .. autoclass:: elasticutils.MappingType
-   :members: from_results, get_object, get_indexes, get_mapping_type_name, get_model
+
+   .. automethod:: from_results
+
+   .. automethod:: get_object
+
+   .. automethod:: get_index
+
+   .. automethod:: get_mapping_type_name
+
+   .. automethod:: get_model
 
 
 The SearchResults class
