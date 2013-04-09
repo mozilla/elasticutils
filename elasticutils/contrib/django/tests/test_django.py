@@ -28,7 +28,7 @@ try:
         ESExceptionMiddleware, es_required_or_50x)
     from elasticutils.contrib.django.tasks import (
         index_objects, unindex_objects)
-    from elasticutils.tests.django_utils import (
+    from elasticutils.contrib.django.tests.django_utils import (
         FakeDjangoMappingType, FakeModel, reset_model_cache)
 except ImportError:
     SKIP_TESTS = True
