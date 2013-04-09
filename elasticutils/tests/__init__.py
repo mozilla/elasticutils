@@ -43,6 +43,7 @@ class ElasticTestCase(TestCase):
             get_es().health()
         except pyelasticsearch.exceptions.ConnectionError:
             cls.skip_tests = True
+            return
 
         if cls.data:
             cls.create_index(settings={'mappings': cls.mapping})
@@ -65,7 +66,6 @@ class ElasticTestCase(TestCase):
         """
         if self.skip_tests:
             raise SkipTest
-
         super(ElasticTestCase, self).setUp()
 
     @classmethod
