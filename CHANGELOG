@@ -110,6 +110,9 @@ Version 0.7: in development
 
 * **Django: ESTestCase was renamed to ElasticTestCase.**
 
+  It was improved, documented and bugs were squashed. It's now used by
+  the test suite.
+
 * **Django: Indexable.index() method no longer has bulk argument.**
 
   The `Indexable.index()` method no longer does bulk indexing. The
