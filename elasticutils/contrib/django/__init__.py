@@ -84,6 +84,7 @@ class ESExceptionMiddleware(object):
       * pyelasticsearch.exceptions.ConnectionError
       * pyelasticsearch.exceptions.ElasticHttpError
       * pyelasticsearch.exceptions.ElasticHttpNotFoundError
+      * pyelasticsearch.exceptions.InvalidJsonResponseError
       * pyelasticsearch.exceptions.Timeout
 
       Template variables:
