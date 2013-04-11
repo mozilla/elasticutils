@@ -322,3 +322,7 @@ Example usage::
 
         def test_locked_filters(self):
             ...
+
+
+.. autoclass:: elasticutils.contrib.django.estestcase.ElasticSearchTestCase
+   :members:
