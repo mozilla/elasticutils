@@ -6,18 +6,29 @@ Installation
 
 .. Warning::
 
-   ElasticUtils doesn't work well with ElasticSearch 0.19.9. If you're
-   using 0.19.9, you should update to at least 0.19.10.
+   ElasticUtils doesn't work well with ElasticSearch 0.19.9. Don't use
+   that version.
 
    https://github.com/elasticsearch/elasticsearch/issues/2205
      ElasticSearch bug with ``_all``.
 
 
-There are a few ways to install ElasticUtils.
+Requirements
+============
+
+ElasticUtils requires:
+
+* pyelasticsearch >= 0.4
+
+
+Installation
+============
+
+There are a few ways to install ElasticUtils:
 
 
 From PyPI
-=========
+---------
 
 Do::
 
@@ -25,7 +36,7 @@ Do::
 
 
 From git
-========
+--------
 
 Do::
 

@@ -1,1 +1,1 @@
-pyelasticsearch >= 0.3
+pyelasticsearch >= 0.4
