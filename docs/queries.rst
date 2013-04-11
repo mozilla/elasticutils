@@ -1223,15 +1223,15 @@ The MappingType class
 
 .. autoclass:: elasticutils.MappingType
 
-   .. automethod:: from_results
+   .. automethod:: elasticutils.MappingType.from_results
 
-   .. automethod:: get_object
+   .. automethod:: elasticutils.MappingType.get_object
 
-   .. automethod:: get_index
+   .. automethod:: elasticutils.MappingType.get_index
 
-   .. automethod:: get_mapping_type_name
+   .. automethod:: elasticutils.MappingType.get_mapping_type_name
 
-   .. automethod:: get_model
+   .. automethod:: elasticutils.MappingType.get_model
 
 
 The SearchResults class
