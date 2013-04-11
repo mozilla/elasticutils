@@ -22,6 +22,10 @@ ES_EXCEPTIONS = (
     pyelasticsearch.exceptions.ConnectionError,
     pyelasticsearch.exceptions.ElasticHttpError,
     pyelasticsearch.exceptions.ElasticHttpNotFoundError,
+    # If the response isn't json (e.g. when Zeus sends an html
+    # response about how the ES cluster is down, because it's being
+    # "helpful")
+    pyelasticsearch.exceptions.InvalidJsonResponseError,
     pyelasticsearch.exceptions.Timeout
 )
 
