@@ -263,14 +263,6 @@ Tasks
    .. autofunction:: index_objects(model, ids=[...])
 
 
-Cron
-----
-
-.. automodule:: elasticutils.contrib.django.cron
-
-   .. autofunction:: reindex_objects(model, chunk_size[=150])
-
-
 Writing tests
 =============
 

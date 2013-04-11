@@ -140,6 +140,10 @@ Version 0.7: in development
   Previously it defaulted to `elasticsearch.contrib.django.get_es()`. Now
   it defaults to `Indexable.get_es()` class method making it more flexible.
 
+* **Django: ditched the cron module and its helpers.**
+
+  It's not clear they ever worked (issue #21) and there are no tests.
+
 * **pyes -> pyelasticsearch changes.**
 
   If you called ``.get_es()`` and got a pyes `ES` object and did
