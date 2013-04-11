@@ -314,7 +314,9 @@ Example usage::
 
 
 ElasticUtils uses this for it's Django tests. Look at the test code
-for more examples of usage.
+for more examples of usage:
+
+https://github.com/mozilla/elasticutils/
 
 If it's not what you want, you could subclass it and override behavior
 or just write your own.
