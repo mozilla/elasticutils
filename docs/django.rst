@@ -274,17 +274,17 @@ Cron
 Writing tests
 =============
 
-:Requirements: Django, test_utils, nose
+:Requirements: Django
 
 When writing test cases for your ElasticUtils-using code, you'll want
 to do a few things:
 
-1. Default ``ES_DISABLED`` to True. This way, the tests that kick off
+1. Default ``ES_DISABLED`` to `True`. This way, the tests that kick off
    creating data but aren't testing search-specific things don't
    additionally index stuff. That'll save you a bunch of test time.
 
 2. When testing ElasticUtils things, override the settings and set
-   ``ES_DISABLED`` to False.
+   ``ES_DISABLED`` to `False`.
 
 3. Use an ``ElasticSearchTestCase`` that sets up the indexes before
    tests run and tears them down after they run.
@@ -293,23 +293,10 @@ to do a few things:
    don't want to run your tests and have them affect your production
    index.
 
-In `elasticutils.contrib.django.estestcase`, is
-`ElasticSearchTestCase` which can be subclassed in your app's test
-cases. It's pretty basic. If it's not what you want, you should write
-your own or subclass it.
-
-It does the following:
-
-* If ``ES_URLS`` is empty or nonexistent, it skips each individual
-  test.
-* If ElasticSearch specified by ``ES_URLS`` can't be connected to, then it
-  skips each individual test.
-* Overrides ``ES_DISABLED`` to True and ``ES_INDEXES`` to index names
-  that have "estest" appended to them so you're not stomping on
-  production indexes.
-* ``self.es`` is available from the ``ElasticSearchTestCase`` class
-  and any subclasses.
-* At the end of the test case the index is wiped.
+You can use
+:py:class:`elasticutils.contrib.django.estestcase.ElasticSearchTestCase`
+for your app's tests. It's pretty basic but does all of the above
+except item 1 which you'll need to do in your test settings.
 
 Example usage::
 
@@ -317,12 +304,27 @@ Example usage::
 
 
     class TestQueries(ElasticSearchTestCase):
+        # This class holds tests that do elasticsearch things
+
         def test_query(self):
             ...
 
         def test_locked_filters(self):
             ...
 
+
+ElasticUtils uses this for it's Django tests. Look at the test code
+for more examples of usage.
+
+If it's not what you want, you could subclass it and override behavior
+or just write your own.
+
+
+The ElasticSearchTestCase class
+-------------------------------
+
+Subclass this and make it do what you need it to do. It's definitely
+worth reading the code.
 
 .. autoclass:: elasticutils.contrib.django.estestcase.ElasticSearchTestCase
    :members:
