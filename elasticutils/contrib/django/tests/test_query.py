@@ -11,6 +11,9 @@ class QueryTest(ESTestCase):
     def setUpClass(cls):
         super(QueryTest, cls).setUpClass()
 
+        if cls.skip_tests:
+            return
+
         index = FakeDjangoMappingType.get_index()
         doctype = FakeDjangoMappingType.get_mapping_type_name()
 
