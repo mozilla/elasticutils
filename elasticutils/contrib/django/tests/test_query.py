@@ -2,11 +2,11 @@ from nose.tools import eq_
 
 from elasticutils.contrib.django import S, F, InvalidFieldActionError
 from elasticutils.contrib.django.tests import FakeDjangoMappingType, FakeModel
-from elasticutils.contrib.django.estestcase import ElasticSearchTestCase
+from elasticutils.contrib.django.estestcase import ESTestCase
 from elasticutils.tests import facet_counts_dict
 
 
-class QueryTest(ElasticSearchTestCase):
+class QueryTest(ESTestCase):
     @classmethod
     def setUpClass(cls):
         super(QueryTest, cls).setUpClass()

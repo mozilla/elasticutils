@@ -4,10 +4,10 @@ from elasticutils.contrib.django import get_es
 from elasticutils.contrib.django.tasks import index_objects, unindex_objects
 from elasticutils.contrib.django.tests import (
     FakeDjangoMappingType, FakeModel, reset_model_cache)
-from elasticutils.contrib.django.estestcase import ElasticSearchTestCase
+from elasticutils.contrib.django.estestcase import ESTestCase
 
 
-class TestTasks(ElasticSearchTestCase):
+class TestTasks(ESTestCase):
     @classmethod
     def get_es(cls):
         return get_es()

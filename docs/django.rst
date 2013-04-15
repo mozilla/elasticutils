@@ -278,24 +278,24 @@ to do a few things:
 2. When testing ElasticUtils things, override the settings and set
    ``ES_DISABLED`` to `False`.
 
-3. Use an ``ElasticSearchTestCase`` that sets up the indexes before
-   tests run and tears them down after they run.
+3. Use an ``ESTestCase`` that sets up the indexes before tests run and
+   tears them down after they run.
 
 4. When testing, make sure you use an index name that's unique. You
    don't want to run your tests and have them affect your production
    index.
 
 You can use
-:py:class:`elasticutils.contrib.django.estestcase.ElasticSearchTestCase`
+:py:class:`elasticutils.contrib.django.estestcase.ESTestCase`
 for your app's tests. It's pretty basic but does all of the above
 except item 1 which you'll need to do in your test settings.
 
 Example usage::
 
-    from elasticutils.contrib.django.estestcase import ElasticSearchTestCase
+    from elasticutils.contrib.django.estestcase import ESTestCase 
 
 
-    class TestQueries(ElasticSearchTestCase):
+    class TestQueries(ESTestCase):
         # This class holds tests that do elasticsearch things
 
         def test_query(self):
@@ -314,11 +314,11 @@ If it's not what you want, you could subclass it and override behavior
 or just write your own.
 
 
-The ElasticSearchTestCase class
--------------------------------
+The ESTestCase class
+--------------------
 
 Subclass this and make it do what you need it to do. It's definitely
 worth reading the code.
 
-.. autoclass:: elasticutils.contrib.django.estestcase.ElasticSearchTestCase
+.. autoclass:: elasticutils.contrib.django.estestcase.ESTestCase
    :members:

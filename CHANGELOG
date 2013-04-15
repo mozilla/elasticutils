@@ -108,7 +108,7 @@ Version 0.7: in development
 
 * **Django: removed the statsd code.**
 
-* **Django: ESTestCase was renamed to ElasticTestCase.**
+* **Django: ESTestCase was improved, documented and bugs squashed.**
 
   It was improved, documented and bugs were squashed. It's now used by
   the test suite.

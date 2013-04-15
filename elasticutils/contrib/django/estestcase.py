@@ -48,7 +48,7 @@ def testify(indexes):
     return ret
 
 
-class ElasticSearchTestCase(TestCase):
+class ESTestCase(TestCase):
     """Test case scaffolding for ElasticUtils-using tests.
 
     If ``ES_URLS`` is empty or missing or you can't connect to
@@ -70,7 +70,7 @@ class ElasticSearchTestCase(TestCase):
         * deletes the test index if there is one
 
         """
-        super(ElasticSearchTestCase, cls).setUpClass()
+        super(ESTestCase, cls).setUpClass()
         if not getattr(settings, 'ES_URLS', None):
             cls.skip_tests = True
             return
@@ -100,7 +100,7 @@ class ElasticSearchTestCase(TestCase):
         """Skips the test if this class is skipping tests."""
         if self.skip_tests:
             return skip_this_test()
-        super(ElasticSearchTestCase, self).setUp()
+        super(ESTestCase, self).setUp()
 
     @classmethod
     def tearDownClass(cls):
@@ -120,7 +120,7 @@ class ElasticSearchTestCase(TestCase):
             settings.ES_DISABLED = cls._old_es_disabled
             settings.ES_INDEXES = cls._old_es_indexes
 
-        super(ElasticSearchTestCase, cls).tearDownClass()
+        super(ESTestCase, cls).tearDownClass()
 
     @classmethod
     def get_es(cls):

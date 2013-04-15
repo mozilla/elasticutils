@@ -3,10 +3,10 @@ from nose.tools import eq_
 from elasticutils.contrib.django import S, get_es
 from elasticutils.contrib.django.tests import (
     FakeDjangoMappingType, FakeModel)
-from elasticutils.contrib.django.estestcase import ElasticSearchTestCase
+from elasticutils.contrib.django.estestcase import ESTestCase
 
 
-class IndexableTest(ElasticSearchTestCase):
+class IndexableTest(ESTestCase):
     @classmethod
     def get_es(cls):
         return get_es()
