@@ -496,6 +496,22 @@ query_string            query_string query [2]_
      ElasticSearch docs on query_string queries
 
 
+Advanced queries: ``query_raw``
+===============================
+
+:py:meth:`elasticutils.S.query_raw()` lets you explicitly define the
+query portion of an Elasticsearch search.
+
+For example::
+
+   q = S().query_raw({'match': {'title': 'example'}})
+
+This will override all ``.query()`` calls you've made in your
+:py:class:`elasticutils.S` before and after the `.query_raw()` call.
+
+This is helpful if ElasticUtils is missing functionality you need.
+
+
 Filters: ``filter``
 ===================
 
@@ -1161,6 +1177,8 @@ The S class
    **Chaining transforms**
 
        .. automethod:: elasticutils.S.query
+
+       .. automethod:: elasticutils.S.query_raw
 
        .. automethod:: elasticutils.S.filter
 

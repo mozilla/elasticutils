@@ -80,6 +80,17 @@ class QueryTest(ElasticTestCase):
         with self.assertRaises(InvalidFieldActionError):
             len(self.get_s().query(foo__foo='awesome'))
 
+    def test_query_raw(self):
+        s = self.get_s().query_raw({'match': {'title': 'example'}})
+        eq_(s._build_query(),
+            {'query': {'match': {'title': 'example'}}})
+
+    def test_query_raw_overrides_everything(self):
+        s = self.get_s().query_raw({'match': {'title': 'example'}})
+        s = s.query(foo__text='foo')
+        eq_(s._build_query(),
+            {'query': {'match': {'title': 'example'}}})
+
     def test_boost(self):
         """Boosted queries shouldn't raise a SearchPhaseExecutionException."""
         # Note: There isn't an assertion here--we just want to make

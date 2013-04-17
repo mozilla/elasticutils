@@ -423,6 +423,26 @@ class S(object):
         """
         return self._clone(next_step=('query', kw.items()))
 
+    def query_raw(self, query):
+        """
+        Return a new S instance with a query_raw.
+
+        :arg query: Python dict specifying the complete query to send
+            to Elasticsearch
+
+        Example::
+
+            S().query_raw({'match': {'title': 'example'}})
+
+
+        .. Note::
+
+           If there's a query_raw in your S, then that's your
+           query. All other ``.query()`` calls are ignored.
+
+        """
+        return self._clone(next_step=('query_raw', query))
+
     def filter(self, *filters, **kw):
         """
         Return a new S instance with filter args combined with
@@ -543,6 +563,7 @@ class S(object):
         """
         filters = []
         queries = []
+        query_raw = None
         sort = []
         dict_fields = set()
         list_fields = set()
@@ -577,6 +598,8 @@ class S(object):
                 explain = value
             elif action == 'query':
                 queries.extend(self._process_queries(value))
+            elif action == 'query_raw':
+                query_raw = value
             elif action == 'demote':
                 demote = (value[0], self._process_queries(value[1]))
             elif action == 'filter':
@@ -606,7 +629,11 @@ class S(object):
         elif filters:
             qs['filter'] = filters[0]
 
-        if len(queries) > 1:
+        # If there's a query_raw, we use that. Otherwise we use
+        # whatever we got from query.
+        if query_raw:
+            qs['query'] = query_raw
+        elif len(queries) > 1:
             qs['query'] = {'bool': {'must': queries}}
         elif queries:
             qs['query'] = queries[0]
