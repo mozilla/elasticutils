@@ -33,6 +33,7 @@ User's Guide
    es
    debugging
    django
+   resources
 
 
 Contributor's Guide
