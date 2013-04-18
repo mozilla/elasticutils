@@ -105,6 +105,9 @@ class QueryTest(ElasticTestCase):
     def test_query_raw_overrides_everything(self):
         s = self.get_s().query_raw({'match': {'title': 'example'}})
         s = s.query(foo__text='foo')
+        s = s.demote(0.5, title__text='bar')
+        s = s.boost(title=5.0)
+
         eq_(s._build_query(),
             {'query': {'match': {'title': 'example'}}})
 

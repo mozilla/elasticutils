@@ -444,7 +444,8 @@ class S(object):
         .. Note::
 
            If there's a query_raw in your S, then that's your
-           query. All other ``.query()`` calls are ignored.
+           query. All ``.query()``, ``.demote()``, ``.boost()`` and
+           anything else that affects the query clause is ignored.
 
         """
         return self._clone(next_step=('query_raw', query))
@@ -485,6 +486,42 @@ class S(object):
     def boost(self, **kw):
         """
         Return a new S instance with field boosts.
+
+        ElasticUtils allows you to specify query-time field boosts
+        with ``.boost()``. It takes a set of arguments where the keys
+        are either field names or field name + ``__`` + field action.
+
+        Examples::
+
+            q = (S().query(title='taco trucks',
+                           description__text='awesome')
+                    .boost(title=4.0, description__text=2.0))
+
+
+        If the key is a field name, then the boost will apply to all
+        query bits that have that field name. For example::
+
+            q = (S().query(title='trucks',
+                           title__prefix='trucks',
+                           title__fuzzy='trucks')
+                    .boost(title=4.0))
+
+
+        applies a 4.0 boost to all three query bits because all three
+        query bits are for the title field name.
+
+        If the key is a field name and field action, then the boost
+        will apply only to that field name and field action. For
+        example:
+
+            q = (S().query(title='trucks',
+                           title__prefix='trucks',
+                           title__fuzzy='trucks')
+                    .boost(title__prefix=4.0))
+
+
+        will only apply the 4.0 boost to title__prefix.
+
         """
         new = self._clone()
         new.field_boosts.update(kw)
@@ -493,6 +530,23 @@ class S(object):
     def demote(self, amount_, **kw):
         """
         Returns a new S instance with boosting query and demotion.
+
+        You can demote documents that match query criteria::
+
+            q = (S().query(title='trucks')
+                    .demote(0.5, description__text='gross'))
+
+        This is implemented using the boosting query in
+        ElasticSearch. Anything you specify with ``.query()`` goes
+        into the positive section. The negative query and negative
+        boost portions are specified as the first and second arguments
+        to ``.demote()``.
+
+        .. Note::
+
+           Calling this again will overwrite previous ``.demote()``
+           calls.
+
         """
         return self._clone(next_step=('demote', (amount_, kw)))
 
@@ -636,22 +690,24 @@ class S(object):
             qs['filter'] = filters[0]
 
         # If there's a query_raw, we use that. Otherwise we use
-        # whatever we got from query.
+        # whatever we got from query and demote.
         if query_raw:
             qs['query'] = query_raw
-        elif len(queries) > 1:
-            qs['query'] = {'bool': {'must': queries}}
-        elif queries:
-            qs['query'] = queries[0]
 
-        if demote is not None:
-            qs['query'] = {
-                'boosting': {
-                    'positive': qs['query'],
-                    'negative': demote[1],
-                    'negative_boost': demote[0]
+        else:
+            if len(queries) > 1:
+                qs['query'] = {'bool': {'must': queries}}
+            elif queries:
+                qs['query'] = queries[0]
+
+            if demote is not None:
+                qs['query'] = {
+                    'boosting': {
+                        'positive': qs['query'],
+                        'negative': demote[1],
+                        'negative_boost': demote[0]
+                        }
                     }
-                }
 
         if as_list and list_fields:
             fields = qs['fields'] = list(list_fields)
