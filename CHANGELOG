@@ -208,6 +208,17 @@ Version 0.7: in development
   Allows you to get **all** the search results possible. This is
   dangerous, so it's been documented with lots of warnings.
 
+* **Added support for ``match`` and ``match_phrase`` queries.**
+
+  Elasticsearch 0.19.9 renamed text query to match query. This adds
+  support for match and match_phrase. 
+
+* **S.query_raw added**
+
+  If ``.query()`` is getting you down, then you can skip it and use
+  the Elasticsearch API to create the query clause of the search
+  by hand.
+
 
 Version 0.6: Released January 17th, 2013
 ========================================

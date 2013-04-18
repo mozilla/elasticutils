@@ -17,6 +17,24 @@ DEFAULT_INDEXES = None
 DEFAULT_TIMEOUT = 5
 
 
+#: Maps ElasticUtils field actions to their ElasticSearch query names.
+QUERY_ACTION_MAP = {
+    None: 'term',  # Default to term
+    'in': 'in',
+    'term': 'term',
+    'startswith': 'prefix',  # Backwards compatability
+    'prefix': 'prefix',
+    'text': 'text',
+    'text_phrase': 'text_phrase',
+    'match': 'match',  # ES 0.19.9 renamed text to match
+    'match_phrase': 'match_phrase',
+    'fuzzy': 'fuzzy'}
+
+
+#: List of text/match actions.
+TEXTMATCH_ACTIONS = ['text', 'text_phrase', 'match', 'match_phrase']
+
+
 class ElasticUtilsError(Exception):
     """Base class for ElasticUtils errors."""
     pass
@@ -237,24 +255,12 @@ class F(object):
 def _boosted_value(name, action, key, value, boost):
     """Boost a value if we should in _process_queries"""
     if boost is not None:
-        # Note: Most queries use 'value' for the key name except Text
-        # queries which use 'query'. So we have to do some switcheroo
-        # for that.
-        value_key = 'query' if action in ['text', 'text_phrase'] else 'value'
+        # Note: Most queries use 'value' for the key name except
+        # Text/Match queries which use 'query'. So we have to do some
+        # switcheroo for that.
+        value_key = 'query' if action in TEXTMATCH_ACTIONS else 'value'
         return {name: {'boost': boost, value_key: value}}
     return {name: value}
-
-
-# Maps ElasticUtils field actions to their ElasticSearch query names.
-ACTION_MAP = {
-    None: 'term',  # Default to term
-    'in': 'in',
-    'term': 'term',
-    'startswith': 'prefix',  # Backwards compatability
-    'prefix': 'prefix',
-    'text': 'text',
-    'text_phrase': 'text_phrase',
-    'fuzzy': 'fuzzy'}
 
 
 class S(object):
@@ -769,9 +775,9 @@ class S(object):
             if boost is None:
                 boost = self.field_boosts.get(field_name)
 
-            if field_action in ACTION_MAP:
+            if field_action in QUERY_ACTION_MAP:
                 rv.append(
-                    {ACTION_MAP[field_action]: _boosted_value(
+                    {QUERY_ACTION_MAP[field_action]: _boosted_value(
                             field_name, field_action, key, val, boost)})
 
             elif field_action == 'query_string':

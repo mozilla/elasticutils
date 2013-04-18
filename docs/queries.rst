@@ -458,18 +458,25 @@ field action            elasticsearch query
 (no action specified)   term query
 term                    term query
 text                    text query
-prefix                  prefix query [1]_
+match                   match query [1]_
+prefix                  prefix query [2]_
 gt, gte, lt, lte        range query
 fuzzy                   fuzzy query
 text_phrase             text_phrase query
-query_string            query_string query [2]_
+match_phrase            match_phrase query [1]_
+query_string            query_string query [3]_
 ======================  =======================
 
 
-.. [1] You can also use ``startswith``, but that's deprecated.
+.. [1] Elasticsearch 0.19.9 renamed text queries to match queries. If
+       you're using Elasticsearch 0.19.9 or later, you should use
+       match and match_phrase. If you're using a version prior to
+       0.19.9 use text and text_phrase.
 
-.. [2] When doing ``query_string`` queries, if the query text is malformed
-   it'll raise a `SearchPhaseExecutionException` exception.
+.. [2] You can also use ``startswith``, but that's deprecated.
+
+.. [3] When doing ``query_string`` queries, if the query text is malformed
+       it'll raise a `SearchPhaseExecutionException` exception.
 
 
 .. seealso::
@@ -482,6 +489,9 @@ query_string            query_string query [2]_
 
    http://www.elasticsearch.org/guide/reference/query-dsl/text-query.html
      ElasticSearch docs on text and text_phrase queries
+
+   http://www.elasticsearch.org/guide/reference/query-dsl/match-query.html
+     ElasticSearch docs on match and match_phrase queries
 
    http://www.elasticsearch.org/guide/reference/query-dsl/prefix-query.html
      ElasticSearch docs on prefix queries

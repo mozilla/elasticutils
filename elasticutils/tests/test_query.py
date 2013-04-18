@@ -33,6 +33,9 @@ class QueryTest(ElasticTestCase):
     def test_q_text(self):
         eq_(len(self.get_s().query(foo__text='car')), 2)
 
+    def test_q_match(self):
+        eq_(len(self.get_s().query(foo__match='car')), 2)
+
     def test_q_prefix(self):
         eq_(len(self.get_s().query(foo__prefix='ca')), 2)
         eq_(len(self.get_s().query(foo__startswith='ca')), 2)
@@ -50,6 +53,20 @@ class QueryTest(ElasticTestCase):
         # Doing a text_phrase query for the two words in the wrong order
         # kicks up no results.
         eq_(len(self.get_s().query(foo__text_phrase='car train')), 0)
+
+    def test_q_text_match(self):
+        # Doing a match query for the two words in either order kicks up
+        # two results.
+        eq_(len(self.get_s().query(foo__match='train car')), 2)
+        eq_(len(self.get_s().query(foo__match='car train')), 2)
+
+        # Doing a match_phrase query for the two words in the right
+        # order kicks up one result.
+        eq_(len(self.get_s().query(foo__match_phrase='train car')), 1)
+
+        # Doing a match_phrase query for the two words in the wrong
+        # order kicks up no results.
+        eq_(len(self.get_s().query(foo__match_phrase='car train')), 0)
 
     def test_q_fuzzy(self):
         # Mispelled word gets no results with text query.
