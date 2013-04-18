@@ -205,8 +205,13 @@ Version 0.7: in development
 
 * **S.all added**
 
-  Allows you to get **all** the search results possible. This is
-  dangerous, so it's been documented with lots of warnings.
+  Allows you to get **all** the search results possible rather than
+  just the first 10 search results which is the default.
+
+  You should consider using slices instead which allows you to
+  specify the maximum number of results to get back.
+
+  This is dangerous, so it's been documented with lots of warnings.
 
 * **Added support for ``match`` and ``match_phrase`` queries.**
 
