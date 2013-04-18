@@ -45,6 +45,11 @@ class InvalidFieldActionError(ElasticUtilsError):
     pass
 
 
+class InvalidFlagsError(ElasticUtilsError):
+    """Raise when multiple flags are passed into a query"""
+    pass
+
+
 class InvalidFacetType(ElasticUtilsError):
     """Raise when _type is unrecognized."""
     pass
@@ -189,12 +194,7 @@ class F(object):
 
     """
     def __init__(self, **filters):
-        """Creates an F
-
-        :raises InvalidFieldActionError: if the field action is not
-            valid
-
-        """
+        """Creates an F"""
         filters = filters.items()
         if len(filters) > 1:
             self.filters = [{'and': filters}]
@@ -249,6 +249,83 @@ class F(object):
         return f
 
 
+class Q(object):
+    """
+    Query objects.
+
+    Makes it easier to create queries cumulatively.
+
+    If there's more than one query part, they're combined under a
+    BooleanQuery. By default, they're combined in the `must` clause.
+
+    You can combine two Q classes using the ``+`` operator. For
+    example::
+
+        q = Q()
+        q += Q(title__text='shoes')
+        q += Q(summary__text='shoes')
+
+    creates a BooleanQuery with two `must` clauses.
+
+    Example 2::
+
+        q = Q()
+        q += Q(title__text='shoes', should=True)
+        q += Q(summary__text='shoes')
+        q += Q(description__text='shoes', must=True)
+
+    creates a BooleanQuery with one `should` clause (title) and two
+    `must` clauses (summary and description).
+
+    :property queries: a list of the queries in this Q
+
+    """
+    def __init__(self, **queries):
+        """Creates a Q"""
+        self.should_q = []
+        self.must_q = []
+        self.must_not_q = []
+
+        should_flag = queries.pop('should', False)
+        must_flag = queries.pop('must', False)
+        must_not_flag = queries.pop('must_not', False)
+
+        # This (ab)uses the fact that booleans are integers.
+        if should_flag + must_flag + must_not_flag > 1:
+            raise InvalidFlagsError(
+                'Either should, must or must_not can be True, but not '
+                'more than one.')
+
+        if should_flag:
+            self.should_q.extend(queries.items())
+        elif must_not_flag:
+            self.must_not_q.extend(queries.items())
+        else:
+            self.must_q.extend(queries.items())
+
+    def __repr__(self):
+        return '<Q should={0} must={1} must_not={2}>'.format(
+            self.should_q, self.must_q, self.must_not_q)
+
+    def __add__(self, other):
+        q = Q()
+
+        # Note: LHS takes precedence over RHS
+        q.should_q = list(self.should_q)
+        q.must_q = list(self.must_q)
+        q.must_not_q = list(self.must_not_q)
+
+        q.should_q.extend(other.should_q)
+        q.must_q.extend(other.must_q)
+        q.must_not_q.extend(other.must_not_q)
+        return q
+
+    def __eq__(self, other):
+        return (sorted(self.should_q) == sorted(other.should_q)
+                and sorted(self.must_q) == sorted(other.must_q)
+                and sorted(self.must_not_q) == sorted(other.must_not_q))
+
+
 def _boosted_value(name, action, key, value, boost):
     """Boost a value if we should in _process_queries"""
     if boost is not None:
@@ -273,7 +350,48 @@ class S(object):
     over it, calling ``.count``, doing ``len(s)``, or calling
     ``.facet_count``.
 
-    **Adding filter support**
+
+    **Adding support for other queries**
+
+    You can add support for queries that S doesn't have support for by
+    subclassing S with a method called ``process_query_ACTION``.  This
+    method takes a key, value and an action.
+
+    For example::
+
+        claass FunkyS(S):
+            def process_query_funkyquery(self, key, val, action):
+                return {'funkyquery': {'field': key, 'value': val}}
+
+
+    Then you can use that just like other actions::
+
+        s = FunkyS().query(Q(foo__funkyquery='bar'))
+        s = FunkyS().query(foo__funkyquery='bar')
+
+
+    Many Elasticsearch queries take other arguments. This is a good
+    way of using different arguments. For example, if you wanted
+    to write a handler for fuzzy for dates, you could do::
+
+        claass FunkyS(S):
+            def process_query_fuzzy(self, key, val, action):
+                # val here is a (value, min_similarity) tuple
+                return {
+                    'funkyquery': {
+                        key: {
+                            'value': val[0],
+                            'min_similarity': val[1]
+                        }
+                    }
+                }
+
+    Used::
+
+        s = FunkyS().query(created__fuzzy=(created_dte, '1d'))
+
+
+    **Adding support for other filters**
 
     You can add support for filters that S doesn't have support for by
     subclassing S with a method called ``process_filter_ACTION``.
@@ -442,12 +560,72 @@ class S(object):
         """
         return self._clone(next_step=('order_by', fields))
 
-    def query(self, **kw):
+    def query(self, *queries, **kw):
         """
         Return a new S instance with query args combined with existing
-        set.
+        set in a must boolean query.
+
+        :arg queries: instances of Q
+        :arg kw: queries in the form of ``field__action=value``
+
+        There are three special flags you can use:
+
+        * ``must=True``: Specifies that the queries and kw queries
+          **must match** in order for a document to be in the result.
+
+          If you don't specify a special flag, this is the default.
+
+        * ``should=True``: Specifies that the queries and kw queries
+          **should match** in order for a document to be in the result.
+
+        * ``must_not=True``: Specifies the queries and kw queries
+          **must not match** in order for a document to be in the result.
+
+        These flags work by putting those queries in the appropriate
+        clause of an Elasticsearch boolean query.
+
+        Examples:
+
+        >>> s = S().query(foo='bar')
+        >>> s = S().query(Q(foo=='bar'))
+        >>> s = S().query(foo='bar', bat__text='baz')
+        >>> s = S().query(foo='bar', should=True)
+        >>> s = S().query(foo='bar', should=True).query(baz='bat', must=True)
+
+        Notes:
+
+        1. Don't specify multiple special flags, but if you did, `should`
+           takes precedence.
+        2. If you don't specify any, it defaults to `must`.
+        3. You can specify special flags in the
+           :py:class:`elasticutils.Q`, too. If you're building your
+           query incrementally, using :py:class:`elasticutils.Q` helps
+           a lot.
+
+        See the documentation on :py:class:`elasticutils.Q` for more
+        details on composing queries with Q.
+
+        See the documentation on :py:class:`elasticutils.S` for more
+        details on adding support for more query types.
+
         """
-        return self._clone(next_step=('query', kw.items()))
+        q = Q()
+        for query in queries:
+            q += query
+
+        if 'or_' in kw:
+            # Backwards compatibile with pre-0.7 version.
+            or_query = kw.pop('or_')
+
+            # or_query here is a dict of key/val pairs. or_ indicates
+            # they're in a should clause, so we generate the
+            # equivalent Q and then add it in.
+            or_query['should'] = True
+            q += Q(**or_query)
+
+        q += Q(**kw)
+
+        return self._clone(next_step=('query', q))
 
     def query_raw(self, query):
         """
@@ -478,7 +656,7 @@ class S(object):
         :arg filters: this will be instances of F
         :arg kw: this will be in the form of ``field__action=value``
 
-        Examples::
+        Examples:
 
         >>> s = S().filter(foo='bar')
         >>> s = S().filter(F(foo='bar'))
@@ -497,8 +675,8 @@ class S(object):
         See the documentation on :py:class:`elasticutils.F` for more
         details on composing filters with F.
 
-        See the documentation on :py:class:`elasticutils.S` for adding
-        support for additional actions.
+        See the documentation on :py:class:`elasticutils.S` for more
+        details on adding support for new filter types.
 
         """
         return self._clone(next_step=('filter', list(filters) + kw.items()))
@@ -547,7 +725,7 @@ class S(object):
         new.field_boosts.update(kw)
         return new
 
-    def demote(self, amount_, **kw):
+    def demote(self, amount_, *queries, **kw):
         """
         Returns a new S instance with boosting query and demotion.
 
@@ -555,6 +733,9 @@ class S(object):
 
             q = (S().query(title='trucks')
                     .demote(0.5, description__text='gross'))
+
+            q = (S().query(title='trucks')
+                    .demote(0.5, Q(description__text='gross')))
 
         This is implemented using the boosting query in
         ElasticSearch. Anything you specify with ``.query()`` goes
@@ -568,7 +749,12 @@ class S(object):
            calls.
 
         """
-        return self._clone(next_step=('demote', (amount_, kw)))
+        q = Q()
+        for query in queries:
+            q += query
+        q += Q(**kw)
+
+        return self._clone(next_step=('demote', (amount_, q)))
 
     def facet(self, *args, **kw):
         """
@@ -698,11 +884,12 @@ class S(object):
             elif action == 'explain':
                 explain = value
             elif action == 'query':
-                queries.extend(self._process_queries(value))
+                queries.append(value)
             elif action == 'query_raw':
                 query_raw = value
             elif action == 'demote':
-                demote = (value[0], self._process_queries(value[1]))
+                # value here is a tuple of (negative_boost, query)
+                demote = value
             elif action == 'filter':
                 filters.extend(self._process_filters(value))
             elif action == 'facet':
@@ -736,19 +923,20 @@ class S(object):
             qs['query'] = query_raw
 
         else:
-            if len(queries) > 1:
-                qs['query'] = {'bool': {'must': queries}}
-            elif queries:
-                qs['query'] = queries[0]
+            pq = self._process_queries(queries)
 
             if demote is not None:
                 qs['query'] = {
                     'boosting': {
-                        'positive': qs['query'],
-                        'negative': demote[1],
+                        'negative': self._process_queries([demote[1]]),
                         'negative_boost': demote[0]
                         }
                     }
+                if pq:
+                    qs['query']['boosting']['positive'] = pq
+
+            elif pq:
+                qs['query'] = pq
 
         if as_list and list_fields:
             fields = qs['fields'] = list(list_fields)
@@ -860,48 +1048,89 @@ class S(object):
 
         return rv
 
-    def _process_queries(self, value):
-        rv = []
-        value = dict(value)
-        or_ = value.pop('or_', [])
-        for key, val in value.items():
-            field_name, field_action = split_field_action(key)
+    def _process_query(self, query):
+        """Takes a key/val pair and returns ES JSON API"""
+        key, val = query
+        field_name, field_action = split_field_action(key)
 
-            # Boost by name__action overrides boost by name.
-            boost = self.field_boosts.get(key)
-            if boost is None:
-                boost = self.field_boosts.get(field_name)
+        # Boost by name__action overrides boost by name.
+        boost = self.field_boosts.get(key)
+        if boost is None:
+            boost = self.field_boosts.get(field_name)
 
-            if field_action in QUERY_ACTION_MAP:
-                rv.append(
-                    {QUERY_ACTION_MAP[field_action]: _boosted_value(
-                            field_name, field_action, key, val, boost)})
+        handler_name = 'process_query_{0}'.format(field_action)
 
-            elif field_action == 'query_string':
-                # query_string has different syntax, so it's handled
-                # differently.
-                #
-                # Note: query_string queries are not boosted with
-                # .boost()---they're boosted in the query text itself.
-                rv.append(
-                    {'query_string':
-                         {'default_field': field_name,
-                          'query': val}})
+        if field_action and hasattr(self, handler_name):
+            return getattr(self, handler_name)(field_name, val, field_action)
 
-            elif field_action in ('gt', 'gte', 'lt', 'lte'):
-                # Ranges are special and have a different syntax, so
-                # we handle them separately.
-                rv.append(
-                    {'range': {field_name: _boosted_value(
-                                field_name, field_action, key, val, boost)}})
+        elif field_action in QUERY_ACTION_MAP:
+            return {
+                QUERY_ACTION_MAP[field_action]: _boosted_value(
+                    field_name, field_action, key, val, boost)
+            }
 
-            else:
-                raise InvalidFieldActionError(
-                    '%s is not a valid field action' % field_action)
+        elif field_action == 'query_string':
+            # query_string has different syntax, so it's handled
+            # differently.
+            #
+            # Note: query_string queries are not boosted with
+            # .boost()---they're boosted in the query text itself.
+            return {
+                'query_string':
+                    {'default_field': field_name,
+                     'query': val}
+            }
 
-        if or_:
-            rv.append({'bool': {'should': self._process_queries(or_.items())}})
-        return rv
+        elif field_action in ('gt', 'gte', 'lt', 'lte'):
+            # Ranges are special and have a different syntax, so
+            # we handle them separately.
+            return {
+                'range': {field_name: _boosted_value(
+                        field_name, field_action, key, val, boost)}
+            }
+
+        raise InvalidFieldActionError(
+            '%s is not a valid field action' % field_action)
+
+    def _process_queries(self, queries):
+        """Takes a list of queries and returns query clause value
+
+        :arg queries: list of Q instances
+
+        :returns: dict which is the query clause value
+
+        """
+        # First, let's mush everything into a single Q. Then we can
+        # parse that into bits.
+        new_q = Q()
+
+        for query in queries:
+            new_q += query
+
+        # Now we have a single Q that needs to be processed.
+        should_q = [self._process_query(query) for query in new_q.should_q]
+        must_q = [self._process_query(query) for query in new_q.must_q]
+        must_not_q = [self._process_query(query) for query in new_q.must_not_q]
+
+        if len(must_q) > 1 or (len(should_q) + len(must_not_q) > 0):
+            # If there's more than one must_q or there are must_not_q
+            # or should_q, then we need to wrap the whole thing in a
+            # boolean query.
+            bool_query = {}
+            if must_q:
+                bool_query['must'] = must_q
+            if should_q:
+                bool_query['should'] = should_q
+            if must_not_q:
+                bool_query['must_not'] = must_not_q
+            return {'bool': bool_query}
+
+        if must_q:
+            # There's only one must_q query and that's it, so we hoist
+            # that.
+            return must_q[0]
+
+        return {}
 
     def _do_search(self):
         """

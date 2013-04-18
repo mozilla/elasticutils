@@ -1,10 +1,71 @@
 from datetime import datetime, timedelta
+from unittest import TestCase
 
 from nose.tools import eq_
 
 from elasticutils import (
-    S, F, InvalidFieldActionError, InvalidFacetType, SearchResults)
+    S, F, Q, InvalidFieldActionError, InvalidFacetType, SearchResults)
 from elasticutils.tests import ElasticTestCase, facet_counts_dict
+
+
+class QTest(TestCase):
+    def test_q_should(self):
+        q = Q(foo__text='abc', bar__text='def', should=True)
+        eq_(sorted(q.should_q), [('bar__text', 'def'), ('foo__text', 'abc')])
+        eq_(sorted(q.must_q), [])
+        eq_(sorted(q.must_not_q), [])
+
+    def test_q_must(self):
+        q = Q(foo__text='abc', bar__text='def', must=True)
+        eq_(sorted(q.should_q), [])
+        eq_(sorted(q.must_q), [('bar__text', 'def'), ('foo__text', 'abc')])
+        eq_(sorted(q.must_not_q), [])
+
+    def test_q_must_not(self):
+        q = Q(foo__text='abc', bar__text='def', must_not=True)
+        eq_(sorted(q.should_q), [])
+        eq_(sorted(q.must_q), [])
+        eq_(sorted(q.must_not_q), [('bar__text', 'def'), ('foo__text', 'abc')])
+
+    def test_q_basic_add(self):
+        """Adding one Q to another Q combines them."""
+        q = Q(foo__text='abc') + Q(bar__text='def')
+
+        eq_(sorted(q.should_q), [])
+        eq_(sorted(q.must_q), [('bar__text', 'def'), ('foo__text', 'abc')])
+        eq_(sorted(q.must_not_q), [])
+
+    def test_q_order(self):
+        q1 = Q(foo__text='abc') + Q(bar__text='def')
+
+        q2 = Q(bar__text='def') + Q(foo__text='abc')
+        eq_(q1, q2)
+
+        q2 = Q(bar__text='def')
+        q2 += Q(foo__text='abc')
+        eq_(q1, q2)
+        
+        q2 = Q(foo__text='abc')
+        q2 += Q(bar__text='def')
+        eq_(q1, q2)
+
+    def test_q_mixed(self):
+        q1 = Q(foo__text='should', bar__text='should', should=True)
+        q2 = Q(baz='must')
+        q3 = Q(bat='must_not', must_not=True)
+        q4 = Q(ban='must', must=True)
+        q5 = Q(bam='must', must=True)
+
+        q_all = q1 + q2 + q3 + q4 + q5
+
+        eq_(sorted(q_all.should_q),
+            [('bar__text', 'should'), ('foo__text', 'should')])
+
+        eq_(sorted(q_all.must_q),
+            [('bam', 'must'), ('ban', 'must'), ('baz', 'must')])
+
+        eq_(sorted(q_all.must_not_q),
+            [('bat', 'must_not')])
 
 
 class QueryTest(ElasticTestCase):
@@ -16,29 +77,44 @@ class QueryTest(ElasticTestCase):
         {'id': 5, 'foo': 'train car', 'tag': 'awesome', 'width': '7'}
         ]
 
+    def test_q_all(self):
+        eq_(len(self.get_s()), 5)
+
     def test_q(self):
         eq_(len(self.get_s().query(foo='bar')), 1)
         eq_(len(self.get_s().query(foo='car')), 2)
 
-    def test_q_all(self):
-        eq_(len(self.get_s()), 5)
+        eq_(len(self.get_s().query(Q(foo='bar'))), 1)
+        eq_(len(self.get_s().query(Q(foo='car'))), 2)
 
     def test_q_term(self):
         eq_(len(self.get_s().query(foo='car')), 2)
         eq_(len(self.get_s().query(foo__term='car')), 2)
 
+        eq_(len(self.get_s().query(Q(foo='car'))), 2)
+        eq_(len(self.get_s().query(Q(foo__term='car'))), 2)
+
     def test_q_in(self):
         eq_(len(self.get_s().query(foo__in=['car', 'bar'])), 3)
+
+        eq_(len(self.get_s().query(Q(foo__in=['car', 'bar']))), 3)
 
     def test_q_text(self):
         eq_(len(self.get_s().query(foo__text='car')), 2)
 
+        eq_(len(self.get_s().query(Q(foo__text='car'))), 2)
+
     def test_q_match(self):
         eq_(len(self.get_s().query(foo__match='car')), 2)
+
+        eq_(len(self.get_s().query(Q(foo__match='car'))), 2)
 
     def test_q_prefix(self):
         eq_(len(self.get_s().query(foo__prefix='ca')), 2)
         eq_(len(self.get_s().query(foo__startswith='ca')), 2)
+
+        eq_(len(self.get_s().query(Q(foo__prefix='ca'))), 2)
+        eq_(len(self.get_s().query(Q(foo__startswith='ca'))), 2)
 
     def test_q_text_phrase(self):
         # Doing a text query for the two words in either order kicks up
@@ -46,34 +122,52 @@ class QueryTest(ElasticTestCase):
         eq_(len(self.get_s().query(foo__text='train car')), 2)
         eq_(len(self.get_s().query(foo__text='car train')), 2)
 
+        eq_(len(self.get_s().query(Q(foo__text='train car'))), 2)
+        eq_(len(self.get_s().query(Q(foo__text='car train'))), 2)
+
         # Doing a text_phrase query for the two words in the right order
         # kicks up one result.
         eq_(len(self.get_s().query(foo__text_phrase='train car')), 1)
+
+        eq_(len(self.get_s().query(Q(foo__text_phrase='train car'))), 1)
 
         # Doing a text_phrase query for the two words in the wrong order
         # kicks up no results.
         eq_(len(self.get_s().query(foo__text_phrase='car train')), 0)
 
-    def test_q_text_match(self):
+        eq_(len(self.get_s().query(Q(foo__text_phrase='car train'))), 0)
+
+    def test_q_match_phrase(self):
         # Doing a match query for the two words in either order kicks up
         # two results.
         eq_(len(self.get_s().query(foo__match='train car')), 2)
         eq_(len(self.get_s().query(foo__match='car train')), 2)
 
+        eq_(len(self.get_s().query(Q(foo__match='train car'))), 2)
+        eq_(len(self.get_s().query(Q(foo__match='car train'))), 2)
+
         # Doing a match_phrase query for the two words in the right
         # order kicks up one result.
         eq_(len(self.get_s().query(foo__match_phrase='train car')), 1)
+
+        eq_(len(self.get_s().query(Q(foo__match_phrase='train car'))), 1)
 
         # Doing a match_phrase query for the two words in the wrong
         # order kicks up no results.
         eq_(len(self.get_s().query(foo__match_phrase='car train')), 0)
 
+        eq_(len(self.get_s().query(Q(foo__match_phrase='car train'))), 0)
+
     def test_q_fuzzy(self):
         # Mispelled word gets no results with text query.
         eq_(len(self.get_s().query(foo__text='tran')), 0)
 
+        eq_(len(self.get_s().query(Q(foo__text='tran'))), 0)
+
         # Mispelled word gets one result with fuzzy query.
         eq_(len(self.get_s().query(foo__fuzzy='tran')), 1)
+
+        eq_(len(self.get_s().query(Q(foo__fuzzy='tran'))), 1)
 
     def test_q_demote(self):
         s = self.get_s().query(foo__text='car')
@@ -86,16 +180,35 @@ class QueryTest(ElasticTestCase):
         # so the top result in each list is different.
         assert scores[0] != demoted_scores
 
+        # Now we do the whole thing again with Qs.
+        s = self.get_s().query(Q(foo__text='car'))
+        scores = [(sr['id'], sr._score) for sr in s.values_dict('id')]
+
+        s = s.demote(0.5, Q(width__term='5'))
+        demoted_scores = [(sr['id'], sr._score) for sr in s.values_dict('id')]
+
+        # These are both sorted by scores. We're demoting one result
+        # so the top result in each list is different.
+        assert scores[0] != demoted_scores
+
     def test_q_query_string(self):
         eq_(len(self.get_s().query(foo__query_string='car AND train')), 1)
         eq_(len(self.get_s().query(foo__query_string='car OR duck')), 3)
 
+        eq_(len(self.get_s().query(Q(foo__query_string='car AND train'))), 1)
+        eq_(len(self.get_s().query(Q(foo__query_string='car OR duck'))), 3)
+
         # You can query against different fields with the query_string.
         eq_(len(self.get_s().query(foo__query_string='tag:boat OR car')), 3)
+
+        eq_(len(self.get_s().query(Q(foo__query_string='tag:boat OR car'))), 3)
 
     def test_q_bad_field_action(self):
         with self.assertRaises(InvalidFieldActionError):
             len(self.get_s().query(foo__foo='awesome'))
+
+        with self.assertRaises(InvalidFieldActionError):
+            len(self.get_s().query(Q(foo__foo='awesome')))
 
     def test_query_raw(self):
         s = self.get_s().query_raw({'match': {'title': 'example'}})
@@ -113,12 +226,48 @@ class QueryTest(ElasticTestCase):
 
     def test_boost(self):
         """Boosted queries shouldn't raise a SearchPhaseExecutionException."""
-        # Note: There isn't an assertion here--we just want to make
-        # sure that it runs without throwing an exception.
         q1 = (self.get_s()
                   .boost(foo=4.0)
                   .query(foo='car', foo__text='car', foo__text_phrase='car'))
+
+        # Make sure the query executes without throwing an exception.
         list(q1)
+
+        # Verify it's producing the correct query.
+        eq_(q1._build_query(),
+            {
+                'query': {
+                    'bool': {
+                        'must': [
+                            {'text_phrase': {'foo': {'query': 'car', 'boost': 4.0}}},
+                            {'term': {'foo': {'value': 'car', 'boost': 4.0}}},
+                            {'text': {'foo': {'query': 'car', 'boost': 4.0}}}
+                        ]
+                    }
+                }
+            })
+
+        # Do the same thing with Qs.
+        q1 = (self.get_s()
+                  .boost(foo=4.0)
+                  .query(Q(foo='car', foo__text='car', foo__text_phrase='car')))
+
+        # Make sure the query executes without throwing an exception.
+        list(q1)
+
+        # Verify it's producing the correct query.
+        eq_(q1._build_query(),
+            {
+                'query': {
+                    'bool': {
+                        'must': [
+                            {'text_phrase': {'foo': {'query': 'car', 'boost': 4.0}}},
+                            {'term': {'foo': {'value': 'car', 'boost': 4.0}}},
+                            {'text': {'foo': {'query': 'car', 'boost': 4.0}}}
+                        ]
+                    }
+                }
+            })
 
     def test_boost_overrides(self):
         def _get_queries(search):
@@ -152,6 +301,91 @@ class QueryTest(ElasticTestCase):
         #
         # Figured I'd mention that in case someone was looking at the
         # tests and was like, "Hey--this is missing!"
+
+    def test_boolean_query_compled(self):
+        """Verify that should/must/must_not collapses right"""
+        s = self.get_s()
+
+        eq_((s.query(Q(foo='should', should=True),
+                     bar='must')
+             ._build_query()),
+            {
+                'query': {
+                    'bool': {
+                        'should': [
+                            {'term': {'foo': 'should'}}
+                        ],
+                        'must': [
+                            {'term': {'bar': 'must'}}
+                        ]
+                    }
+                }
+            })
+
+        eq_((s.query(Q(foo='should', should=True),
+                     bar='must_not', must_not=True)
+             ._build_query()),
+            {
+                'query': {
+                    'bool': {
+                        'should': [
+                            {'term': {'foo': 'should'}}
+                        ],
+                        'must_not': [
+                            {'term': {'bar': 'must_not'}}
+                        ]
+                    }
+                }
+            })
+
+        eq_((s.query(Q(foo='should', should=True),
+                     bar='must_not', must_not=True)
+             .query(Q(baz='must'))
+             ._build_query()),
+            {
+                'query': {
+                    'bool': {
+                        'should': [
+                            {'term': {'foo': 'should'}},
+                        ],
+                        'must_not': [
+                            {'term': {'bar': 'must_not'}}
+                        ],
+                        'must': [
+                            {'term': {'baz': 'must'}}
+                        ]
+                    }
+                }
+            })
+
+        # This is a pathological case. The should=True applies to the
+        # foo term query and the must=True doesn't apply to
+        # anything--it shouldn't override the should=True in the Q.
+        eq_((s.query(Q(foo='should', should=True), must=True)
+             ._build_query()),
+            {
+                'query': {
+                    'bool': {
+                        'should': [
+                            {'term': {'foo': 'should'}}
+                        ]
+                    }
+                }
+            })
+
+    def test_funkyquery(self):
+        """Test implementing query processors"""
+        class FunkyS(S):
+            def process_query_funkyquery(self, key, val, field_action):
+                return {'funkyquery': {'field': key, 'value': val}}
+
+        s = FunkyS().query(foo__funkyquery='bar')
+        eq_(s._build_query(),
+            {
+                'query': {
+                    'funkyquery': {'field': 'foo', 'value': 'bar'}
+                }
+            })
 
     def test_execute(self):
         assert isinstance(self.get_s().execute(), SearchResults)
