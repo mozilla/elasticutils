@@ -5,12 +5,20 @@ from elasticutils.contrib.django import get_es, S
 
 
 class DjangoMappingType(MappingType):
-    """This has most of the pieces you need to tie back to a Django ORM model.
+    """MappingType that ties to Django ORM models
 
-    Subclass this and override at least `get_model`.
+    You probably want to subclass this and override at least
+    `get_model()`.
 
     """
     def get_object(self):
+        """Returns the database object for this result
+
+        By default, this is::
+
+            self.get_model().objects.get(pk=self._id)
+
+        """
         return self.get_model().objects.get(pk=self._id)
 
     @classmethod
@@ -55,7 +63,9 @@ class DjangoMappingType(MappingType):
     def get_mapping_type_name(cls):
         """Returns the name of the mapping.
 
-        By default, this is ``cls.get_model()._meta.db_table``.
+        By default, this is::
+
+            cls.get_model()._meta.db_table
 
         Override this if you want to compute the mapping type name
         differently.
@@ -69,7 +79,7 @@ class DjangoMappingType(MappingType):
     def search(cls):
         """Returns a typed S for this class.
 
-        :returns: an `S`
+        :returns: an `S` for this DjangoMappingType
 
         """
         return S(cls)
@@ -88,6 +98,7 @@ class Indexable(object):
         """Returns an ElasticSearch object
 
         Override this if you need special functionality.
+
         :returns: a pyelasticsearch `ElasticSearch` instance
 
         """
@@ -111,7 +122,7 @@ class Indexable(object):
     def extract_document(cls, obj_id, obj=None):
         """Extracts the ElasticSearch index document for this instance
 
-        This must be implemented.
+        **This must be implemented.**
 
         .. Note::
 
@@ -133,7 +144,8 @@ class Indexable(object):
 
         Defaults to::
 
-            cls.get_model().objects.order_by('id').values_list('id', flat=True)
+            cls.get_model().objects.order_by('id').values_list(
+                'id', flat=True)
 
         :returns: iterable of ids of objects to be indexed
 
@@ -236,10 +248,11 @@ class Indexable(object):
     def refresh_index(cls, es=None):
         """Refreshes the index.
 
-        ElasticSearch will update the index periodically automatically. If you
-        need to see the documents you just indexed in your search results
-        right now, you should call `refresh_index` as soon as you're done
-        indexing. This is particularly helpful for unit tests.
+        ElasticSearch will update the index periodically
+        automatically. If you need to see the documents you just
+        indexed in your search results right now, you should call
+        `refresh_index` as soon as you're done indexing. This is
+        particularly helpful for unit tests.
 
         :arg es: The `ElasticSearch` to use. If you don't specify an
             `ElasticSearch`, it'll use `cls.get_es()`.

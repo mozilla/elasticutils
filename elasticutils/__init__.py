@@ -187,9 +187,6 @@ class F(object):
 
     creates a filter "price = 'Free' or style = 'Mexican'".
 
-    :property filters: a list of the filters in this F; filters are
-        either a dict or (key, val) tuple
-
     """
     def __init__(self, **filters):
         """Creates an F
@@ -512,7 +509,7 @@ class S(object):
 
         If the key is a field name and field action, then the boost
         will apply only to that field name and field action. For
-        example:
+        example::
 
             q = (S().query(title='trucks',
                            title__prefix='trucks',

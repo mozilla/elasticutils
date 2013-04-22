@@ -153,21 +153,18 @@ es_required_or_50x = decorator_from_middleware_with_args(ESExceptionMiddleware)
 
 
 class S(elasticutils.S):
-    """S that's more Django-focused
-
-    * creates ElasticSearch objects based on ``settings.py`` settings
-
-    """
+    """S that's based on Django settings"""
     def __init__(self, mapping_type):
         """Create and return an S.
 
-        :arg mapping_type: class; the mapping type that this S is based on
+        :arg mapping_type: class; the mapping type that this S is
+            based on
 
         .. Note::
 
-           The :class: `elasticutils.S` doesn't require the
+           The :py:class:`elasticutils.S` doesn't require the
            `mapping_type` argument, but the
-           :class:`elasticutils.contrib.django.S` does.
+           :py:class:`elasticutils.contrib.django.S` does.
 
         """
         return super(S, self).__init__(mapping_type)
@@ -182,7 +179,9 @@ class S(elasticutils.S):
         return super(S, self).get_es(default_builder=default_builder)
 
     def get_indexes(self, default_indexes=None):
-        """Returns the list of indexes to act on."""
+        """Returns the list of indexes to act on based on ES_INDEXES setting
+
+        """
         doctype = self.type.get_mapping_type_name()
         indexes = (settings.ES_INDEXES.get(doctype) or
                    settings.ES_INDEXES['default'])

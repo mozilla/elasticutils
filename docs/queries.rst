@@ -170,8 +170,8 @@ You can also construct a `typed S` which is an S with a
 each search result.
 
 
-S can be sliced
----------------
+S can be sliced to return the results you want
+----------------------------------------------
 
 By default ElasticSearch gives you the first 10 results.
 
@@ -197,7 +197,7 @@ The slicing is chainable, too::
 
 .. Note::
 
-   The slice happens on the ElasticSearch side---it doesn't pull all
+   The slicing happens on the ElasticSearch side---it doesn't pull all
    the results back and then slice them in Python. Ew.
 
 
@@ -227,11 +227,11 @@ same results.
 S results can be returned in many shapes
 ----------------------------------------
 
-If you have a `typed S` (e.g. ``S(MappingType)``), then by default,
-results will be instances of that type.
+An `untyped S` (e.g. ``S()``) will return instances of
+:py:class:`elasticutils.DefaultMappingType` by default.
 
-If you have an `untyped S` (e.g. ``S()``), then by default, results
-will be DefaultMappingType.
+A `typed S` (e.g. ``S(Foo)``), will return instances of that type
+(e.g. type ``Foo``) by default.
 
 :py:meth:`elasticutils.S.values_list()` gives you a list of
 tuples. See documentation for more details.
@@ -250,10 +250,14 @@ documentation for details.
 Mapping types
 =============
 
-:py:class:`elasticutils.MappingType` gives you a way to centralize
-concerns regarding documents you're storing in your ElasticSearch
-index. When you do searches with MappingTypes, you get back those
-results as an iterable of MappingTypes by default.
+:py:class:`elasticutils.MappingType` lets you centralize concerns
+regarding documents you're storing in your ElasticSearch index.
+
+Lets you tie business logic to search results
+---------------------------------------------
+
+When you do searches with MappingTypes, you get back those results as
+an iterable of MappingTypes by default.
 
 For example, say you had a description field and wanted to have a
 truncated version of it. You could do it this way::
@@ -269,6 +273,9 @@ truncated version of it. You could do it this way::
 
     print list(results)[0].description_truncated()
 
+
+Lets you link database data to search results
+---------------------------------------------
 
 You can relate a MappingType to a database model allowing you to link
 documents in the ElasticSearch index back to their origins in a
@@ -300,6 +307,9 @@ For example::
     print first.object.height
 
 
+DefaultMappingType
+------------------
+
 The most basic MappingType is the DefaultMappingType which is returned
 if you don't specify a MappingType and also don't call
 :py:meth:`elasticutils.S.values_dict()` or
@@ -311,6 +321,10 @@ you access search result fields as instance attributes or as keys::
 
 The latter syntax is helpful when there are attributes defined on the
 class that have the same name as the document field.
+
+
+For more information
+--------------------
 
 See :py:class:`elasticutils.MappingType` for documentation on creating
 MappingTypes.
@@ -433,7 +447,7 @@ Queries: ``query``
 The query is specified by keyword arguments to the
 :py:meth:`elasticutils.S.query()` method. The key of the keyword
 argument is parsed splitting on ``__`` (that's two underscores) with
-the first part as the "field" and the second part as the "field
+the first part as the "field name" and the second part as the "field
 action".
 
 For example::
@@ -445,10 +459,10 @@ will do an elasticsearch term query for "taco trucks" in the title field.
 
 And::
 
-   q = S().query(title__text='taco trucks')
+   q = S().query(title__match='taco trucks')
 
 
-will do a text query instead of a term query.
+will do a match query for "taco trucks" in the title field.
 
 There are many different field actions to choose from:
 
@@ -1172,98 +1186,3 @@ This works regardless of what form the search results are in.
    http://www.elasticsearch.org/guide/reference/api/search/explain.html
      ElasticSearch docs on explain (which are pretty bereft of
      details).
-
-
-API
-===
-
-The S class
------------
-
-.. autoclass:: elasticutils.S
-
-   .. automethod:: elasticutils.S.__init__
-
-   **Chaining transforms**
-
-       .. automethod:: elasticutils.S.query
-
-       .. automethod:: elasticutils.S.query_raw
-
-       .. automethod:: elasticutils.S.filter
-
-       .. automethod:: elasticutils.S.order_by
-
-       .. automethod:: elasticutils.S.boost
-
-       .. automethod:: elasticutils.S.demote
-
-       .. automethod:: elasticutils.S.facet
-
-       .. automethod:: elasticutils.S.facet_raw
-
-       .. automethod:: elasticutils.S.highlight
-
-       .. automethod:: elasticutils.S.values_list
-
-       .. automethod:: elasticutils.S.values_dict
-
-       .. automethod:: elasticutils.S.es
-
-       .. automethod:: elasticutils.S.indexes
-
-       .. automethod:: elasticutils.S.doctypes
-
-       .. automethod:: elasticutils.S.explain
-
-   **Methods to override if you need different behavior**
-
-       .. automethod:: elasticutils.S.get_es
-
-       .. automethod:: elasticutils.S.get_indexes
-
-       .. automethod:: elasticutils.S.get_doctypes
-
-   **Methods that force evaluation**
-
-       .. automethod:: elasticutils.S.__iter__
-
-       .. automethod:: elasticutils.S.__len__
-
-       .. automethod:: elasticutils.S.all
-
-       .. automethod:: elasticutils.S.count
-
-       .. automethod:: elasticutils.S.execute
-
-       .. automethod:: elasticutils.S.facet_counts
-
-
-The F class
------------
-
-.. autoclass:: elasticutils.F
-   :members:
-
-
-The MappingType class
----------------------
-
-.. autoclass:: elasticutils.MappingType
-
-   .. automethod:: elasticutils.MappingType.from_results
-
-   .. automethod:: elasticutils.MappingType.get_object
-
-   .. automethod:: elasticutils.MappingType.get_index
-
-   .. automethod:: elasticutils.MappingType.get_mapping_type_name
-
-   .. automethod:: elasticutils.MappingType.get_model
-
-
-The SearchResults class
------------------------
-
-.. autoclass:: elasticutils.SearchResults
-   :members:

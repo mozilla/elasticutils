@@ -1,6 +1,6 @@
-==============================================
-elasticutils.contrib.django: Using with Django
-==============================================
+==============================
+Using ElasticUtils with Django
+==============================
 
 .. contents::
    :local:
@@ -9,9 +9,10 @@ elasticutils.contrib.django: Using with Django
 Summary
 =======
 
-Django helpers are all located in `elasticutils.contrib.django`.
+Django-specific code is all located in `elasticutils.contrib.django`.
 
-This chapter covers using ElasticUtils Django bits.
+This chapter covers using ElasticUtils Django bits. For API
+documentation, see :ref:`django-api-docs-chapter`.
 
 
 Configuration
@@ -213,21 +214,6 @@ explicitly specifying `.get_mapping()`.
     searcher = MyMappingType.search()
 
 
-
-DjangoMappingType
------------------
-
-.. autoclass:: elasticutils.contrib.django.models.DjangoMappingType
-   :members:
-
-
-Indexable
----------
-
-.. autoclass:: elasticutils.contrib.django.models.Indexable
-   :members:
-
-
 .. seealso::
 
    http://www.elasticsearch.org/guide/reference/mapping/
@@ -245,22 +231,6 @@ Other helpers
 You can then utilize things such as
 :func:`elasticutils.contrib.django.tasks.index_objects` to
 automatically index all new items.
-
-
-View decorators
----------------
-
-.. autofunction:: elasticutils.contrib.django.es_required
-
-.. autofunction:: elasticutils.contrib.django.es_required_or_50x
-
-
-Tasks
------
-
-.. automodule:: elasticutils.contrib.django.tasks
-
-   .. autofunction:: index_objects(model, ids=[...])
 
 
 Writing tests
@@ -312,13 +282,3 @@ https://github.com/mozilla/elasticutils/
 
 If it's not what you want, you could subclass it and override behavior
 or just write your own.
-
-
-The ESTestCase class
---------------------
-
-Subclass this and make it do what you need it to do. It's definitely
-worth reading the code.
-
-.. autoclass:: elasticutils.contrib.django.estestcase.ESTestCase
-   :members:

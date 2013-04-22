@@ -32,8 +32,18 @@ User's Guide
    mlt
    es
    debugging
-   django
+   api
    resources
+
+
+Using ElasticUtils with Django
+==============================
+
+.. toctree::
+   :maxdepth: 1
+
+   django
+   django_api
 
 
 Contributor's Guide
