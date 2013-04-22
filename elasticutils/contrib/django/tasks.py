@@ -31,7 +31,8 @@ def index_objects(mapping_type, ids, **kw):
        Therefore, you want to do the chunking. If you have 10,000
        documents to index, you should create `x` celery tasks with `y`
        sized chunks each where `y` is whatever you think is an
-       appropriate number.
+       appropriate number for bulk indexing. If you don't know, try
+       100.
 
     """
     if settings.ES_DISABLED:
@@ -50,8 +51,8 @@ def index_objects(mapping_type, ids, **kw):
         try:
             documents.append(mapping_type.extract_document(obj.id, obj))
         except Exception as exc:
-            print 'GAH!', repr(exc)
-            log.exception('Unable to extract document {0}'.format(obj))
+            log.exception('Unable to extract document {0}: {1}'.format(
+                    obj, repr(exc)))
 
     mapping_type.bulk_index(documents, id_field='id')
 
