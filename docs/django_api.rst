@@ -24,8 +24,8 @@ The DjangoMappingType class
    :members:
 
 
-Indexable
-=========
+The Indexable class
+===================
 
 .. autoclass:: elasticutils.contrib.django.models.Indexable
    :members:
@@ -39,8 +39,8 @@ View decorators
 .. autofunction:: elasticutils.contrib.django.es_required_or_50x
 
 
-Middleware
-==========
+The ESExceptionMiddleware class
+===============================
 
 .. autoclass:: elasticutils.contrib.django.ESExceptionMiddleware
 
