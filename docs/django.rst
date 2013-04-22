@@ -15,6 +15,28 @@ This chapter covers using ElasticUtils Django bits. For API
 documentation, see :ref:`django-api-docs-chapter`.
 
 
+How to integrate ElasticUtils with Django
+=========================================
+
+1. add ElasticUtils configuration settings to your project's setting
+   file
+
+2. write one or more `DjangoMappingType` classes
+
+3. write code to create the ElasticSearch index and populate it with
+   documents based on your `DjangoMappingType` subclasses
+
+3. use :py:class:`elasticutils.contrib.django.S` to search and return
+   results
+
+4. use :py:class:`elasticutils.contrib.django.estestcase.ESTestCase`
+   to write tests
+
+
+That's the gist of it. You can deviate on any of these depending on
+your needs, of course.
+
+
 Configuration
 =============
 
