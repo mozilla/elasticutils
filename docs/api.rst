@@ -77,6 +77,13 @@ The F class
    :members:
 
 
+The Q class
+===========
+
+.. autoclass:: elasticutils.Q
+   :members:
+
+
 The MappingType class
 =====================
 

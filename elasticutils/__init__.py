@@ -277,8 +277,6 @@ class Q(object):
     creates a BooleanQuery with one `should` clause (title) and two
     `must` clauses (summary and description).
 
-    :property queries: a list of the queries in this Q
-
     """
     def __init__(self, **queries):
         """Creates a Q"""

@@ -405,8 +405,116 @@ query_string            query_string query [3]_
      ElasticSearch docs on query_string queries
 
 
-Advanced queries: ``query_raw``
-===============================
+Advanced queries: ``Q`` and ``query_raw``
+=========================================
+
+calling .query() multiple times
+-------------------------------
+
+Calling :py:method:`elasticutils.S.query` multiple times will combine
+all the queries together.
+
+
+should, must and must_not
+-------------------------
+
+By default all queries must match a document in order for the document
+to show up in the search results.
+
+You can alter this behavior by flagging your queries with ``should``,
+``must``, and ``must_not`` flags.
+
+**should**
+
+    A query added with ``should=True`` affects the score for a result,
+    but it won't prevent the document from being in the result set.
+
+    Example::
+
+        qs = S().query(title__text='castle',
+                       summary__text='castle',
+                       should=True)
+
+    If the document matches either the ``title__text`` or the
+    ``summary__text`` then it's included in the results set. It
+    doesn't *have* to match both.
+
+
+**must**
+
+    This is the default.
+
+    A query added with ``must=True`` must match in order for the
+    document to be in the result set.
+
+    Example::
+
+        qs = S().query(title__text='castle',
+                       summary__text='castle')
+
+        qs = S().query(title__text='castle',
+                       summary__text='castle',
+                       must=True)
+
+    These two are equivalent. The document must match both the
+    ``title__text`` and ``summary__text`` queries in order to be
+    included in the result set. If it doesn't match one of them, then
+    it's not included.
+
+
+**must_not**
+
+    A query added with ``must_not=True`` must NOT match in order
+    for the document to be in the result set.
+
+    Example::
+
+        qs = (S().query(title__text='castle')
+                 .query(author='castle', must_not=True))
+
+    For a document to be included in the result set, it must match the
+    ``title__text`` query and must NOT match the ``author``
+    query. I.e. The title must have "castle", but the document can't
+    have been written by someone with "castle" in their name.
+
+
+The Q class
+-----------
+
+You can manipulate query units with the :py:class:`elasticutils.Q`
+class. For example, you can incrementally build your query::
+
+    q = Q()
+
+    if search_authors:
+        q += Q(author_name=search_text, should=True)
+
+    if search_keywords:
+        q += Q(keyword=search_text, should=True)
+
+    q += Q(title__text=search_text, summary__text=search_text,
+           should=True)
+
+
+The ``+`` Python operator will combine two `Q` instances together and
+return a new instance.
+
+You can then use one or more `Q` classes in a query call::
+
+    if search_authors:
+        q += Q(author_name=search_text, should=True)
+
+    if search_keywords:
+        q += Q(keyword=search_text, should=True)
+
+    q += Q(title__text=search_text, summary__text=search_text,
+           should=True)
+
+    s = S().query(q)
+
+
+query_raw
+---------
 
 :py:meth:`elasticutils.S.query_raw` lets you explicitly define the
 query portion of an Elasticsearch search.
@@ -419,6 +527,19 @@ This will override all ``.query()`` calls you've made in your
 :py:class:`elasticutils.S` before and after the `.query_raw` call.
 
 This is helpful if ElasticUtils is missing functionality you need.
+
+
+adding new query actions
+------------------------
+
+You can subclass :py:class:`elasticutils.S` and add handling for
+additional query actions. This is helpful in two circumstances:
+
+1. ElasticUtils doesn't have support for that query type
+2. ElasticUtils doesn't support that query type in a way you
+   need---for example, ElasticUtils uses different argument values
+
+See :py:class:`elasticutils.S` for more details on how to do this.
 
 
 Filters: ``filter``
