@@ -1,6 +1,6 @@
-==================
-Join this project!
-==================
+====================
+ Join this project!
+====================
 
 Interested in working on a Python library for using elasticsearch?
 Interested in using it? Then you should be interested in this project!

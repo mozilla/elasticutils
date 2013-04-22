@@ -415,7 +415,30 @@ class S(object):
 
     def order_by(self, *fields):
         """
-        Return a new S instance with the ordering changed.
+        Return a new S instance with results ordered as specified
+
+        You can change the order search results by specified fields::
+
+            q = (S().query(title='trucks')
+                    .order_by('title')
+
+
+        This orders search results by the `title` field in ascending
+        order.
+
+        If you want to sort by descending order, prepend a ``-``::
+
+            q = (S().query(title='trucks')
+                    .order_by('-title')
+
+
+        You can also sort by the computed field ``_score``.
+
+        .. Note::
+
+           Calling this again will overwrite previous ``.order_by()``
+           calls.
+
         """
         return self._clone(next_step=('order_by', fields))
 
@@ -564,11 +587,6 @@ class S(object):
     def highlight(self, *fields, **kwargs):
         """Set highlight/excerpting with specified options.
 
-        This highlight will override previous highlights.
-
-        This won't let you clear it--we'd need to write a
-        ``clear_highlight()``.
-
         :arg fields: The list of fields to highlight. If the field is
             None, then the highlight is cleared.
 
@@ -577,15 +595,40 @@ class S(object):
         * ``pre_tags`` -- List of tags before highlighted portion
         * ``post_tags`` -- List of tags after highlighted portion
 
-        See ElasticSearch highlight:
+        Results will have a ``_highlight`` property which contains
+        the highlighted field excerpts.
 
-        http://www.elasticsearch.org/guide/reference/api/search/highlighting.html
+        For example::
+
+            q = (S().query(title__text='crash', content__text='crash')
+                    .highlight('title', 'content'))
+
+            for result in q:
+                print result._highlight['title']
+                print result._highlight['content']
+
+
+        If you pass in ``None``, it will clear the highlight.
+
+        For example, this search won't highlight anything::
+
+            q = (S().query(title__text='crash')
+                    .highlight('title')          # highlights 'title' field
+                    .highlight(None))            # clears highlight
+
+
+        .. Note::
+
+           Calling this again will overwrite previous ``.highlight()``
+           calls.
+
+        .. Note::
+
+           Make sure the fields you're highlighting are indexed
+           correctly.  Read the ElasticSearch documentation for
+           details.
 
         """
-        # TODO: Implement `limit` kwarg if useful.
-        # TODO: Once oedipus is no longer needed in SUMO, support ranked lists
-        # of before_match and after_match tags. ElasticSearch can highlight more
-        # significant stuff brighter.
         return self._clone(next_step=('highlight', (fields, kwargs)))
 
     def extra(self, **kw):
@@ -594,7 +637,8 @@ class S(object):
         set.
         """
         new = self._clone()
-        actions = 'values_list values_dict order_by query filter facet'.split()
+        actions = ['values_list', 'values_dict', 'order_by', 'query',
+                   'filter', 'facet']
         for key, vals in kw.items():
             assert key in actions
             if hasattr(vals, 'items'):

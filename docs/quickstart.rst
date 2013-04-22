@@ -2,6 +2,9 @@
  Quickstart
 ============
 
+Sample program
+==============
+
 Here's a short script that gives you the gist of how to use
 ElasticUtils:
 

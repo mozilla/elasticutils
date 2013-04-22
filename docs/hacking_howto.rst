@@ -1,8 +1,8 @@
 .. _hacking-howto-chapter:
 
-=============
-Hacking HOWTO
-=============
+===============
+ Hacking HOWTO
+===============
 
 This covers setting up a development environment for developing on
 ElasticUtils. If you're interested in using ElasticUtils, then you

@@ -1,6 +1,6 @@
-==============================
-Using ElasticUtils with Django
-==============================
+================================
+ Using ElasticUtils with Django
+================================
 
 .. contents::
    :local:

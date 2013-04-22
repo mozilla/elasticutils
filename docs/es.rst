@@ -1,8 +1,8 @@
 .. _es-chapter:
 
-===============================
-Getting an ElasticSearch object
-===============================
+=================================
+ Getting an ElasticSearch object
+=================================
 
 ElasticUtils uses `pyelasticsearch` which comes with a handy
 `ElasticSearch` object. This lets you work with ElasticSearch outside

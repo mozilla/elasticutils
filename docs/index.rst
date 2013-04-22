@@ -1,8 +1,8 @@
 .. _project-details:
 
-============
-ElasticUtils
-============
+==============
+ ElasticUtils
+==============
 
 ElasticUtils is a Python library that gives you a chainable search API
 for `ElasticSearch <http://elasticsearch.org/>`_ as well as some other
@@ -28,8 +28,8 @@ User's Guide
    changelog
    installation
    quickstart
+   theory
    queries
-   mlt
    es
    debugging
    api

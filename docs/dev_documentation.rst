@@ -1,6 +1,6 @@
-=============
-Documentation
-=============
+===============
+ Documentation
+===============
 
 Conventions
 ===========

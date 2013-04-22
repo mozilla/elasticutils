@@ -1,8 +1,8 @@
 .. _api-docs-chapter:
 
-========
-API docs
-========
+==========
+ API docs
+==========
 
 .. contents::
    :local:
@@ -77,15 +77,6 @@ The F class
    :members:
 
 
-The MLT class
-=============
-
-.. autoclass:: elasticutils.MLT
-   :members:
-
-   .. automethod:: elasticutils.MLT.__init__
-
-
 The MappingType class
 =====================
 
@@ -107,3 +98,12 @@ The SearchResults class
 
 .. autoclass:: elasticutils.SearchResults
    :members:
+
+
+The MLT class
+=============
+
+.. autoclass:: elasticutils.MLT
+   :members:
+
+   .. automethod:: elasticutils.MLT.__init__

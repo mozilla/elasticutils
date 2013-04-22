@@ -1,8 +1,8 @@
 .. _installation:
 
-============
-Installation
-============
+==============
+ Installation
+==============
 
 .. Warning::
 

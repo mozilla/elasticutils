@@ -1,8 +1,8 @@
 .. _debugging-chapter:
 
-=========
-Debugging
-=========
+===========
+ Debugging
+===========
 
 Here are a few helpful utilities for debugging your ElasticUtils work.
 

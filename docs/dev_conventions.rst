@@ -1,6 +1,6 @@
-===========
-Conventions
-===========
+=============
+ Conventions
+=============
 
 We follow the code conventions listed in the `coding conventions page
 of the webdev bootcamp guide

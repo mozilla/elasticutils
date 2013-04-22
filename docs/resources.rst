@@ -1,8 +1,8 @@
 .. _resource-chapter:
 
-=========
-Resources
-=========
+===========
+ Resources
+===========
 
 Documentation
 =============

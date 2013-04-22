@@ -1,8 +1,8 @@
 .. _django-api-docs-chapter:
 
-===============
-Django API docs
-===============
+=================
+ Django API docs
+=================
 
 .. contents::
    :local:
