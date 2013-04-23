@@ -78,8 +78,9 @@ User's Guide
    :maxdepth: 1
 
    installation
-   queries
-   es
+   indexing
+   mappingtype
+   searching
    debugging
    api
 

@@ -8,6 +8,12 @@
    :local:
 
 
+Functions
+=========
+
+.. autofunction:: elasticutils.get_es
+
+
 The S class
 ===========
 
