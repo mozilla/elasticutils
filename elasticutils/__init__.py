@@ -718,6 +718,22 @@ class S(object):
 
         will only apply the 4.0 boost to title__prefix.
 
+        Boosts are relative to one another and all boosts default to
+        1.0.
+
+        For example, if you had::
+
+            qs = (S().boost(title=4.0, summary=2.0)
+                     .query(title__text=value,
+                            summary__text=value,
+                            content__text=value,
+                            should=True))
+
+
+        ``title__text`` would be boosted twice as much as
+        ``summary__text`` and ``summary__text`` twice as much as
+        ``content__text``.
+
         """
         new = self._clone()
         new.field_boosts.update(kw)

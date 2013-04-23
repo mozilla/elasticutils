@@ -667,6 +667,10 @@ Query-time field boosting: ``boost``
 ElasticUtils allows you to specify query-time field boosts with
 :py:meth:`elasticutils.S.boost`.
 
+These boosts take effect at the time the query is executing. After the
+query has executed, then the boost is applied and that becomes the
+final score for the query.
+
 This is a useful way to weight queries for some fields over others.
 
 See :py:meth:`elasticutils.S.boost` for more details.
