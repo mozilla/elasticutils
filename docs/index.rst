@@ -27,7 +27,7 @@ index and doctype to look at.
 
 Print the count of everything in that index with that type:
 
->>> print s.count()
+>>> s.count()
 4
 
 Show titles of all blog entries with "elasticutils" in the title:
@@ -37,7 +37,7 @@ Show titles of all blog entries with "elasticutils" in the title:
 [u'ElasticUtils v0.4 released!', u'elasticutils status -- May 18th, 2012',
 u'ElasticUtils sprint at PyCon US 2013']
 
-Use properties rather than keys:
+You can also use properties rather than keys:
 
 >>> [result.title for result in s]
 [u'ElasticUtils v0.4 released!', u'elasticutils status -- May 18th, 2012',
