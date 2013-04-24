@@ -1621,7 +1621,7 @@ class MappingType(object):
 
     To extend this class:
 
-    1. implement ``get_indexes``.
+    1. implement ``get_index``.
     2. implement ``get_mapping_type_name``.
     3. if this ties back to a model, implement ``get_model`` and
        possibly also ``get_object``.
@@ -1630,7 +1630,7 @@ class MappingType(object):
 
         class ContactType(MappingType):
             @classmethod
-            def get_indexes(cls):
+            def get_index(cls):
                 return 'contacts_index'
 
             @classmethod
@@ -1767,3 +1767,174 @@ class MappingType(object):
 
 class DefaultMappingType(MappingType):
     """This is the default mapping type for S."""
+
+
+class Indexable(object):
+    """Mixin for mapping types with all the indexing hoo-hah.
+
+    Add this mixin to your DjangoMappingType subclass and it gives you
+    super indexing power.
+
+    """
+
+    @classmethod
+    def get_es(cls):
+        """Returns an ElasticSearch object
+
+        Override this if you need special functionality.
+
+        :returns: a pyelasticsearch `ElasticSearch` instance
+
+        """
+        return get_es()
+
+    @classmethod
+    def get_mapping(cls):
+        """Returns the mapping for this mapping type.
+
+        See the docs for details on how to specify a mapping.
+
+        Override this to return a mapping for this doctype.
+
+        :returns: dict representing the ElasticSearch mapping or None
+            if you want ElasticSearch to infer it. defaults to None.
+
+        """
+        return None
+
+    @classmethod
+    def extract_document(cls, obj_id, obj=None):
+        """Extracts the ElasticSearch index document for this instance
+
+        **This must be implemented.**
+
+        .. Note::
+
+           The resulting dict must be JSON serializable.
+
+        :arg obj_id: the object id for the object to extract from
+        :arg obj: if this is not None, use this as the object to
+            extract from; this allows you to fetch a bunch of items
+            at once and extract them one at a time
+
+        :returns: dict of key/value pairs representing the document
+
+        """
+        raise NotImplementedError
+
+    @classmethod
+    def get_indexable(cls):
+        """Returns an iterable of things to index.
+
+        :returns: iterable of things to index
+
+        """
+        raise NotImplemented
+
+    @classmethod
+    def index(cls, document, id_=None, force_insert=False, es=None):
+        """Adds or updates a document to the index
+
+        :arg document: Python dict of key/value pairs representing
+            the document
+
+            .. Note::
+
+               This must be serializable into JSON.
+
+        :arg id_: the id of the document
+
+            .. Note::
+
+               If you don't provide an ``id_``, then ElasticSearch
+               will make up an id for your document and it'll look
+               like a character name from a Lovecraft novel.
+
+        :arg force_insert: TODO
+
+        :arg es: The `ElasticSearch` to use. If you don't specify an
+            `ElasticSearch`, it'll use `cls.get_es()`.
+
+        .. Note::
+
+           If you need the documents available for searches
+           immediately, make sure to refresh the index by calling
+           ``refresh_index()``.
+
+        """
+        if es is None:
+            es = cls.get_es()
+
+        es.index(
+            cls.get_index(),
+            cls.get_mapping_type_name(),
+            document,
+            id=id_,
+            force_insert=force_insert)
+
+    @classmethod
+    def bulk_index(cls, documents, id_field='id', es=None):
+        """Adds or updates a batch of documents.
+
+        :arg documents: List of Python dicts representing individual
+            documents to be added to the index
+
+            .. Note::
+
+               This must be serializable into JSON.
+
+        :arg id_field: The name of the field to use as the document
+            id. This defaults to 'id'.
+
+        :arg es: The `ElasticSearch` to use. If you don't specify an
+            `ElasticSearch`, it'll use `cls.get_es()`.
+
+        .. Note::
+
+           If you need the documents available for searches
+           immediately, make sure to refresh the index by calling
+           ``refresh_index()``.
+
+        """
+        if es is None:
+            es = cls.get_es()
+
+        es.bulk_index(cls.get_index(),
+                      cls.get_mapping_type_name(),
+                      documents,
+                      id_field)
+
+    @classmethod
+    def unindex(cls, id_, es=None):
+        """Removes a particular item from the search index.
+
+        :arg id_: The ElasticSearch id for the document to remove from
+            the index.
+
+        :arg es: The `ElasticSearch` to use. If you don't specify an
+            `ElasticSearch`, it'll use `cls.get_es()`.
+
+        """
+        if es is None:
+            es = cls.get_es()
+
+        es.delete(cls.get_index(), cls.get_mapping_type_name(), id_)
+
+    @classmethod
+    def refresh_index(cls, es=None):
+        """Refreshes the index.
+
+        ElasticSearch will update the index periodically
+        automatically. If you need to see the documents you just
+        indexed in your search results right now, you should call
+        `refresh_index` as soon as you're done indexing. This is
+        particularly helpful for unit tests.
+
+        :arg es: The `ElasticSearch` to use. If you don't specify an
+            `ElasticSearch`, it'll use `cls.get_es()`.
+
+        """
+        if es is None:
+            es = cls.get_es()
+
+        es.refresh(cls.get_index())

@@ -92,6 +92,8 @@ Version 0.7: in development
   `MappingType` had a method called `get_indexes`. This is now
   `get_index` because it should return a single index name.
 
+* **Added Indexable mixin for indexing bits for MappingTypes.**
+
 * **Django: changed settings.**
 
   Changed ES_HOSTS setting to ES_URLS. This is both a name and a value
@@ -139,6 +141,13 @@ Version 0.7: in development
 
   Previously it defaulted to `elasticsearch.contrib.django.get_es()`. Now
   it defaults to `Indexable.get_es()` class method making it more flexible.
+
+* **Django: renamed DjangoMappingType to MappingType.**
+
+* **Django: moved MappingType and Indexable.**
+
+  They were in ``elasticutils.contrib.django.models`` and are now in
+  ``elasticutils.contrib.django``. Yay for slightly shorter module paths!
 
 * **Django: ditched the cron module and its helpers.**
 

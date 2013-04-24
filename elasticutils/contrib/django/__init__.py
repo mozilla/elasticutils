@@ -3,16 +3,16 @@ from functools import wraps
 
 import pyelasticsearch
 
-import elasticutils
-from elasticutils import F, InvalidFieldActionError
+from django.conf import settings
+from django.shortcuts import render
+from django.utils.decorators import decorator_from_middleware_with_args
 
-try:
-    from django.conf import settings
-    from django.shortcuts import render
-    from django.utils.decorators import decorator_from_middleware_with_args
-except ImportError:
-    def decorator_from_middleware_with_args(func):
-        return func
+from elasticutils import F, InvalidFieldActionError
+from elasticutils import S as BaseS
+from elasticutils import get_es as base_get_es
+from elasticutils import Indexable as BaseIndexable
+from elasticutils import MappingType as BaseMappingType
+from elasticutils import NoModelError
 
 
 log = logging.getLogger('elasticutils')
@@ -52,7 +52,7 @@ def get_es(**overrides):
         }
 
     defaults.update(overrides)
-    return elasticutils.get_es(**defaults)
+    return base_get_es(**defaults)
 
 
 def es_required(fun):
@@ -149,10 +149,11 @@ Examples::
         ...
 
 """
-es_required_or_50x = decorator_from_middleware_with_args(ESExceptionMiddleware)
+es_required_or_50x = decorator_from_middleware_with_args(
+    ESExceptionMiddleware)
 
 
-class S(elasticutils.S):
+class S(BaseS):
     """S that's based on Django settings"""
     def __init__(self, mapping_type):
         """Create and return an S.
@@ -195,3 +196,119 @@ class S(elasticutils.S):
         if isinstance(doctypes, basestring):
             doctypes = [doctypes]
         return super(S, self).get_doctypes(default_doctypes=doctypes)
+
+
+class MappingType(BaseMappingType):
+    """MappingType that ties to Django ORM models
+
+    You probably want to subclass this and override at least
+    `get_model()`.
+
+    """
+    def get_object(self):
+        """Returns the database object for this result
+
+        By default, this is::
+
+            self.get_model().objects.get(pk=self._id)
+
+        """
+        return self.get_model().objects.get(pk=self._id)
+
+    @classmethod
+    def get_model(cls):
+        """Return the model related to this DjangoMappingType.
+
+        This can be any class that has an instance related to this
+        DjangoMappingtype by id.
+
+        Override this to return a model class.
+
+        :returns: model class
+
+        """
+        raise NoModelError
+
+    @classmethod
+    def get_index(cls):
+        """Gets the index for this model.
+
+        The index for this model is specified in `settings.ES_INDEXES`
+        which is a dict of mapping type -> index name.
+
+        By default, this uses `.get_mapping_type()` to determine the
+        mapping and returns the value in `settings.ES_INDEXES` for that
+        or ``settings.ES_INDEXES['default']``.
+
+        Override this to compute it differently.
+
+        :returns: index name to use
+
+        """
+        indexes = settings.ES_INDEXES
+        index = indexes.get(cls.get_mapping_type_name()) or indexes['default']
+        if not (isinstance(index, basestring)):
+            # FIXME - not sure what to do here, but we only want one
+            # index and somehow this isn't one index.
+            index = index[0]
+        return index
+
+    @classmethod
+    def get_mapping_type_name(cls):
+        """Returns the name of the mapping.
+
+        By default, this is::
+
+            cls.get_model()._meta.db_table
+
+        Override this if you want to compute the mapping type name
+        differently.
+
+        :returns: mapping type string
+
+        """
+        return cls.get_model()._meta.db_table
+
+    @classmethod
+    def search(cls):
+        """Returns a typed S for this class.
+
+        :returns: an `S` for this DjangoMappingType
+
+        """
+        return S(cls)
+
+
+class Indexable(BaseIndexable):
+    """MappingType mixin that has indexing bits
+
+    Add this mixin to your MappingType subclass and it gives you super
+    indexing power.
+
+    """
+
+    @classmethod
+    def get_es(cls):
+        """Returns an ElasticSearch object using Django settings
+
+        Override this if you need special functionality.
+
+        :returns: a pyelasticsearch `ElasticSearch` instance
+
+        """
+        return get_es()
+
+    @classmethod
+    def get_indexable(cls):
+        """Returns the queryset of ids of all things to be indexed.
+
+        Defaults to::
+
+            cls.get_model().objects.order_by('id').values_list(
+                'id', flat=True)
+
+        :returns: iterable of ids of objects to be indexed
+
+        """
+        model = cls.get_model()
+        return model.objects.order_by('id').values_list('id', flat=True)

@@ -17,17 +17,17 @@ The S class
    .. automethod:: elasticutils.contrib.django.S.__init__
 
 
-The DjangoMappingType class
-===========================
+The MappingType class
+=====================
 
-.. autoclass:: elasticutils.contrib.django.models.DjangoMappingType
+.. autoclass:: elasticutils.contrib.django.MappingType
    :members:
 
 
 The Indexable class
 ===================
 
-.. autoclass:: elasticutils.contrib.django.models.Indexable
+.. autoclass:: elasticutils.contrib.django.Indexable
    :members:
 
 

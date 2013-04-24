@@ -3,7 +3,7 @@
 # if django isn't installed.
 
 
-from elasticutils.contrib.django.models import DjangoMappingType, Indexable
+from elasticutils.contrib.django import MappingType, Indexable
 
 
 _model_cache = []
@@ -34,7 +34,7 @@ class FakeModel(object):
         _model_cache.append(self)
 
 
-class FakeDjangoMappingType(DjangoMappingType, Indexable):
+class FakeDjangoMappingType(MappingType, Indexable):
     @classmethod
     def get_model(cls):
         return FakeModel

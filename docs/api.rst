@@ -90,6 +90,13 @@ The Q class
    :members:
 
 
+The SearchResults class
+=======================
+
+.. autoclass:: elasticutils.SearchResults
+   :members:
+
+
 The MappingType class
 =====================
 
@@ -106,10 +113,10 @@ The MappingType class
    .. automethod:: elasticutils.MappingType.get_model
 
 
-The SearchResults class
-=======================
+The Indexable class
+=====================
 
-.. autoclass:: elasticutils.SearchResults
+.. autoclass:: elasticutils.Indexable
    :members:
 
 

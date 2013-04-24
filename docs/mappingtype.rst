@@ -1,7 +1,11 @@
 .. _mapping-type-chapter:
 
-Mapping types
-=============
+==============================
+ Mapping types and Indexables
+==============================
+
+The MappingType class
+=====================
 
 :py:class:`elasticutils.MappingType` lets you centralize concerns
 regarding documents you're storing in your ElasticSearch index.
@@ -85,3 +89,80 @@ mappings in the index.
 
 See :py:class:`elasticutils.MappingType` for documentation on creating
 MappingTypes.
+
+
+The Indexable class
+===================
+
+:py:class:`elasticutils.Indexable` is a mixin for
+:py:class:`elasticutils.MappingType` that has methods and classmethods
+for making indexing easier.
+
+
+Example
+=======
+
+Here's an example of a class that subclasses `MappingType` and
+`Indexable`. It's based on a model called `BlogEntry`.
+
+::
+
+    class BlogEntryMappingType(MappingType, Indexable):
+        @classmethod
+        def get_index(cls):
+            return 'blog-index'
+
+        @classmethod
+        def get_mapping_type_name(cls):
+            return 'blog-entry'
+
+        @classmethod
+        def get_model(cls):
+            return BlogEntry
+
+        @classmethod
+        def get_es(cls):
+            return get_es(urls=['http://localhost:9200'])
+
+        @classmethod
+        def get_mapping(cls):
+            return {
+                'properties': {
+                    'id': {'type': 'integer'},
+                    'title': {'type': 'string'},
+                    'tags': {'type': 'string'}
+                }
+            }
+
+        @classmethod
+        def extract_document(cls, obj_id, obj=None):
+            if obj == None:
+                obj = cls.get_model().get(id=obj_id)
+
+            doc = {}
+            doc['id'] = obj.id
+            doc['title'] = obj.title
+            doc['tags'] = obj.tags
+            return doc
+
+        @classmethod
+        def get_indexable(cls):
+            return cls.get_model().get_objects()
+
+
+With this, I can write code elsewhere in my project that:
+
+1. gets the mapping type name and mapping for documents of type
+   "blog-entry"
+2. gets all the objects that are indexable
+3. for each object, extracts the ElasticSearch document data and
+   indexes it
+
+When I create my :py:class:`elasticutils.S` object, I'd create it like
+this::
+
+    s = S(BlogEntryMappingType)
+
+
+and now by default any search results I get back are instances of the
+`BlogEntryMappingType` class.

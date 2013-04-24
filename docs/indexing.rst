@@ -245,3 +245,12 @@ For example::
 
    http://www.elasticsearch.org/guide/reference/api/admin-indices-delete-index/
      Elasticsearch delete index API documentation
+
+
+Doing all of this with MappingTypes and Indexables
+==================================================
+
+If you're using MappingTypes, then you can do much of the above using
+methods and classmethods on :py:class:`MappingType` and
+:py:class:`Indexable` classes. See :ref:`mapping-type-chapter` for
+more details.
