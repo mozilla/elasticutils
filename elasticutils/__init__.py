@@ -1662,33 +1662,6 @@ class MappingType(object):
         self._object = self.get_object()
         return self._object
 
-    def get_object(self):
-        """Returns the model instance
-
-        This gets called when someone uses the ``.object`` attribute
-        which triggers lazy-loading of the object this document is
-        based on.
-
-        If this MappingType is associated with a model, then by
-        default, it calls::
-
-            self.get_model().get(id=self._id)
-
-        where ``self._id`` is the ElasticSearch document id.
-
-        Override it to do something different.
-
-        :raises cls.DoesNotExist: if the instance doesn't exist.
-            You should wrap this in a try/except block like this::
-
-                try:
-                    obj = result.object
-                except result.get_model().DoesNotExist:
-                    # exception handling here....
-
-        """
-        return self.get_model().get(id=self._id)
-
     @classmethod
     def get_index(cls):
         """Returns the index to use for this mapping type.
@@ -1718,19 +1691,37 @@ class MappingType(object):
         """
         raise NotImplementedError()
 
+    def get_object(self):
+        """Returns the model instance
+
+        This gets called when someone uses the ``.object`` attribute
+        which triggers lazy-loading of the object this document is
+        based on.
+
+        By default, this calls::
+
+            self.get_model().get(id=self._id)
+
+
+        where ``self._id`` is the ElasticSearch document id.
+
+        Override it to do something different.
+
+        """
+        return self.get_model().get(id=self._id)
+
     @classmethod
     def get_model(cls):
-        """Return the model related to this MappingType.
+        """Return the model class related to this MappingType.
 
         This can be any class that has an instance related to this
         Mappingtype by id.
 
         By default, raises NoModelError.
 
-        Override this to return a class that has a ``.get(id=id)``
-        classmethod.
-
-        TODO: fix the docs.
+        Override this to return a class that works with
+        ``.get_object()`` to return the instance of the model that is
+        related to this document.
 
         """
         raise NoModelError
