@@ -1,10 +1,10 @@
 from nose.tools import eq_
 
 from elasticutils import MLT
-from elasticutils.tests import ElasticTestCase
+from elasticutils.tests import ESTestCase
 
 
-class MoreLikeThisTest(ElasticTestCase):
+class MoreLikeThisTest(ESTestCase):
     @classmethod
     def setup_class(cls):
         super(MoreLikeThisTest, cls).setup_class()

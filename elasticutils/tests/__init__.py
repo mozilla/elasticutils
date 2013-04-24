@@ -7,7 +7,7 @@ import pyelasticsearch
 from elasticutils import get_es, S
 
 
-class ElasticTestCase(TestCase):
+class ESTestCase(TestCase):
     """Superclass for ElasticSearch-using test cases.
 
     :property index_name: name of the index to use
@@ -66,7 +66,7 @@ class ElasticTestCase(TestCase):
         """
         if self.skip_tests:
             raise SkipTest
-        super(ElasticTestCase, self).setUp()
+        super(ESTestCase, self).setUp()
 
     @classmethod
     def get_es(cls):

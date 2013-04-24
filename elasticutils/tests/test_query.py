@@ -5,7 +5,7 @@ from nose.tools import eq_
 
 from elasticutils import (
     S, F, Q, InvalidFieldActionError, InvalidFacetType, SearchResults)
-from elasticutils.tests import ElasticTestCase, facet_counts_dict
+from elasticutils.tests import ESTestCase, facet_counts_dict
 
 
 class QTest(TestCase):
@@ -68,7 +68,7 @@ class QTest(TestCase):
             [('bat', 'must_not')])
 
 
-class QueryTest(ElasticTestCase):
+class QueryTest(ESTestCase):
     data = [
         {'id': 1, 'foo': 'bar', 'tag': 'awesome', 'width': '2'},
         {'id': 2, 'foo': 'bart', 'tag': 'boring', 'width': '7'},
@@ -425,9 +425,9 @@ class QueryTest(ElasticTestCase):
         assert res[0]._explanation
 
 
-class FilterTest(ElasticTestCase):
+class FilterTest(ESTestCase):
     mapping = {
-        ElasticTestCase.mapping_type_name: {
+        ESTestCase.mapping_type_name: {
             'properties': {
                 'id': {'type': 'integer'},
                 'foo': {'type': 'string'},
@@ -639,7 +639,7 @@ class FilterTest(ElasticTestCase):
         })
 
 
-class FacetTest(ElasticTestCase):
+class FacetTest(ESTestCase):
     data = [
         {'id': 1, 'foo': 'bar', 'tag': 'awesome', 'width': '2'},
         {'id': 2, 'foo': 'bart', 'tag': 'boring', 'width': '7'},
@@ -695,7 +695,7 @@ class FacetTest(ElasticTestCase):
             dict(awesome=3, boring=1, boat=1))
 
 
-class FacetNoDataTest(ElasticTestCase):
+class FacetNoDataTest(ESTestCase):
     """This is for tests that generate their own data and need
     to be cleaned up.
 
@@ -784,7 +784,7 @@ class FacetNoDataTest(ElasticTestCase):
                      .facet_counts()))
 
 
-class HighlightTest(ElasticTestCase):
+class HighlightTest(ESTestCase):
     @classmethod
     def setup_class(cls):
         super(HighlightTest, cls).setup_class()

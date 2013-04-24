@@ -39,8 +39,8 @@ ElasticTestCase
 
 If you're testing things in ElasticUtils that require hitting an
 ElasticSearch instance, then you should subclass
-`elasticutils.tests.ElasticTestCase` which has code in it for making
+`elasticutils.tests.ESTestCase` which has code in it for making
 things easier.
 
-.. autoclass:: elasticutils.tests.ElasticTestCase
+.. autoclass:: elasticutils.tests.ESTestCase
    :members:

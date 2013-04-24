@@ -1,7 +1,7 @@
 from nose.tools import eq_
 
 from elasticutils import S, DefaultMappingType, NoModelError, MappingType
-from elasticutils.tests import ElasticTestCase
+from elasticutils.tests import ESTestCase
 
 
 model_cache = []
@@ -36,7 +36,7 @@ class FakeMappingType(MappingType):
         return FakeModel
 
 
-class TestResultsWithData(ElasticTestCase):
+class TestResultsWithData(ESTestCase):
     @classmethod
     def setup_class(cls):
         super(TestResultsWithData, cls).setup_class()
@@ -132,7 +132,7 @@ class TestResultsWithData(ElasticTestCase):
             {'query': {"term": {"fld1": 2}}})
 
 
-class TestMappingType(ElasticTestCase):
+class TestMappingType(ESTestCase):
     def tearDown(self):
         super(TestMappingType, self).tearDown()
         self.__class__.cleanup_index()
