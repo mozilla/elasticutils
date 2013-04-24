@@ -35,9 +35,8 @@ def get_es(**overrides):
     from ``settings.py``.
 
     :arg overrides: Allows you to override defaults to create the
-    ElasticSearch object.
-
-    You can override any of the arguments listed in :ref:`get_es`.
+        ElasticSearch object. You can override any of the arguments
+        isted in :py:func:`elasticutils.get_es`.
 
     For example, if you wanted to create an ElasticSearch with a
     longer timeout to a different cluster, you'd do:
@@ -288,15 +287,19 @@ class Indexable(BaseIndexable):
     """
 
     @classmethod
-    def get_es(cls):
+    def get_es(cls, **overrides):
         """Returns an ElasticSearch object using Django settings
 
         Override this if you need special functionality.
 
+        :arg overrides: Allows you to override defaults to create the
+            ElasticSearch object. You can override any of the arguments
+            listed in :py:func:`elasticutils.getes`.
+
         :returns: a pyelasticsearch `ElasticSearch` instance
 
         """
-        return get_es()
+        return get_es(**overrides)
 
     @classmethod
     def get_indexable(cls):
