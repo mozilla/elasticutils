@@ -7,7 +7,7 @@
 .. Warning::
 
    ElasticUtils doesn't work well with ElasticSearch 0.19.9. Don't use
-   that version.
+   that version---newer or older versions are fine.
 
    https://github.com/elasticsearch/elasticsearch/issues/2205
      ElasticSearch bug with ``_all``.
