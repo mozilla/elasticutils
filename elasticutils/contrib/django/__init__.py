@@ -293,7 +293,7 @@ class Indexable(BaseIndexable):
 
         :arg overrides: Allows you to override defaults to create the
             ElasticSearch object. You can override any of the arguments
-            listed in :py:func:`elasticutils.getes`.
+            listed in :py:func:`elasticutils.get_es`.
 
         :returns: a pyelasticsearch `ElasticSearch` instance
 

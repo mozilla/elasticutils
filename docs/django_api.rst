@@ -14,6 +14,9 @@ The S class
 .. autoclass:: elasticutils.contrib.django.S
    :members:
 
+   This shows the Django-specific documentation. See
+   :py:class:`elasticutils.S` for more the rest.
+
    .. automethod:: elasticutils.contrib.django.S.__init__
 
 
@@ -23,12 +26,19 @@ The MappingType class
 .. autoclass:: elasticutils.contrib.django.MappingType
    :members:
 
+   This shows the Django-specific documentation. See
+   :py:class:`elasticutils.MappingType` for more the rest.
+
 
 The Indexable class
 ===================
 
 .. autoclass:: elasticutils.contrib.django.Indexable
    :members:
+
+   This shows the Django-specific documentation. See
+   :py:class:`elasticutils.Indexable` for more the rest.
+
 
 
 View decorators

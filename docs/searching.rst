@@ -25,7 +25,7 @@ search.
 
     searcher = S()
 
-This creates an `untyped ` :py:class:`elasticutils.S` using the
+This creates an `untyped` :py:class:`elasticutils.S` using the
 defaults:
 
 * uses an :py:class:`pyelasticsearch.client.ElasticSearch` instance
