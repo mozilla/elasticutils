@@ -1465,8 +1465,8 @@ class MLT(object):
 
         body = self.s._build_query() if self.s else ''
 
-        hits = es.more_like_this(self.index, self.doctype, self.id, mlt_fields,
-                                 body, **params)
+        hits = es.more_like_this(
+            self.index, self.doctype, self.id, mlt_fields, body, **params)
 
         log.debug(hits)
 
