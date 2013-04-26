@@ -1832,7 +1832,8 @@ class Indexable(object):
         raise NotImplemented
 
     @classmethod
-    def index(cls, document, id_=None, force_insert=False, es=None):
+    def index(cls, document, id_=None, force_insert=False, es=None,
+              index=None):
         """Adds or updates a document to the index
 
         :arg document: Python dict of key/value pairs representing
@@ -1855,6 +1856,9 @@ class Indexable(object):
         :arg es: The `ElasticSearch` to use. If you don't specify an
             `ElasticSearch`, it'll use `cls.get_es()`.
 
+        :arg index: The name of the index to use. If you don't specify one
+            it'll use `cls.get_index()`.
+
         .. Note::
 
            If you need the documents available for searches
@@ -1865,15 +1869,18 @@ class Indexable(object):
         if es is None:
             es = cls.get_es()
 
+        if index is None:
+            index = cls.get_index()
+
         es.index(
-            cls.get_index(),
+            index,
             cls.get_mapping_type_name(),
             document,
             id=id_,
             force_insert=force_insert)
 
     @classmethod
-    def bulk_index(cls, documents, id_field='id', es=None):
+    def bulk_index(cls, documents, id_field='id', es=None, index=None):
         """Adds or updates a batch of documents.
 
         :arg documents: List of Python dicts representing individual
@@ -1889,6 +1896,9 @@ class Indexable(object):
         :arg es: The `ElasticSearch` to use. If you don't specify an
             `ElasticSearch`, it'll use `cls.get_es()`.
 
+        :arg index: The name of the index to use. If you don't specify one
+            it'll use `cls.get_index()`.
+
         .. Note::
 
            If you need the documents available for searches
@@ -1899,13 +1909,16 @@ class Indexable(object):
         if es is None:
             es = cls.get_es()
 
-        es.bulk_index(cls.get_index(),
+        if index is None:
+            index = cls.get_index()
+
+        es.bulk_index(index,
                       cls.get_mapping_type_name(),
                       documents,
                       id_field)
 
     @classmethod
-    def unindex(cls, id_, es=None):
+    def unindex(cls, id_, es=None, index=None):
         """Removes a particular item from the search index.
 
         :arg id_: The ElasticSearch id for the document to remove from
@@ -1914,14 +1927,20 @@ class Indexable(object):
         :arg es: The `ElasticSearch` to use. If you don't specify an
             `ElasticSearch`, it'll use `cls.get_es()`.
 
+        :arg index: The name of the index to use. If you don't specify one
+            it'll use `cls.get_index()`.
+
         """
         if es is None:
             es = cls.get_es()
 
-        es.delete(cls.get_index(), cls.get_mapping_type_name(), id_)
+        if index is None:
+            index = cls.get_index()
+
+        es.delete(index, cls.get_mapping_type_name(), id_)
 
     @classmethod
-    def refresh_index(cls, es=None):
+    def refresh_index(cls, es=None, index=None):
         """Refreshes the index.
 
         ElasticSearch will update the index periodically
@@ -1933,8 +1952,14 @@ class Indexable(object):
         :arg es: The `ElasticSearch` to use. If you don't specify an
             `ElasticSearch`, it'll use `cls.get_es()`.
 
+        :arg index: The name of the index to use. If you don't specify one
+            it'll use `cls.get_index()`.
+
         """
         if es is None:
             es = cls.get_es()
 
-        es.refresh(cls.get_index())
+        if index is None:
+            index = cls.get_index()
+
+        es.refresh(index)
