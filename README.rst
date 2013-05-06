@@ -30,3 +30,19 @@ IRC:
 License:
     BSD 3-clause; see LICENSE file
 
+
+Quick install
+=============
+
+Latest released version::
+
+    $ pip install elasticutils
+
+
+Run the dev version (which is master tip)::
+
+    $ pip install elasticutils==dev
+
+
+That corresponds with
+`<http://github.com/mozilla/elasticutils/tarball/master#egg=elasticutils-dev>`_.
