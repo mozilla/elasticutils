@@ -304,3 +304,25 @@ https://github.com/mozilla/elasticutils/
 
 If it's not what you want, you could subclass it and override behavior
 or just write your own.
+
+
+Helpful things to know
+======================
+
+Indexing and reset_queries
+--------------------------
+
+If you are:
+
+1. indexing a lot of data pulled out with the Django ORM, and
+2. have ``DEBUG = True`` (i.e. development environments)
+
+then you'll probably want to call ``django.db.reset_queries()``
+periodically.
+
+What's going on is that when ``DEBUG = True`` (i.e. a devleopment
+environment), Django helpfully stores all the queries that are made
+which when you're indexing a lot of data is a lot of data. Calling
+``django.db.reset_queries()`` periodically flushes the queries so
+it doesn't monotonically eat all your memory before the indexing
+is done.
