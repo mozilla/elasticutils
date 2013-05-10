@@ -771,16 +771,16 @@ class FacetNoDataTest(ESTestCase):
             ])
         FacetTest.refresh()
 
-        # Note: This uses a statistcal facet. If we implement handling
+        # Note: This uses a terms_stats facet. If we implement handling
         # for that, then we need to pick another facet type to fail on
         # or do the right thing and mock the test.
-        # Note: This used to use a histogram facet, but that was
-        # implemented.
+        # Note: Previously this used histogram and statistical facets,
+        # but those were implemented.
         self.assertRaises(
             InvalidFacetType,
             lambda: (self.get_s()
                      .facet_raw(created1={
-                        'statistical': {'field': 'age'}})
+                        'terms_stats':{"key_field":"age","value_field":"age"}})
                      .facet_counts()))
 
 
