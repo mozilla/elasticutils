@@ -1407,6 +1407,8 @@ class S(PythonMixin):
                 facets[key] = [v for v in val['entries']]
             elif val['_type'] == 'histogram':
                 facets[key] = [v for v in val['entries']]
+            elif val['_type'] == 'statistical':
+                facets[key] = val
             else:
                 raise InvalidFacetType(
                     'Facet _type "%s". key "%s" val "%r"' %
