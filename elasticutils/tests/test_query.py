@@ -868,3 +868,27 @@ class HighlightTest(ESTestCase):
         # Set it back to no fields and no highlight.
         s = s.highlight(None)
         eq_(list(s)[0]._highlight, {})
+
+
+def test_to_python():
+    def check_to_python(obj, expected):
+        eq_(S().to_python(obj), expected)
+
+    tests = [
+        (
+            {'date': '2013-05-15T15:00:00'},
+            {'date': datetime(2013, 5, 15, 15, 0, 0)}
+        ),
+        (
+            {'foo': {'date': '2013-05-15T15:00:00'}},
+            {'foo': {'date': datetime(2013, 5, 15, 15, 0, 0)}}
+        ),
+        (
+            {'foo': ['2013-05-15T15:00:00', '2013-03-03T03:00:00']},
+            {'foo': [datetime(2013, 5, 15, 15, 0, 0),
+                     datetime(2013, 3, 3, 3, 0, 0)]}
+        ),
+    ]
+
+    for obj, expected in tests:
+        yield check_to_python, obj, expected

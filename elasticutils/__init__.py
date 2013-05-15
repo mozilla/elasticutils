@@ -1,5 +1,6 @@
 import copy
 import logging
+from datetime import datetime
 from operator import itemgetter
 
 from pyelasticsearch import ElasticSearch
@@ -335,7 +336,47 @@ def _boosted_value(name, action, key, value, boost):
     return {name: value}
 
 
-class S(object):
+class PythonMixin(object):
+    """Mixin that provides ES results fixing"""
+    def to_python(self, obj):
+        """Converts strings in a data structure to Python types
+
+        It converts datetime-ish things to Python datetimes.
+
+        Override if you want something different.
+
+        :arg obj: Python datastructure
+
+        :returns: Python datastructure with strings converted to
+            Python types
+
+        .. Note::
+
+           This does the conversion in-place!
+
+        """
+        if isinstance(obj, basestring):
+            if len(obj) == 19:
+                # Note: ES seems to support other date/datetime
+                # formats, but I wasn't able to create a situation
+                # where it returns something in a different shape in
+                # the results.
+                try:
+                    return datetime.strptime(obj, '%Y-%m-%dT%H:%M:%S')
+                except ValueError:
+                    pass
+
+        elif isinstance(obj, dict):
+            for key, val in obj.items():
+                obj[key] = self.to_python(val)
+
+        elif isinstance(obj, list):
+            return [self.to_python(item) for item in obj]
+
+        return obj
+
+
+class S(PythonMixin):
     """Represents a lazy ElasticSearch Search API request.
 
     The API for `S` takes inspiration from Django's QuerySet.
@@ -1146,20 +1187,30 @@ class S(object):
 
         return {}
 
+    def get_results_class(self):
+        """Returns the results class to use
+
+        The results class should be a subclass of SearchResults.
+
+        """
+        if self.as_list:
+            return ListSearchResults
+        elif self.as_dict:
+            return DictSearchResults
+        else:
+            return ObjectSearchResults
+
     def _do_search(self):
         """
         Perform the search, then convert that raw format into a
         SearchResults instance and return it.
         """
         if not self._results_cache:
-            hits = self.raw()
-            if self.as_list:
-                ResultClass = ListSearchResults
-            elif self.as_dict:
-                ResultClass = DictSearchResults
-            else:
-                ResultClass = ObjectSearchResults
-            self._results_cache = ResultClass(self.type, hits, self.fields)
+            response = self.raw()
+            ResultsClass = self.get_results_class()
+            results = self.to_python(response.get('hits', {}).get('hits', []))
+            self._results_cache = ResultsClass(
+                self.type, response, results, self.fields)
         return self._results_cache
 
     def get_es(self, default_builder=get_es):
@@ -1334,7 +1385,7 @@ class S(object):
         return iter(self._do_search())
 
     def _raw_facets(self):
-        return self._do_search().results.get('facets', {})
+        return self._do_search().response.get('facets', {})
 
     def facet_counts(self):
         """
@@ -1363,7 +1414,7 @@ class S(object):
         return facets
 
 
-class MLT(object):
+class MLT(PythonMixin):
     """Represents a lazy ElasticSearch More Like This API request.
 
     This is lazy in the sense that it doesn't evaluate and execute the
@@ -1478,8 +1529,10 @@ class MLT(object):
         SearchResults instance and return it.
         """
         if not self._results_cache:
-            hits = self.raw()
-            self._results_cache = DictSearchResults(self.type, hits, None)
+            response = self.raw()
+            results = self.to_python(response.get('hits', {}).get('hits', []))
+            self._results_cache = DictSearchResults(
+                self.type, response, results, None)
         return self._results_cache
 
 
@@ -1492,7 +1545,8 @@ class SearchResults(object):
         SearchResults instance
     :property took: the amount of time the search took
     :property count: the total results
-    :property results: the raw ElasticSearch search response
+    :property response: the raw ElasticSearch search response
+    :property results: the search results from the response if any
     :property fields: the list of fields specified by values_list
         or values_dict
 
@@ -1513,13 +1567,15 @@ class SearchResults(object):
 
     """
 
-    def __init__(self, type, results, fields):
+    def __init__(self, type, response, results, fields):
         self.type = type
-        self.took = results.get('took', 0)
-        self.count = results.get('hits', {}).get('total', 0)
+        self.response = response
+        self.took = response.get('took', 0)
+        self.count = response.get('hits', {}).get('total', 0)
         self.results = results
         self.fields = fields
-        self.set_objects(results.get('hits', {}).get('hits', []))
+
+        self.set_objects(self.results)
 
     def set_objects(self, hits):
         raise NotImplementedError()
@@ -1544,10 +1600,10 @@ class DictSearchResults(SearchResults):
     SearchResults subclass that returns a results in the form of a
     dict.
     """
-    def set_objects(self, hits):
+    def set_objects(self, results):
         key = 'fields' if self.fields else '_source'
         self.objects = [decorate_with_metadata(DictResult(r[key]), r)
-                        for r in hits]
+                        for r in results]
 
 
 class ListSearchResults(SearchResults):
@@ -1555,10 +1611,10 @@ class ListSearchResults(SearchResults):
     SearchResults subclass that returns a results in the form of a
     tuple.
     """
-    def set_objects(self, hits):
+    def set_objects(self, results):
         if self.fields:
             getter = itemgetter(*self.fields)
-            objs = [(getter(r['fields']), r) for r in hits]
+            objs = [(getter(r['fields']), r) for r in results]
 
             # itemgetter returns an item--not a tuple of one item--if
             # there is only one thing in self.fields. Since we want
@@ -1567,7 +1623,7 @@ class ListSearchResults(SearchResults):
             if len(self.fields) == 1:
                 objs = [((obj,), r) for obj, r in objs]
         else:
-            objs = [(r['_source'].values(), r) for r in hits]
+            objs = [(r['_source'].values(), r) for r in results]
         self.objects = [decorate_with_metadata(TupleResult(obj), r)
                         for obj, r in objs]
 
@@ -1582,33 +1638,33 @@ def _convert_results_to_dict(r):
 
 
 class ObjectSearchResults(SearchResults):
-    def set_objects(self, hits):
+    def set_objects(self, results):
         mapping_type = (self.type if self.type is not None
                         else DefaultMappingType)
         self.objects = [
             decorate_with_metadata(
                 mapping_type.from_results(_convert_results_to_dict(r)),
                 r)
-            for r in hits]
+            for r in results]
 
     def __iter__(self):
         return self.objects.__iter__()
 
 
-def decorate_with_metadata(obj, hit):
-    """Return obj decorated with hit-scope metadata."""
+def decorate_with_metadata(obj, result):
+    """Return obj decorated with result-scope metadata."""
     # ElasticSearch id
-    obj._id = hit.get('_id', 0)
+    obj._id = result.get('_id', 0)
     # Source data
-    obj._source = hit.get('_source', {})
+    obj._source = result.get('_source', {})
     # The search result score
-    obj._score = hit.get('_score')
+    obj._score = result.get('_score')
     # The document type
-    obj._type = hit.get('_type')
+    obj._type = result.get('_type')
     # Explanation structure
-    obj._explanation = hit.get('_explanation', {})
+    obj._explanation = result.get('_explanation', {})
     # Highlight bits
-    obj._highlight = hit.get('highlight', {})
+    obj._highlight = result.get('highlight', {})
     return obj
 
 

@@ -1,3 +1,5 @@
+from datetime import date, datetime
+
 from nose.tools import eq_
 
 from elasticutils import S, DefaultMappingType, NoModelError, MappingType
@@ -130,6 +132,36 @@ class TestResultsWithData(ESTestCase):
                .values_list()
                ._build_query(),
             {'query': {"term": {"fld1": 2}}})
+
+
+class TestResultsWithDates(ESTestCase):
+    def test_dates(self):
+        """Datetime strings in ES results get converted to Python datetimes"""
+        self.create_index(
+            settings={
+                'mappings': {
+                    self.mapping_type_name: {
+                        'id': {'type': 'integer'},
+                        'bday': {'type': 'date', 'format': 'YYYY-mm-dd'},
+                        'btime': {'type': 'date'}
+                    }
+                }
+            }
+        )
+        data = [
+            {'id': 1, 'bday': date(2012, 12, 1),
+             'btime': datetime(2012, 12, 1, 12, 00)},
+        ]
+
+        self.index_data(data)
+        self.refresh()
+
+        results = list(self.get_s().values_dict())
+        eq_(results,
+            [{u'bday': datetime(2012, 12, 1, 0, 0),
+              u'btime': datetime(2012, 12, 1, 12, 0),
+              u'id': 1}]
+        )
 
 
 class TestMappingType(ESTestCase):

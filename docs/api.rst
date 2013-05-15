@@ -61,6 +61,8 @@ The S class
 
        .. automethod:: elasticutils.S.get_doctypes
 
+       .. automethod:: elasticutils.S.to_python
+
    **Methods that force evaluation**
 
        .. automethod:: elasticutils.S.__iter__
@@ -127,3 +129,5 @@ The MLT class
    :members:
 
    .. automethod:: elasticutils.MLT.__init__
+
+   .. automethod:: elasticutils.MLT.to_python
