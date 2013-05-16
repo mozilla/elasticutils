@@ -269,18 +269,18 @@ There are many different field actions to choose from:
 ======================  =======================
 field action            elasticsearch query
 ======================  =======================
-(no action specified)   term query
-term                    term query
-terms                   terms query
-text                    text query
-match                   match query [1]_
-prefix                  prefix query [2]_
-gt, gte, lt, lte        range query
-fuzzy                   fuzzy query
-wildcard                wildcard query
-text_phrase             text_phrase query
-match_phrase            match_phrase query [1]_
-query_string            query_string query [3]_
+(no action specified)   Term query
+term                    Term query
+terms                   Terms query
+text                    Text query
+match                   Match query [1]_
+prefix                  Prefix query [2]_
+gt, gte, lt, lte        Range query
+fuzzy                   Fuzzy query
+wildcard                Wildcard query
+text_phrase             Text phrase query
+match_phrase            Match phrase query [1]_
+query_string            Querystring query [3]_
 ======================  =======================
 
 
@@ -490,6 +490,23 @@ prefix, startswith   Prefix filter
 (no action)          Term filter
 ===================  ====================
 
+You can also filter on fields that have ``None`` as a value or have no
+value::
+
+    q = S().filter(language=None)
+
+This uses the ElasticSearch Missing filter.
+
+
+.. Note::
+
+   In order to filter on fields that have ``None`` as a value, you
+   have to tell Elasticsearch that the field can have null values. To
+   do this, you have to add ``null_value: True`` to the mapping for
+   that field.
+
+   http://www.elasticsearch.org/guide/reference/mapping/core-types.html
+
 
 .. seealso::
 
@@ -507,6 +524,9 @@ prefix, startswith   Prefix filter
 
    http://www.elasticsearch.org/guide/reference/query-dsl/term-filter.html
      ElasticSearch docs for term filter
+
+   http://www.elasticsearch.org/guide/reference/query-dsl/missing-filter.html
+     ElasticSearch docs for missing filter
 
 
 Advanced filters: ``filter`` and ``F``
