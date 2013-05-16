@@ -1850,7 +1850,19 @@ class Indexable(object):
     def get_mapping(cls):
         """Returns the mapping for this mapping type.
 
-        See the docs for details on how to specify a mapping.
+        Example::
+
+            @classmethod
+            def get_mapping(cls):
+                return {
+                    'properties': {
+                        'id': {'type': 'integer'},
+                        'name': {'type': 'string'}
+                    }
+                }
+
+
+        See the docs for more details on how to specify a mapping.
 
         Override this to return a mapping for this doctype.
 

@@ -204,21 +204,23 @@ explicitly specifying `.get_mapping()`.
         def get_mapping(cls):
             """Returns an ElasticSearch mapping."""
             return {
-                # The id is an integer, so store it as such. ElasticSearch
-                # would have inferred this just fine.
-                'id': {'type': 'integer'},
+                'properties': {
+                    # The id is an integer, so store it as such. ElasticSearch
+                    # would have inferred this just fine.
+                    'id': {'type': 'integer'},
 
-                # The name is a name---so we shouldn't analyze it
-                # (de-stem, tokenize, parse, etc).
-                'name': {'type': 'string', 'index': 'not_analyzed'},
+                    # The name is a name---so we shouldn't analyze it
+                    # (de-stem, tokenize, parse, etc).
+                    'name': {'type': 'string', 'index': 'not_analyzed'},
 
-                # The bio has free-form text in it, so analyze it with
-                # snowball.
-                'bio': {'type': 'string', 'analyzer': 'snowball'},
+                    # The bio has free-form text in it, so analyze it with
+                    # snowball.
+                    'bio': {'type': 'string', 'analyzer': 'snowball'},
 
-                # Age is an integer
-                'age': {'type': 'integer'}
+                    # Age is an integer
+                    'age': {'type': 'integer'}
                 }
+            }
 
         @classmethod
         def extract_document(cls, obj_id, obj=None):
