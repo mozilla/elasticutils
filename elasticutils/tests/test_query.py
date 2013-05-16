@@ -94,6 +94,11 @@ class QueryTest(ESTestCase):
         eq_(len(self.get_s().query(Q(foo='car'))), 2)
         eq_(len(self.get_s().query(Q(foo__term='car'))), 2)
 
+    def test_q_terms(self):
+        eq_(len(self.get_s().query(foo__terms=['car', 'duck'])), 3)
+
+        eq_(len(self.get_s().query(Q(foo__terms=['car', 'duck']))), 3)
+
     def test_q_in(self):
         eq_(len(self.get_s().query(foo__in=['car', 'bar'])), 3)
 
@@ -168,6 +173,13 @@ class QueryTest(ESTestCase):
         eq_(len(self.get_s().query(foo__fuzzy='tran')), 1)
 
         eq_(len(self.get_s().query(Q(foo__fuzzy='tran'))), 1)
+
+    def test_q_wildcard(self):
+        eq_(len(self.get_s().query(foo__wildcard='tra*n')), 1)
+        eq_(len(self.get_s().query(foo__wildcard='tra?n')), 1)
+
+        eq_(len(self.get_s().query(Q(foo__wildcard='tra*n'))), 1)
+        eq_(len(self.get_s().query(Q(foo__wildcard='tra?n'))), 1)
 
     def test_q_demote(self):
         s = self.get_s().query(foo__text='car')

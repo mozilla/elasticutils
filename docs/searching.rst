@@ -271,11 +271,13 @@ field action            elasticsearch query
 ======================  =======================
 (no action specified)   term query
 term                    term query
+terms                   terms query
 text                    text query
 match                   match query [1]_
 prefix                  prefix query [2]_
 gt, gte, lt, lte        range query
 fuzzy                   fuzzy query
+wildcard                wildcard query
 text_phrase             text_phrase query
 match_phrase            match_phrase query [1]_
 query_string            query_string query [3]_
@@ -301,6 +303,9 @@ query_string            query_string query [3]_
    http://www.elasticsearch.org/guide/reference/query-dsl/term-query.html
      ElasticSearch docs on term queries
 
+   http://www.elasticsearch.org/guide/reference/query-dsl/terms-query.html
+     ElasticSearch docs on terms queries
+
    http://www.elasticsearch.org/guide/reference/query-dsl/text-query.html
      ElasticSearch docs on text and text_phrase queries
 
@@ -315,6 +320,9 @@ query_string            query_string query [3]_
 
    http://www.elasticsearch.org/guide/reference/query-dsl/fuzzy-query.html
      ElasticSearch docs on fuzzy queries
+
+   http://www.elasticsearch.org/guide/reference/query-dsl/wildcard-query.html
+     ElasticSearch docs on wildcard queries
 
    http://www.elasticsearch.org/guide/reference/query-dsl/query-string-query.html
      ElasticSearch docs on query_string queries

@@ -23,12 +23,14 @@ QUERY_ACTION_MAP = {
     None: 'term',  # Default to term
     'in': 'in',
     'term': 'term',
+    'terms': 'terms',
     'startswith': 'prefix',  # Backwards compatability
     'prefix': 'prefix',
     'text': 'text',
     'text_phrase': 'text_phrase',
     'match': 'match',  # ES 0.19.9 renamed text to match
     'match_phrase': 'match_phrase',
+    'wildcard': 'wildcard',
     'fuzzy': 'fuzzy'}
 
 
