@@ -3,12 +3,14 @@ import logging
 from django.conf import settings
 from celery.decorators import task
 
+from elasticutils.utils import chunked
+
 
 log = logging.getLogger('elasticutils')
 
 
 @task
-def index_objects(mapping_type, ids, **kw):
+def index_objects(mapping_type, ids, chunk_size=100, **kw):
     """Index documents of a specified mapping type.
 
     This allows for asynchronous indexing.
@@ -22,17 +24,14 @@ def index_objects(mapping_type, ids, **kw):
             tasks.index_objects.delay(MyMappingType, [instance.id])
 
 
-    .. Warning::
+    :arg mapping_type: the mapping type for these ids
+    :arg ids: the list of ids of things to index
+    :arg chunk_size: the size of the chunk for bulk indexing
 
-       This uses bulk indexing. If you pass in, say, 10,000 ids
-       then it will build a single list of 10,000 documents and
-       then bulk index them all at once.
+    .. Note::
 
-       Therefore, you want to do the chunking. If you have 10,000
-       documents to index, you should create `x` celery tasks with `y`
-       sized chunks each where `y` is whatever you think is an
-       appropriate number for bulk indexing. If you don't know, try
-       100.
+       The default chunk_size is 100. The number of documents you can
+       bulk index at once depends on the size of the documents.
 
     """
     if settings.ES_DISABLED:
@@ -46,15 +45,18 @@ def index_objects(mapping_type, ids, **kw):
 
     # Retrieve all the objects that we're going to index and do it in
     # bulk.
-    documents = []
-    for obj in model.objects.filter(id__in=ids):
-        try:
-            documents.append(mapping_type.extract_document(obj.id, obj))
-        except Exception as exc:
-            log.exception('Unable to extract document {0}: {1}'.format(
-                    obj, repr(exc)))
+    for id_list in chunked(ids, chunk_size):
+        documents = []
 
-    mapping_type.bulk_index(documents, id_field='id')
+        for obj in model.objects.filter(id__in=id_list):
+            try:
+                documents.append(mapping_type.extract_document(obj.id, obj))
+            except StandardError as exc:
+                log.exception('Unable to extract document {0}: {1}'.format(
+                        obj, repr(exc)))
+
+        if documents:
+            mapping_type.bulk_index(documents, id_field='id')
 
 
 @task

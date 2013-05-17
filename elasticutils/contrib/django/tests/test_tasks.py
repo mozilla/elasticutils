@@ -40,3 +40,34 @@ class TestTasks(ESTestCase):
         unindex_objects(FakeDjangoMappingType, [1, 2, 3])
         FakeDjangoMappingType.refresh_index()
         eq_(FakeDjangoMappingType.search().count(), 0)
+
+    def test_tasks_chunk_size(self):
+        """Test chunk size affects bulk_index"""
+        documents = [
+            {'id': 1, 'name': 'odin skullcrusher'},
+            {'id': 2, 'name': 'heimdall kneebiter'},
+            {'id': 3, 'name': 'erik rose'}
+        ]
+
+        for doc in documents:
+            FakeModel(**doc)
+
+        class MockMappingType(FakeDjangoMappingType):
+            bulk_index_count = 0
+
+            @classmethod
+            def bulk_index(cls, *args, **kwargs):
+                cls.bulk_index_count += 1
+
+        index_objects(MockMappingType, [1, 2, 3])
+        eq_(MockMappingType.bulk_index_count, 1)
+
+        MockMappingType.bulk_index_count = 0
+
+        index_objects(MockMappingType, [1, 2, 3], chunk_size=2)
+        eq_(MockMappingType.bulk_index_count, 2)
+
+        MockMappingType.bulk_index_count = 0
+
+        index_objects(MockMappingType, [1, 2, 3], chunk_size=1)
+        eq_(MockMappingType.bulk_index_count, 3)
