@@ -189,7 +189,9 @@ Version 0.7: in development
   We're not using pyes anymore, so now it handles:
 
   * pyelasticsearch.exceptions.ConnectionError
+  * pyelasticsearch.exceptions.ElasticHttpError
   * pyelasticsearch.exceptions.ElasticHttpNotFoundError
+  * pyelasticsearch.exceptions.InvalidJsonResponseError
   * pyelasticsearch.exceptions.Timeout
 
   You probably don't need to do anything about this, but it's good to
@@ -226,6 +228,16 @@ Version 0.7: in development
 
   Elasticsearch 0.19.9 renamed text query to match query. This adds
   support for match and match_phrase. 
+
+* **Added support for ``wildcard`` and ``terms`` queries.**
+
+* **Reimplemented filter and query logic.**
+
+  The new implementations allow you to add handling for filters and
+  queries that ElasticUtils doesn't handle as well as override what
+  ElasticUtils does.
+
+  See :py:class:`elasticutils.S` for details.
 
 * **S.query_raw added**
 
