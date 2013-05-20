@@ -23,11 +23,13 @@ class MiddlewareTest(ESTestCase):
             response = ESExceptionMiddleware().process_exception(
                 self.fake_request, exc(Exception))
             eq_(response.status_code, 503)
+            self.assertTemplateUsed(response, 'elasticutils/503.html')
 
     @override_settings(ES_DISABLED=True)
     def test_es_disabled(self):
         response = ESExceptionMiddleware().process_request(self.fake_request)
         eq_(response.status_code, 501)
+        self.assertTemplateUsed(response, 'elasticutils/501.html')
 
 
 class DecoratorTest(ESTestCase):

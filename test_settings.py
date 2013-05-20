@@ -13,3 +13,14 @@ CELERY_ALWAYS_EAGER = True
 
 SECRET_KEY = 'super_secret'
 TEMPLATE_DIRS = ('%s/elasticutils/templates' % ROOT,)
+
+DATABASES = {
+    'default': {
+        'NAME': 'test',
+        'ENGINE': 'django.db.backends.sqlite3'
+    }
+}
+
+INSTALLED_APPS = [
+    'elasticutils.contrib.django'
+]

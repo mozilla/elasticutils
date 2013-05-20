@@ -99,6 +99,12 @@ class ESExceptionMiddleware(object):
 
         Defaults to ``elasticutils/503.html``.
 
+
+    .. Note::
+
+       In order to use the included templates, you must add
+       ``elasticutils.contrib.django`` to ``INSTALLED_APPS``.
+
     """
 
     def __init__(self, disabled_template=None, error_template=None):

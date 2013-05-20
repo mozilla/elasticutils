@@ -247,14 +247,25 @@ explicitly specifying `.get_mapping()`.
      The ElasticSearch guide on mapping type field types.
 
 
-Other helpers
-=============
+Celery tasks
+============
 
 :Requirements: Django, Celery
 
 You can then utilize things such as
-:func:`elasticutils.contrib.django.tasks.index_objects` to
+:py:func:`elasticutils.contrib.django.tasks.index_objects` to
 automatically index all new items.
+
+
+Middleware
+==========
+
+:Requirements: Django
+
+There's a middleware that catches all Elasticsearch-related
+exceptions and shows a 501/503 template accordingly. See
+:py:class:`elasticutils.contrib.django.ESExceptionMiddleware`
+for details.
 
 
 Writing tests

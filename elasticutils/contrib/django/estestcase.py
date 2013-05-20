@@ -1,7 +1,7 @@
 """
 With `test_utils` you can use this testcase.
 """
-from unittest import TestCase
+from django.test import TestCase
 
 from django.conf import settings
 from pyelasticsearch.exceptions import (
