@@ -36,6 +36,8 @@ QUERY_ACTION_MAP = {
 
 #: List of text/match actions.
 TEXTMATCH_ACTIONS = ['text', 'text_phrase', 'match', 'match_phrase']
+#: List of range actions.
+RANGE_ACTIONS = ['gt', 'gte', 'lt', 'lte']
 
 
 class ElasticUtilsError(Exception):
@@ -1096,7 +1098,7 @@ class S(PythonMixin):
                 elif field_action == 'in':
                     rv.append({'in': {key: val}})
 
-                elif field_action in ('gt', 'gte', 'lt', 'lte'):
+                elif field_action in RANGE_ACTIONS:
                     rv.append({'range': {key: {field_action: val}}})
 
                 else:
@@ -1138,12 +1140,12 @@ class S(PythonMixin):
                      'query': val}
             }
 
-        elif field_action in ('gt', 'gte', 'lt', 'lte'):
+        elif field_action in RANGE_ACTIONS:
             # Ranges are special and have a different syntax, so
             # we handle them separately.
             return {
                 'range': {field_name: _boosted_value(
-                        field_name, field_action, key, val, boost)}
+                        field_action, field_action, key, val, boost)}
             }
 
         raise InvalidFieldActionError(
