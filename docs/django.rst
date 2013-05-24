@@ -118,26 +118,26 @@ The `elasticutils.contrib.django.S` class takes a `MappingType` in the
 constructor. That allows you to tie Django ORM models to ElasticSearch
 index search results.
 
-In ``elasticutils.contrib.django.models`` is `DjangoMappingType` which
+In ``elasticutils.contrib.django`` is `MappingType` which
 has some additional Django ORM-specific code in it to make it easier.
 
-Define a `DjangoMappingType` subclass for your model. The minimal you
+Define a `MappingType` subclass for your model. The minimal you
 need to define is `get_model`.
 
 Further, you can use the `Indexable` mixin to get a bunch of helpful
 indexing-related code.
 
-For example, here's a minimal `DjangoMappingType` subclass::
+For example, here's a minimal `MappingType` subclass::
 
     from django.models import Model
-    from elasticutils.contrib.django.models import DjangoMappingType
+    from elasticutils.contrib.django import MappingType
 
 
     class MyModel(Model):
         ...
 
 
-    class MyMappingType(DjangoMappingType):
+    class MyMappingType(MappingType):
         @classmethod
         def get_model(cls):
             return MyModel
@@ -148,14 +148,14 @@ For example, here's a minimal `DjangoMappingType` subclass::
 Here's one that uses `Indexable` and handles indexing::
 
     from django.models import Model
-    from elasticutils.contrib.django.models import DjangoMappingType
+    from elasticutils.contrib.django import Indexable, MappingType
 
 
     class MyModel(Model):
         ...
 
 
-    class MyMappingType(DjangoMappingType, Indexable):
+    class MyMappingType(MappingType, Indexable):
         @classmethod
         def get_model(cls):
             return MyModel
@@ -188,14 +188,14 @@ explicitly specifying `.get_mapping()`.
 ::
 
     from django.models import Model
-    from elasticutils.contrib.django.models import DjangoMappingType
+    from elasticutils.contrib.django import Indexable, MappingType
 
 
     class MyModel(Model):
         ...
 
 
-    class MyMappingType(DjangoMappingType, Indexable):
+    class MyMappingType(MappingType, Indexable):
         @classmethod
         def get_model(cls):
             return MyModel
