@@ -70,11 +70,41 @@ class QTest(TestCase):
 
 class QueryTest(ESTestCase):
     data = [
-        {'id': 1, 'foo': 'bar', 'tag': 'awesome', 'width': '2', 'height': 7},
-        {'id': 2, 'foo': 'bart', 'tag': 'boring', 'width': '7', 'height': 11},
-        {'id': 3, 'foo': 'car', 'tag': 'awesome', 'width': '5', 'height': 5},
-        {'id': 4, 'foo': 'duck', 'tag': 'boat', 'width': '11', 'height': 7},
-        {'id': 5, 'foo': 'train car', 'tag': 'awesome', 'width': '7', 'height': 2}
+        {
+            'id': 1,
+            'foo': 'bar',
+            'tag': 'awesome',
+            'width': '2',
+            'height': 7
+        },
+        {
+            'id': 2,
+            'foo': 'bart',
+            'tag': 'boring',
+            'width': '7',
+            'height': 11
+        },
+        {
+            'id': 3,
+            'foo': 'car',
+            'tag': 'awesome',
+            'width': '5',
+            'height': 5
+        },
+        {
+            'id': 4,
+            'foo': 'duck',
+            'tag': 'boat',
+            'width': '11',
+            'height': 7
+        },
+        {
+            'id': 5,
+            'foo': 'train car',
+            'tag': 'awesome',
+            'width': '7',
+            'height': 2
+        }
     ]
 
     def test_q_all(self):
@@ -109,13 +139,11 @@ class QueryTest(ESTestCase):
         eq_(len(self.get_s().query(height__gte=7)), 3)
         eq_(len(self.get_s().query(height__lt=10)), 4)
         eq_(len(self.get_s().query(height__lte=7)), 4)
-        
 
         eq_(len(self.get_s().query(Q(height__gt=10))), 1)
         eq_(len(self.get_s().query(Q(height__gte=7))), 3)
         eq_(len(self.get_s().query(Q(height__lt=10))), 4)
         eq_(len(self.get_s().query(Q(height__lte=7))), 4)
-        
 
     def test_q_text(self):
         eq_(len(self.get_s().query(foo__text='car')), 2)
