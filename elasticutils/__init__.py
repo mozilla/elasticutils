@@ -4,7 +4,6 @@ from datetime import datetime
 from operator import itemgetter
 
 from pyelasticsearch import ElasticSearch
-from pyelasticsearch import __version__ as PYELASTICSEARCH_VERSION
 
 from elasticutils._version import __version__
 

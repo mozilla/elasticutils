@@ -202,13 +202,6 @@ Version 0.7: in development
   The celery tasks were rewritten, docs were updated, and tests were
   added so they work now.
 
-* **elasticutils.PYELASTICSEARCH_VERSION is added.**
-
-  You can see which version of pyelasticsearch is in use by doing::
-
-      from elasticutils import PYELASTICSEARCH_VERSION
-      print PYELASTICSEARCH_VERSION
-
 * **S.execute added**
 
   This allows you to explicitly execute a search and get back a
