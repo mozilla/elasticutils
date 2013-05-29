@@ -21,9 +21,9 @@ Version 0.7: in development
 
 **API-breaking changes:**
 
-* **pyelasticsearch v0.3 or later now required.**
+* **pyelasticsearch v0.4 or later now required.**
 
-  ElasticUtils now requires pyelasticsearch v0.3 or later and its
+  ElasticUtils now requires pyelasticsearch v0.4 or later and its
   requirements.
 
 * **elasticutils.PYES_VERSION is removed.**
