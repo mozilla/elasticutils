@@ -125,7 +125,7 @@ Version 0.7: in development
 
   But wait...
 
-* **Django: Indexable now has bulk_index() .**
+* **Django: Indexable now has bulk_index().**
 
   pyes would keep track of all the things you wanted to bulk index
   and then at some point push them all. Instead of doing it under the
@@ -137,7 +137,7 @@ Version 0.7: in development
   pyelasticsearch `ElasticSearch.refresh` doesn't take a timesleep
   argument, so we don't need that anymore.
 
-* **Django: Indexable `es` argument defaults to Indexable.get_es() now.**
+* **Django: Indexable es argument defaults to Indexable.get_es() now.**
 
   Previously it defaulted to `elasticsearch.contrib.django.get_es()`. Now
   it defaults to `Indexable.get_es()` class method making it more flexible.
@@ -178,6 +178,50 @@ Version 0.7: in development
 
   We no longer use pyes so you can remove it from your requirements.
 
+* **S.execute added**
+
+  This allows you to explicitly execute a search and get back a
+  `SearchResults` instance.
+
+  See :py:meth:`elasticutils.S.execute` for details.
+
+* **S.all added**
+
+  Allows you to get **all** the search results possible rather than
+  just the first 10 search results which is the default.
+
+  You should consider using slices instead which allows you to
+  specify the maximum number of results to get back.
+
+  This is dangerous, so it's been documented with lots of warnings.
+
+  See :py:meth:`elasticutils.S.all` for details.
+
+* **Added support for ``match`` and ``match_phrase`` queries.**
+
+  Elasticsearch 0.19.9 renamed text query to match query. This adds
+  support for ``match`` and ``match_phrase``.
+
+  See :ref:`queries-queries` for details.
+
+* **Added support for ``wildcard`` and ``terms`` queries.**
+
+  See :ref:`queries-queries` for details.
+
+* **Reimplemented filter and query implementation.**
+
+  The new implementations allow you to add handling for filters and
+  queries that ElasticUtils doesn't handle as well as override what
+  ElasticUtils does.
+
+  See :py:class:`elasticutils.S` for details.
+
+* **S.query_raw added**
+
+  If :py:meth:`elasticutils.S.query` is getting you down, then you
+  can skip it and use the Elasticsearch API to create the query clause
+  of the search by hand with :py:meth:`elasticutils.S.query_raw`.
+
 * **Django: es_required_or_50x handles different exceptions.**
 
   Previously it handled:
@@ -201,42 +245,6 @@ Version 0.7: in development
 
   The celery tasks were rewritten, docs were updated, and tests were
   added so they work now.
-
-* **S.execute added**
-
-  This allows you to explicitly execute a search and get back a
-  `SearchResults` instance.
-
-* **S.all added**
-
-  Allows you to get **all** the search results possible rather than
-  just the first 10 search results which is the default.
-
-  You should consider using slices instead which allows you to
-  specify the maximum number of results to get back.
-
-  This is dangerous, so it's been documented with lots of warnings.
-
-* **Added support for ``match`` and ``match_phrase`` queries.**
-
-  Elasticsearch 0.19.9 renamed text query to match query. This adds
-  support for match and match_phrase. 
-
-* **Added support for ``wildcard`` and ``terms`` queries.**
-
-* **Reimplemented filter and query logic.**
-
-  The new implementations allow you to add handling for filters and
-  queries that ElasticUtils doesn't handle as well as override what
-  ElasticUtils does.
-
-  See :py:class:`elasticutils.S` for details.
-
-* **S.query_raw added**
-
-  If ``.query()`` is getting you down, then you can skip it and use
-  the Elasticsearch API to create the query clause of the search
-  by hand.
 
 
 Version 0.6: Released January 17th, 2013

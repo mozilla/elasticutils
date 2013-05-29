@@ -238,6 +238,8 @@ specified will do a ``match_all`` query in ElasticSearch.
      ElasticSearch match_all documentation
 
 
+.. _queries-queries:
+
 Queries: ``query``
 ==================
 
