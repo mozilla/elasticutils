@@ -41,11 +41,11 @@ class ESTest(TestCase):
 
         es2 = get_es(force_new=True)
 
-        # force_new prevents the new ElasticSearch from getting
+        # force_new prevents the new ElasticSearch instance from getting
         # cached, so we should only have one item in the cache.
         eq_(len(_cached_elasticsearch), 1)
 
-        # However, the two ElasticSearch objects should be different.
+        # However, the two ElasticSearch instances should be different.
         assert id(es) != id(es2)
 
     def test_get_es_settings_cache(self):

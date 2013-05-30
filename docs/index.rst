@@ -13,8 +13,8 @@
 
 
 ElasticUtils is a Python library that gives you a chainable search API
-for `ElasticSearch <http://elasticsearch.org/>`_ as well as some other
-tools to make it easier to integrate ElasticSearch into your
+for `Elasticsearch <http://elasticsearch.org/>`_ as well as some other
+tools to make it easier to integrate Elasticsearch into your
 application.
 
 So what's it like? Let's do a couple basic things:

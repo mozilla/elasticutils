@@ -75,14 +75,14 @@ documents = [
 
 es.bulk_index(INDEX, DOCTYPE, documents, id_field='id')
 
-# ElasticSearch will refresh the indexes and make those documents
+# Elasticsearch will refresh the indexes and make those documents
 # available for querying in a second or so (it's configurable in
-# ElasticSearch), but we want them available right now, so we refresh
+# Elasticsearch), but we want them available right now, so we refresh
 # the index.
 es.refresh(INDEX)
 
-# Let's build a basic S that looks at the right instance of
-# ElasticSearch, index, and doctype.
+# Let's build a basic S that looks at the right Elasticsearch cluster,
+# index and doctype.
 basic_s = S().es(urls=[URL]).indexes(INDEX).doctypes(DOCTYPE).values_dict()
  
 # Now let's see facet counts for all the products.

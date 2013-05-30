@@ -21,7 +21,7 @@ def get_version():
 setup(
     name='elasticutils',
     version=get_version(),
-    description='Chainable interface to querying ElasticSearch',
+    description='Chainable interface to querying Elasticsearch',
     long_description=open(READMEFILE).read(),
     url='https://github.com/mozilla/elasticutils',
     author='Mozilla Foundation and contributors',

@@ -8,7 +8,7 @@ The MappingType class
 =====================
 
 :py:class:`elasticutils.MappingType` lets you centralize concerns
-regarding documents you're storing in your ElasticSearch index.
+regarding documents you're storing in your Elasticsearch index.
 
 
 Lets you tie business logic to search results
@@ -36,7 +36,7 @@ Lets you link database data to search results
 ---------------------------------------------
 
 You can relate a MappingType to a database model allowing you to link
-documents in the ElasticSearch index back to their origins in a
+documents in the Elasticsearch index back to their origins in a
 lazy-loading way. This is done by subclassing MappingType and
 implementing the ``get_object()`` method. You can then access the
 origin using the ``object`` property.
@@ -54,12 +54,12 @@ For example::
 
     first = list(results)[0]
 
-    # This prints "height" which comes from the ElasticSearch
+    # This prints "height" which comes from the Elasticsearch
     # document
     print first.height
 
     # This prints "height" which comes from the database data
-    # that the ElasticSearch document is based on. This is the
+    # that the Elasticsearch document is based on. This is the
     # first time ``.object`` is used, so it does the db hit
     # here.
     print first.object.height
@@ -155,7 +155,7 @@ With this, I can write code elsewhere in my project that:
 1. gets the mapping type name and mapping for documents of type
    "blog-entry"
 2. gets all the objects that are indexable
-3. for each object, extracts the ElasticSearch document data and
+3. for each object, extracts the Elasticsearch document data and
    indexes it
 
 When I create my :py:class:`elasticutils.S` object, I'd create it like

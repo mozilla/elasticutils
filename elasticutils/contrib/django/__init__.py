@@ -57,7 +57,7 @@ def es_required(fun):
     """Wrap a callable and return None if ES_DISABLED is False.
 
     This also adds an additional `es` argument to the callable
-    giving you an ElasticSearch to use.
+    giving you an ElasticSearch instance to use.
 
     """
     @wraps(fun)
@@ -71,7 +71,7 @@ def es_required(fun):
 
 
 class ESExceptionMiddleware(object):
-    """Middleware to handle ElasticSearch errors.
+    """Middleware to handle Elasticsearch errors.
 
     HTTP 501
       Returned when ``ES_DISABLED`` is True.
@@ -93,7 +93,7 @@ class ESExceptionMiddleware(object):
 
         Defaults to ``elasticutils/501.html``.
 
-    :arg error_template: The template to use when ElasticSearch isn't
+    :arg error_template: The template to use when Elasticsearch isn't
         working properly, is missing an index, or something along
         those lines.
 
@@ -128,7 +128,7 @@ class ESExceptionMiddleware(object):
 
 
 """
-The following decorator wraps a Django view and handles ElasticSearch errors.
+The following decorator wraps a Django view and handles Elasticsearch errors.
 
 This wraps a Django view and returns 501 or 503 status codes and
 pages if things go awry.

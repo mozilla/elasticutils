@@ -72,7 +72,7 @@ es.refresh(INDEX)
 
 # Now let's do some basic queries.
 
-# Let's build a basic S that looks at our ElasticSearch cluster and
+# Let's build a basic S that looks at our Elasticsearch cluster and
 # the index and doctype we just indexed our documents in.
 basic_s = S().es(urls=[URL]).indexes(INDEX).doctypes(DOCTYPE)
 

@@ -8,15 +8,15 @@ from elasticutils import get_es, S
 
 
 class ESTestCase(TestCase):
-    """Superclass for ElasticSearch-using test cases.
+    """Superclass for Elasticsearch-using test cases.
 
     :property index_name: name of the index to use
     :property mapping_type_name: the mapping type name
-    :property es_settings: settings to use to build an ElasticSearch
-        object.
+    :property es_settings: settings to use to build a pyelasticsearch 
+        ElasticSearch object.
     :property mapping: the mapping to use when creating an index
     :property data: any data to add to the index in setup_class
-    :property skip_tests: if ElasticSearch isn't available, then this
+    :property skip_tests: if Elasticsearch isn't available, then this
         is True and therefore tests should be skipped for this class
 
     For examples of usage, see the other ``test_*.py`` files.
@@ -123,7 +123,7 @@ class ESTestCase(TestCase):
         This refreshes the index specified by `self.index_name`.
 
         :arg timesleep: int; number of seconds to sleep after telling
-            ElasticSearch to refresh
+            Elasticsearch to refresh
 
         """
         cls.get_es().refresh(cls.index_name)

@@ -23,7 +23,7 @@ How to integrate ElasticUtils with Django
 
 2. write one or more `MappingType` classes
 
-3. write code to create the ElasticSearch index and populate it with
+3. write code to create the Elasticsearch index and populate it with
    documents based on your `MappingType` subclasses
 
 3. use :py:class:`elasticutils.contrib.django.S` to search and return
@@ -49,11 +49,11 @@ file:
 
    If `ES_DISABLED = True`, then Any method wrapped with
    `es_required` will return and log a warning. This is useful while
-   developing, so you don't have to have ElasticSearch running.
+   developing, so you don't have to have Elasticsearch running.
 
 .. data:: ES_URLS
 
-   This is a list of ElasticSearch urls. In development this will look
+   This is a list of Elasticsearch urls. In development this will look
    like::
 
        ES_URLS = ['http://localhost:9200']
@@ -98,7 +98,7 @@ file:
 
 .. data:: ES_TIMEOUT
 
-   Defines the timeout for the `ElasticSearch` connection.  This
+   Defines the timeout for creating the Elasticsearch connection.  This
    defaults to 5 seconds.
 
 
@@ -106,7 +106,7 @@ ElasticSearch
 =============
 
 The `get_es()` in the Django contrib will use Django settings listed
-above to build the ElasticSearch object.
+above to build the pyelasticsearch ElasticSearch object.
 
 
 Using with Django ORM models
@@ -115,7 +115,7 @@ Using with Django ORM models
 :Requirements: Django
 
 The `elasticutils.contrib.django.S` class takes a `MappingType` in the
-constructor. That allows you to tie Django ORM models to ElasticSearch
+constructor. That allows you to tie Django ORM models to Elasticsearch
 index search results.
 
 In ``elasticutils.contrib.django`` is `MappingType` which
@@ -177,7 +177,7 @@ Here's one that uses `Indexable` and handles indexing::
 
 
 This example doesn't specify a mapping. That's ok because
-ElasticSearch will infer from the shape of the data how it should
+Elasticsearch will infer from the shape of the data how it should
 analyze and store the data.
 
 If you want to specify this explicitly (and I suggest you do for
@@ -202,10 +202,10 @@ explicitly specifying `.get_mapping()`.
 
         @classmethod
         def get_mapping(cls):
-            """Returns an ElasticSearch mapping."""
+            """Returns an Elasticsearch mapping."""
             return {
                 'properties': {
-                    # The id is an integer, so store it as such. ElasticSearch
+                    # The id is an integer, so store it as such. Elasticsearch
                     # would have inferred this just fine.
                     'id': {'type': 'integer'},
 
@@ -241,10 +241,10 @@ explicitly specifying `.get_mapping()`.
 .. seealso::
 
    http://www.elasticsearch.org/guide/reference/mapping/
-     The ElasticSearch guide on mapping types.
+     The Elasticsearch guide on mapping types.
 
    http://www.elasticsearch.org/guide/reference/mapping/core-types.html
-     The ElasticSearch guide on mapping type field types.
+     The Elasticsearch guide on mapping type field types.
 
 
 Celery tasks

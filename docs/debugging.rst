@@ -57,7 +57,7 @@ line.
 .. Note::
 
    If you add a ``pretty=1`` to the query string of the url that
-   you're curling, then ElasticSearch will return a prettified
+   you're curling, then Elasticsearch will return a prettified
    response that's easier to read.
 
 
@@ -65,7 +65,7 @@ Seeing the query
 ================
 
 The `S` class has a `_build_query()` method that you can use to see the
-body of the ElasticSearch request it's generated with the parameters
+body of the Elasticsearch request it's generated with the parameters
 you've specified so far. This is helpful in debugging ElasticUtils and
 figuring out whether it's doing things poorly.
 
@@ -97,4 +97,4 @@ elasticsearch-paramedic
 https://github.com/karmi/elasticsearch-paramedic
 
 elasticsearch-paramedic allows you to see the state and real-time
-statistics of your ElasticSearch cluster.
+statistics of your Elasticsearch cluster.

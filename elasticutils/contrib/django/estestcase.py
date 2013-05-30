@@ -52,7 +52,7 @@ class ESTestCase(TestCase):
     """Test case scaffolding for ElasticUtils-using tests.
 
     If ``ES_URLS`` is empty or missing or you can't connect to
-    ElasticSearch specified in ``ES_URLS``, then this will skip each
+    Elasticsearch specified in ``ES_URLS``, then this will skip each
     individual test. This works with py.test, nose, and unittest in
     Python 2.7. If you don't have one of those, then this will print
     to stdout and just skip the test silently.

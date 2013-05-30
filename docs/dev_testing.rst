@@ -38,7 +38,7 @@ ElasticTestCase
 ===============
 
 If you're testing things in ElasticUtils that require hitting an
-ElasticSearch instance, then you should subclass
+Elasticsearch cluster, then you should subclass
 `elasticutils.tests.ESTestCase` which has code in it for making
 things easier.
 

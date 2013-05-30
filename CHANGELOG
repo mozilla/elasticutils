@@ -44,7 +44,7 @@ Version 0.7: in development
   The arguments correspond with pyelasticsearch `ElasticSearch`
   object.
 
-  ElasticUtils uses HTTP urls for connecting to ElasticSearch now.
+  ElasticUtils uses HTTP urls for connecting to Elasticsearch now.
   Previously, you'd do::
 
       get_es(hosts=['localhost:9200'])        # Old way
@@ -82,7 +82,7 @@ Version 0.7: in development
 * **MLT arguments changed.**
 
   The `fields` argument in the constructor was renamed to `mlt_fields`
-  to be in line with ElasticSearch API names.
+  to be in line with Elasticsearch API names.
 
   Will now raise a `DeprecationWarning` if you pass in `fields`
   argument.
@@ -313,7 +313,7 @@ Version 0.6: Released January 17th, 2013
 * **elasticutils.contrib.django.models.SearchMixin is no more.**
 
   The `SearchMixin` class is replaced by `DjangoMappingType` which
-  relates ElasticSearch mapping types to Django ORM models and
+  relates Elasticsearch mapping types to Django ORM models and
   `Indexable` which is a mixin that adds a bunch of index-related
   infrastructure.
 

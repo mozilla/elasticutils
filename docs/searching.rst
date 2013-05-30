@@ -18,7 +18,7 @@ All about S: ``S``
 What is S?
 ----------
 
-:py:class:`elasticutils.S` helps you define an ElasticSearch
+:py:class:`elasticutils.S` helps you define an Elasticsearch
 search.
 
 ::
@@ -85,7 +85,7 @@ MappingTypes.
 S can be sliced to return the results you want
 ----------------------------------------------
 
-By default ElasticSearch gives you the first 10 results.
+By default Elasticsearch gives you the first 10 results.
 
 If you want something different than that, :py:class:`elasticutils.S`
 supports slicing allowing you to get back the specific results you're
@@ -107,14 +107,14 @@ The slicing is chainable, too::
 
 .. Note::
 
-   The slicing happens on the ElasticSearch side---it doesn't pull all
+   The slicing happens on the Elasticsearch side---it doesn't pull all
    the results back and then slice them in Python. Ew.
 
 
 .. seealso::
 
    http://www.elasticsearch.org/guide/reference/api/search/from-size.html
-     ElasticSearch from / size documentation
+     Elasticsearch from / size documentation
 
 
 S is lazy
@@ -131,7 +131,7 @@ The search won't execute until you do one of the following:
 
 Once you execute the search, then it will cache the results and
 further executions of that :py:class:`elasticutils.S` won't result in
-another roundtrip to your ElasticSearch cluster.
+another roundtrip to your Elasticsearch cluster.
 
 
 .. _queries-shapes:
@@ -153,7 +153,7 @@ documentation for more details.
 
 If you use :py:meth:`elasticutils.S.execute`, you get back a
 :py:class:`elasticutils.SearchResults` instance which has additional
-useful bits including the raw response from ElasticSearch. See
+useful bits including the raw response from Elasticsearch. See
 documentation for details.
 
 
@@ -167,7 +167,8 @@ Specifying connection parameters: ``es``
 :py:class:`pyelasticsearch.client.ElasticSearch` object that connects
 to ``http://localhost:9200`` by default. That's usually not what
 you want. You can use the :py:meth:`elasticutils.S.es` method to
-specify the arguments used to create the ElasticSearch object.
+specify the arguments used to create the pyelasticsearch ElasticSearch
+object.
 
 Examples::
 
@@ -230,12 +231,12 @@ By default, S does a Match All
 ==============================
 
 By default, :py:class:`elasticutils.S` with no filters or queries
-specified will do a ``match_all`` query in ElasticSearch.
+specified will do a ``match_all`` query in Elasticsearch.
 
 .. seealso::
 
    http://www.elasticsearch.org/guide/reference/query-dsl/match-all-query.html
-     ElasticSearch match_all documentation
+     Elasticsearch match_all documentation
 
 
 .. _queries-queries:
@@ -300,34 +301,34 @@ query_string            Querystring query [3]_
 .. seealso::
 
    http://www.elasticsearch.org/guide/reference/query-dsl/
-     ElasticSearch docs for query dsl
+     Elasticsearch docs for query dsl
 
    http://www.elasticsearch.org/guide/reference/query-dsl/term-query.html
-     ElasticSearch docs on term queries
+     Elasticsearch docs on term queries
 
    http://www.elasticsearch.org/guide/reference/query-dsl/terms-query.html
-     ElasticSearch docs on terms queries
+     Elasticsearch docs on terms queries
 
    http://www.elasticsearch.org/guide/reference/query-dsl/text-query.html
-     ElasticSearch docs on text and text_phrase queries
+     Elasticsearch docs on text and text_phrase queries
 
    http://www.elasticsearch.org/guide/reference/query-dsl/match-query.html
-     ElasticSearch docs on match and match_phrase queries
+     Elasticsearch docs on match and match_phrase queries
 
    http://www.elasticsearch.org/guide/reference/query-dsl/prefix-query.html
-     ElasticSearch docs on prefix queries
+     Elasticsearch docs on prefix queries
 
    http://www.elasticsearch.org/guide/reference/query-dsl/range-query.html
-     ElasticSearch docs on range queries
+     Elasticsearch docs on range queries
 
    http://www.elasticsearch.org/guide/reference/query-dsl/fuzzy-query.html
-     ElasticSearch docs on fuzzy queries
+     Elasticsearch docs on fuzzy queries
 
    http://www.elasticsearch.org/guide/reference/query-dsl/wildcard-query.html
-     ElasticSearch docs on wildcard queries
+     Elasticsearch docs on wildcard queries
 
    http://www.elasticsearch.org/guide/reference/query-dsl/query-string-query.html
-     ElasticSearch docs on query_string queries
+     Elasticsearch docs on query_string queries
 
 
 Advanced queries: ``Q`` and ``query_raw``
@@ -497,7 +498,7 @@ value::
 
     q = S().filter(language=None)
 
-This uses the ElasticSearch Missing filter.
+This uses the Elasticsearch Missing filter.
 
 
 .. Note::
@@ -513,22 +514,22 @@ This uses the ElasticSearch Missing filter.
 .. seealso::
 
    http://www.elasticsearch.org/guide/reference/query-dsl/
-     ElasticSearch docs for query dsl
+     Elasticsearch docs for query dsl
 
    http://www.elasticsearch.org/guide/reference/query-dsl/terms-filter.html
-     ElasticSearch docs for terms filter
+     Elasticsearch docs for terms filter
 
    http://www.elasticsearch.org/guide/reference/query-dsl/range-filter.html
-     ElasticSearch docs for range filter
+     Elasticsearch docs for range filter
 
    http://www.elasticsearch.org/guide/reference/query-dsl/prefix-filter.html
-     ElasticSearch docs for prefix filter
+     Elasticsearch docs for prefix filter
 
    http://www.elasticsearch.org/guide/reference/query-dsl/term-filter.html
-     ElasticSearch docs for term filter
+     Elasticsearch docs for term filter
 
    http://www.elasticsearch.org/guide/reference/query-dsl/missing-filter.html
-     ElasticSearch docs for missing filter
+     Elasticsearch docs for missing filter
 
 
 Advanced filters: ``filter`` and ``F``
@@ -632,7 +633,7 @@ See :py:meth:`elasticutils.S.order_by` for more details.
 .. seealso::
 
    http://www.elasticsearch.org/guide/reference/api/search/sort.html
-     ElasticSearch docs on sort parameter in the Search API
+     Elasticsearch docs on sort parameter in the Search API
 
 
 Demoting: ``demote``
@@ -653,7 +654,7 @@ description with a fraction boost of 0.5.
    again overwrites previous calls.
 
 
-This is implemented using the `boosting query` in ElasticSearch.
+This is implemented using the `boosting query` in Elasticsearch.
 Anything you specify with :py:meth:`elasticutils.S.query` goes into
 the `positive` section. The `negative query` and `negative boost`
 portions are specified as the first and second arguments to
@@ -676,7 +677,7 @@ portions are specified as the first and second arguments to
 .. seealso::
 
    http://www.elasticsearch.org/guide/reference/query-dsl/boosting-query.html
-     ElasticSearch docs on boosting query (which are as clear as mud)
+     Elasticsearch docs on boosting query (which are as clear as mud)
 
 
 Highlighting: ``highlight``
@@ -690,7 +691,7 @@ See :py:meth:`elasticutils.S.highlight` for more details.
 .. seealso::
 
    http://www.elasticsearch.org/guide/reference/api/search/highlighting.html
-     ElasticSearch docs for highlight
+     Elasticsearch docs for highlight
 
 
 .. _queries-chapter-facets-section:
@@ -724,10 +725,10 @@ The facet counts are available through
 .. seealso::
 
    http://www.elasticsearch.org/guide/reference/api/search/facets/
-     ElasticSearch docs on facets
+     Elasticsearch docs on facets
 
    http://www.elasticsearch.org/guide/reference/api/search/facets/terms-facet.html
-     ElasticSearch docs on terms facet
+     Elasticsearch docs on terms facet
 
 
 
@@ -786,17 +787,17 @@ For example::
 .. seealso::
 
    http://www.elasticsearch.org/guide/reference/api/search/facets/
-     ElasticSearch docs on facets, facet_filter, and global
+     Elasticsearch docs on facets, facet_filter, and global
 
    http://www.elasticsearch.org/guide/reference/api/search/facets/terms-facet.html
-     ElasticSearch docs on terms facet
+     Elasticsearch docs on terms facet
 
 
 
 Facets... RAW!: ``facet_raw``
 -----------------------------
 
-ElasticSearch facets can do a lot of other things. Because of this,
+Elasticsearch facets can do a lot of other things. Because of this,
 there exists :py:meth:`elasticutils.S.facet_raw` which will do
 whatever you need it to. Specify key/value args by facet name.
 
@@ -828,7 +829,7 @@ For example::
 .. seealso::
 
    http://www.elasticsearch.org/guide/reference/modules/scripting.html
-     ElasticSearch docs on scripting
+     Elasticsearch docs on scripting
 
 
 .. _scores-and-explanations:
@@ -857,7 +858,7 @@ Getting an explanation: ``explain``
 
 Wondering why one document shows up higher in the results than another
 that should have shown up higher? Wonder how that score was computed?
-You can set the search to pass the ``explain`` flag to ElasticSearch
+You can set the search to pass the ``explain`` flag to Elasticsearch
 with :py:meth:`elasticutils.S.explain`.
 
 This returns data that will be in every item in the search results
@@ -878,14 +879,14 @@ This works regardless of what form the search results are in.
 .. seealso::
 
    http://www.elasticsearch.org/guide/reference/api/search/explain.html
-     ElasticSearch docs on explain (which are pretty bereft of
+     Elasticsearch docs on explain (which are pretty bereft of
      details).
 
 
 More like this: ``MLT``
 =======================
 
-ElasticUtils exposes ElasticSearch More Like This API with the `MLT`
+ElasticUtils exposes Elasticsearch More Like This API with the `MLT`
 class.
 
 For example::
@@ -897,7 +898,7 @@ This creates an `MLT` that will return documents that are like
 document with id 2034 of type `addon` in the `addon_index`.
 
 You can pass it an `S` instance and the `MLT` will derive the index,
-doctype, ElasticSearch object, and also use the search specified by
+doctype, ElasticSearch object and also use the search specified by
 the `S` in the body of the More Like This request. This allows you to
 get documents like the one specified that also meet query and filter
 criteria. For example::
@@ -912,10 +913,10 @@ See :py:class:`MLT` for more details.
 .. seealso::
 
    http://www.elasticsearch.org/guide/reference/api/more-like-this.html
-     ElasticSearch guide on More Like This API
+     Elasticsearch guide on More Like This API
 
    http://www.elasticsearch.org/guide/reference/query-dsl/mlt-query.html
-     ElasticSearch guide on the moreLikeThis query which specifies the
+     Elasticsearch guide on the moreLikeThis query which specifies the
      additional parameters you can use.
 
    http://pyelasticsearch.readthedocs.org/en/latest/api/#pyelasticsearch.ElasticSearch.more_like_this

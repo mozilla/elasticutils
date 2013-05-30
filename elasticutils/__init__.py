@@ -17,7 +17,7 @@ DEFAULT_INDEXES = None
 DEFAULT_TIMEOUT = 5
 
 
-#: Maps ElasticUtils field actions to their ElasticSearch query names.
+#: Maps ElasticUtils field actions to their Elasticsearch query names.
 QUERY_ACTION_MAP = {
     None: 'term',  # Default to term
     'in': 'in',
@@ -103,13 +103,13 @@ def get_es(urls=None, timeout=DEFAULT_TIMEOUT, force_new=False, **settings):
        a fresh `ElasticSearch` object AND that object will not be
        cached
 
-    :arg urls: list of uris; ElasticSearch hosts to connect to,
+    :arg urls: list of uris; Elasticsearch hosts to connect to,
         defaults to ``['http://localhost:9200']``
     :arg timeout: int; the timeout in seconds, defaults to 5
     :arg force_new: Forces get_es() to generate a new ElasticSearch
         object rather than pulling it from cache.
     :arg settings: other settings to pass into ElasticSearch
-        constructor See
+        constructor; See
         `<http://pyelasticsearch.readthedocs.org/en/latest/api/>`_ for
         more details.
 
@@ -380,14 +380,14 @@ class PythonMixin(object):
 
 
 class S(PythonMixin):
-    """Represents a lazy ElasticSearch Search API request.
+    """Represents a lazy Elasticsearch Search API request.
 
     The API for `S` takes inspiration from Django's QuerySet.
 
     `S` can be either typed or untyped. An untyped `S` returns dict
     results by default.
 
-    An `S` is lazy in the sense that it doesn't do an ElasticSearch
+    An `S` is lazy in the sense that it doesn't do an Elasticsearch
     search request until it's forced to evaluate by either iterating
     over it, calling ``.count``, doing ``len(s)``, or calling
     ``.facet_count``.
@@ -488,8 +488,8 @@ class S(PythonMixin):
     def es(self, **settings):
         """Return a new S with specified ElasticSearch settings.
 
-        This allows you to configure the ElasticSearch that gets used
-        to execute the search.
+        This allows you to configure the ElasticSearch object that gets
+        used to execute the search.
 
         :arg settings: the settings you'd use to build the
             ElasticSearch---same as what you'd pass to
@@ -510,7 +510,7 @@ class S(PythonMixin):
 
         .. Note::
 
-           ElasticSearch calls these "mapping types". It's the name
+           Elasticsearch calls these "mapping types". It's the name
            associated with a mapping.
         """
         return self._clone(next_step=('doctypes', doctypes))
@@ -796,7 +796,7 @@ class S(PythonMixin):
                     .demote(0.5, Q(description__text='gross')))
 
         This is implemented using the boosting query in
-        ElasticSearch. Anything you specify with ``.query()`` goes
+        Elasticsearch. Anything you specify with ``.query()`` goes
         into the positive section. The negative query and negative
         boost portions are specified as the first and second arguments
         to ``.demote()``.
@@ -869,7 +869,7 @@ class S(PythonMixin):
         .. Note::
 
            Make sure the fields you're highlighting are indexed
-           correctly.  Read the ElasticSearch documentation for
+           correctly.  Read the Elasticsearch documentation for
            details.
 
         """
@@ -904,7 +904,7 @@ class S(PythonMixin):
     def _build_query(self):
         """
         Loop self.steps to build the query format that will be sent to
-        ElasticSearch, and return it as a dict.
+        Elasticsearch, and return it as a dict.
         """
         filters = []
         queries = []
@@ -1268,7 +1268,7 @@ class S(PythonMixin):
 
     def raw(self):
         """
-        Build query and passes to ElasticSearch, then returns the raw
+        Build query and passes to Elasticsearch, then returns the raw
         format returned.
         """
         qs = self._build_query()
@@ -1325,7 +1325,7 @@ class S(PythonMixin):
 
            This is very different than calling ``.count()``. If you
            call ``.count()`` you get the total number of results
-           that ElasticSearch thinks matches your search. If you call
+           that Elasticsearch thinks matches your search. If you call
            ``len(s)``, then you get the number of results you'd get
            if you executed the search. This factors in slices and
            default from and size values.
@@ -1420,10 +1420,10 @@ class S(PythonMixin):
 
 
 class MLT(PythonMixin):
-    """Represents a lazy ElasticSearch More Like This API request.
+    """Represents a lazy Elasticsearch More Like This API request.
 
     This is lazy in the sense that it doesn't evaluate and execute the
-    ElasticSearch request unless you force it to by iterating over it
+    Elasticsearch request unless you force it to by iterating over it
     or getting the length of the search results.
 
     For example:
@@ -1446,7 +1446,7 @@ class MLT(PythonMixin):
             listed in s.get_indexes().
         :arg doctype: The doctype to use. Falls back to the first
             doctype listed in s.get_doctypes().
-        :arg es: `The ElasticSearch` object to use. If you don't
+        :arg es: The `ElasticSearch` object to use. If you don't
             provide one, then it will create one for you.
         :arg query_params: Any additional query parameters for the
             more like this call.
@@ -1511,7 +1511,7 @@ class MLT(PythonMixin):
 
     def raw(self):
         """
-        Build query and passes to ElasticSearch, then returns the raw
+        Build query and passes to `ElasticSearch`, then returns the raw
         format returned.
         """
         es = self.get_es()
@@ -1550,14 +1550,14 @@ class SearchResults(object):
         SearchResults instance
     :property took: the amount of time the search took
     :property count: the total results
-    :property response: the raw ElasticSearch search response
+    :property response: the raw Elasticsearch search response
     :property results: the search results from the response if any
     :property fields: the list of fields specified by values_list
         or values_dict
 
     When you iterate over this object, it returns the individual
     search results in the shape you asked for (object, tuple, dict,
-    etc) in the order returned by ElasticSearch.
+    etc) in the order returned by Elasticsearch.
 
     Example::
 
@@ -1567,7 +1567,7 @@ class SearchResults(object):
         # Shows how long the search took
         print results.took
 
-        # Shows the raw ElasticSearch response
+        # Shows the raw Elasticsearch response
         print results.results
 
     """
@@ -1634,7 +1634,7 @@ class ListSearchResults(SearchResults):
 
 
 def _convert_results_to_dict(r):
-    """Takes a results from ElasticSearch and returns fields."""
+    """Takes a results from Elasticsearch and returns fields."""
     if 'fields' in r:
         return r['fields']
     if '_source' in r:
@@ -1658,7 +1658,7 @@ class ObjectSearchResults(SearchResults):
 
 def decorate_with_metadata(obj, result):
     """Return obj decorated with result-scope metadata."""
-    # ElasticSearch id
+    # Elasticsearch id
     obj._id = result.get('_id', 0)
     # Source data
     obj._source = result.get('_source', {})
@@ -1764,7 +1764,7 @@ class MappingType(object):
             self.get_model().get(id=self._id)
 
 
-        where ``self._id`` is the ElasticSearch document id.
+        where ``self._id`` is the Elasticsearch document id.
 
         Override it to do something different.
 
@@ -1869,15 +1869,15 @@ class Indexable(object):
 
         Override this to return a mapping for this doctype.
 
-        :returns: dict representing the ElasticSearch mapping or None
-            if you want ElasticSearch to infer it. defaults to None.
+        :returns: dict representing the Elasticsearch mapping or None
+            if you want Elasticsearch to infer it. defaults to None.
 
         """
         return None
 
     @classmethod
     def extract_document(cls, obj_id, obj=None):
-        """Extracts the ElasticSearch index document for this instance
+        """Extracts the Elasticsearch index document for this instance
 
         **This must be implemented.**
 
@@ -1920,7 +1920,7 @@ class Indexable(object):
 
             .. Note::
 
-               If you don't provide an ``id_``, then ElasticSearch
+               If you don't provide an ``id_``, then Elasticsearch
                will make up an id for your document and it'll look
                like a character name from a Lovecraft novel.
 
@@ -1994,7 +1994,7 @@ class Indexable(object):
     def unindex(cls, id_, es=None, index=None):
         """Removes a particular item from the search index.
 
-        :arg id_: The ElasticSearch id for the document to remove from
+        :arg id_: The Elasticsearch id for the document to remove from
             the index.
 
         :arg es: The `ElasticSearch` to use. If you don't specify an
@@ -2016,7 +2016,7 @@ class Indexable(object):
     def refresh_index(cls, es=None, index=None):
         """Refreshes the index.
 
-        ElasticSearch will update the index periodically
+        Elasticsearch will update the index periodically
         automatically. If you need to see the documents you just
         indexed in your search results right now, you should call
         `refresh_index` as soon as you're done indexing. This is
