@@ -25,6 +25,20 @@ pyelasticsearch documentation
 Videos
 ======
 
+Elasticsearch videos
+
+    http://www.elasticsearch.org/videos/
+
+    Lots of videos covering a variety of use cases and other things.
+
+
+Elasticsearch video tutorials
+
+    http://www.elasticsearch.org/tutorials/
+
+    Covers deployment and using Elasticsearch for various things
+
+
 FoodFightShow
 
     http://www.youtube.com/watch?v=dBWlXdmjjzY
