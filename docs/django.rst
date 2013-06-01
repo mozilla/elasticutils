@@ -98,8 +98,9 @@ file:
 
 .. data:: ES_TIMEOUT
 
-   Defines the timeout for creating the Elasticsearch connection.  This
-   defaults to 5 seconds.
+   **Default:** ``5``
+
+   The timeout in seconds for creating the Elasticsearch connection.
 
 
 ElasticSearch
@@ -127,14 +128,16 @@ need to define is `get_model`.
 Further, you can use the `Indexable` mixin to get a bunch of helpful
 indexing-related code.
 
-For example, here's a minimal `MappingType` subclass::
+For example, here's a minimal `MappingType` subclass:
+
+.. code-block:: python
 
     from django.models import Model
     from elasticutils.contrib.django import MappingType
 
 
     class MyModel(Model):
-        ...
+        # Django model ...
 
 
     class MyMappingType(MappingType):
@@ -145,14 +148,16 @@ For example, here's a minimal `MappingType` subclass::
     searcher = MyMappingType.search()
 
 
-Here's one that uses `Indexable` and handles indexing::
+Here's one that uses `Indexable` and handles indexing:
+
+.. code-block:: python
 
     from django.models import Model
     from elasticutils.contrib.django import Indexable, MappingType
 
 
     class MyModel(Model):
-        ...
+        # Django model ...
 
 
     class MyMappingType(MappingType, Indexable):
@@ -185,14 +190,14 @@ anything that involves strings), then you want to additionally
 override `.get_mapping()`. Let's refine the above example by
 explicitly specifying `.get_mapping()`.
 
-::
+.. code-block:: python
 
     from django.models import Model
     from elasticutils.contrib.django import Indexable, MappingType
 
 
     class MyModel(Model):
-        ...
+        # Django model ...
 
 
     class MyMappingType(MappingType, Indexable):
@@ -295,7 +300,9 @@ You can use
 for your app's tests. It's pretty basic but does all of the above
 except item 1 which you'll need to do in your test settings.
 
-Example usage::
+Example usage:
+
+.. code-block:: python
 
     from elasticutils.contrib.django.estestcase import ESTestCase 
 
@@ -304,10 +311,10 @@ Example usage::
         # This class holds tests that do elasticsearch things
 
         def test_query(self):
-            ...
+            # Test code ...
 
         def test_locked_filters(self):
-            ...
+            # Test code ...
 
 
 ElasticUtils uses this for it's Django tests. Look at the test code

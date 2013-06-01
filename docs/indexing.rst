@@ -50,14 +50,18 @@ An `index` is a collection of documents.
 Before you do anything, you need to have an index. You can create one
 with `.create_index()`.
 
-For example::
+For example:
+
+.. code-block:: python
 
     es = get_es()
     es.create_index('blog-index')
 
 
 You can pass in settings, too. For example, you can set the refresh
-interval when creating the index::
+interval when creating the index:
+
+.. code-block:: python
 
     es.create_index('blog-index', settings={'refresh_interval': '5s'})
 
@@ -89,7 +93,9 @@ more value by specifying them explicitly.
 
 To define a mapping, you use `.put_mapping()`.
 
-For example::
+For example:
+
+.. code-block:: python
 
     es = get_es()
     es.put_mapping('blog-index', 'blog-entry-type', {
@@ -101,7 +107,9 @@ For example::
         })
 
 
-You can also define mappings when you create the index::
+You can also define mappings when you create the index:
+
+.. code-block:: python
 
     es = get_es()
     es.create_index('blog-index', settings={
@@ -140,7 +148,9 @@ Indexing documents
 
 Use `.index()` to index a document.
 
-For example::
+For example:
+
+.. code-block:: python
 
     es = get_es()
 
@@ -157,7 +167,9 @@ For example::
 If you're indexing a bunch of documents at the same time, you should
 use `.bulk_index()`.
 
-For example::
+For example:
+
+.. code-block:: python
 
     es = get_es()
 
@@ -186,7 +198,9 @@ Deleting documents
 
 You can delete documents with `.delete()`.
 
-For example::
+For example:
+
+.. code-block:: python
 
     es = get_es()
 
@@ -210,7 +224,9 @@ after the index is refreshed. By default, the index refreshes every
 second. If you need the documents to show up in searches before that,
 call `.refresh()`.
 
-For example::
+For example:
+
+.. code-block:: python
 
     es = get_es()
 
@@ -231,7 +247,9 @@ Delete indexes
 
 You can delete indexes with `.delete_index()`.
 
-For example::
+For example:
+
+.. code-block:: python
 
     es = get_es()
 
