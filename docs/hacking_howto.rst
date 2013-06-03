@@ -12,24 +12,22 @@ should check out :ref:`users-guide`.
 External requirements
 =====================
 
-You should have `elasticsearch <http://elasticsearch.org/>`_ installed
+You should have `Elasticsearch <http://elasticsearch.org/>`_ installed
 and running.
 
 
-Get dependencies
-================
+Install dependencies
+====================
 
 Run::
 
-    $ virtualenv ./venv/
+    $ virtualenv ./venv
     $ . ./venv/bin/activate
     $ pip install -r requirements-dev.txt
+    $ python setup.py develop
 
-If you want to work on the contrib.django bits, you also need to do::
 
-    $ pip install -r requirements-django.txt
-
-This sets up all the required dependencies for development of ElasticUtils.
+This sets up the required dependencies for development of ElasticUtils.
 
 .. Note::
 

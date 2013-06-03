@@ -9,8 +9,8 @@ You can run the tests with::
 
     ./run_tests.py
 
-If you have Django installed, this will run the Django-specific tests. If you
-don't, then the test runner will skip the Django-specific tests.
+
+This will run all the tests.
 
 
 .. Note::

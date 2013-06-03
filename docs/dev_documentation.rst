@@ -16,9 +16,14 @@ always up to date.
 
 Also, of extreme high-priority hyperbole-ignoring importance:
 
-* *ElasticSearch* (camel-case) refers to the pyelasticsearch ElasticSearch
-  class and instances.
-* *Elasticsearch* (no camel-case) is the Elasticsearch software.
+*ElasticSearch* (camel-case)
+
+    Refers to the pyelasticsearch ElasticSearch
+    class and instances.
+
+*Elasticsearch* (no camel-case)
+
+    The Elasticsearch software.
 
 
 Building the docs
