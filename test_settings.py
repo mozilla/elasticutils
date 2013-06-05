@@ -16,7 +16,7 @@ TEMPLATE_DIRS = ('%s/elasticutils/templates' % ROOT,)
 
 DATABASES = {
     'default': {
-        'NAME': 'test',
+        'NAME': ':memory:',
         'ENGINE': 'django.db.backends.sqlite3'
     }
 }
