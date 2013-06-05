@@ -18,9 +18,65 @@ class Meta(object):
         self.db_table = db_table
 
 
-class Manager(object):
+class SearchQuerySet(object):
+    # Yes. This is kind of crazy, but ... whatever.
+    def __init__(self, model):
+        self.model = model
+        self.steps = []
+
+    def get(self, pk):
+        pk = int(pk)
+        return [m for m in _model_cache if m.id == pk][0]
+
     def filter(self, id__in=None):
-        return [m for m in _model_cache if m.id in id__in]
+        self.steps.append(('filter', id__in))
+        return self
+
+    def order_by(self, *fields):
+        self.steps.append(('order_by', fields))
+        return self
+
+    def values_list(self, *args, **kwargs):
+        self.steps.append(('values_list', args, kwargs.pop('flat', False)))
+        return self
+
+    def __iter__(self):
+        order_by = None
+        values_list = None
+        objs = _model_cache
+
+        for mem in self.steps:
+            if mem[0] == 'filter':
+                objs = [obj for obj in objs if obj.id in mem[1]]
+            elif mem[0] == 'order_by':
+                order_by_field = mem[1][0]
+            elif mem[0] == 'values_list':
+                values_list = (mem[1], mem[2])
+
+        if order_by:
+            objs.sort(key=getattr(obj, order_by_field))
+
+        if values_list:
+            # Note: Hard-coded to just id and flat
+            objs = [obj.id for obj in objs]
+        return iter(objs)
+
+
+class Manager(object):
+    def get_query_set(self):
+        return SearchQuerySet(self)
+
+    def get(self, pk):
+        return self.get_query_set().get(pk)
+
+    def filter(self, *args, **kwargs):
+        return self.get_query_set().filter(*args, **kwargs)
+
+    def order_by(self, *args, **kwargs):
+        return self.get_query_set().order_by(*args, **kwargs)
+
+    def values_list(self, *args, **kwargs):
+        return self.get_query_set().values_list(*args, **kwargs)
 
 
 class FakeModel(object):

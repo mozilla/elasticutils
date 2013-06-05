@@ -32,8 +32,21 @@ class FakeModel(object):
             setattr(self, key, kw[key])
         model_cache.append(self)
 
+    @classmethod
+    def get(cls, id):
+        id = int(id)
+        return [m for m in model_cache if m.id == id][0]
+
 
 class FakeMappingType(MappingType):
+    @classmethod
+    def get_index(cls):
+        return 'elasticutilstestfmt'
+
+    @classmethod
+    def get_mapping_type_name(cls):
+        return 'elasticutilsdoctypefmt'
+
     def get_model(self):
         return FakeModel
 
@@ -134,6 +147,37 @@ class TestResultsWithData(ESTestCase):
             {'query': {"term": {"fld1": 2}}})
 
 
+class TestFakeMappingType(ESTestCase):
+    index_name = FakeMappingType.get_index()
+    mapping_type_name = FakeMappingType.get_mapping_type_name()
+    data = [
+        {'id': 1, 'name': 'odin skullcrusher'},
+        {'id': 2, 'name': 'olaf bloodbiter'}
+    ]
+
+    @classmethod
+    def setup_class(cls):
+        super(TestFakeMappingType, cls).setup_class()
+        if cls.skip_tests:
+            return
+
+        for doc in cls.data:
+            FakeModel(**doc)
+
+    @classmethod
+    def teardown_class(cls):
+        super(TestFakeMappingType, cls).setup_class()
+        if cls.skip_tests:
+            return
+
+        reset_model_cache()
+
+    def test_object(self):
+        s = S(FakeMappingType).query(name__prefix='odin')
+        eq_(len(s), 1)
+        eq_(s[0].object.id, 1)
+
+
 class TestResultsWithDates(ESTestCase):
     def test_dates(self):
         """Datetime strings in ES results get converted to Python datetimes"""
@@ -163,6 +207,30 @@ class TestResultsWithDates(ESTestCase):
               u'id': 1}]
         )
 
+    def test_dates_lookalikes(self):
+        """Datetime strings in ES results get converted to Python datetimes"""
+        self.create_index(
+            settings={
+                'mappings': {
+                    self.mapping_type_name: {
+                        'id': {'type': 'integer'},
+                        'bday': {'type': 'string', 'analyzer': 'keyword'}
+                    }
+                }
+            }
+        )
+        data = [
+            {'id': 1, 'bday': 'xxxx-xx-xxTxx:xx:xx'}
+        ]
+
+        self.index_data(data)
+        self.refresh()
+
+        results = list(self.get_s().values_dict())
+        eq_(results,
+            [{u'id': 1, u'bday': u'xxxx-xx-xxTxx:xx:xx'}]
+        )
+
 
 class TestMappingType(ESTestCase):
     def tearDown(self):
@@ -172,7 +240,7 @@ class TestMappingType(ESTestCase):
     def test_default_mapping_type(self):
         data = [
             {'id': 1, 'name': 'Alice'}
-            ]
+        ]
 
         self.__class__.create_index()
         self.__class__.index_data(data)

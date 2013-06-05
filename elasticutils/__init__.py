@@ -244,10 +244,10 @@ class F(object):
         self_filters = copy.deepcopy(self.filters)
         if len(self_filters) == 0:
             f.filters = []
-        elif (len(self_filters) < 2
-            and 'not' in self_filters
-            and 'filter' in self_filters['not']):
-            f.filters = self_filters['not']['filter']
+        elif (len(self_filters) == 1
+              and isinstance(self_filters[0], dict)
+              and self_filters[0].get('not', {}).get('filter', {})):
+            f.filters = self_filters[0]['not']['filter']
         else:
             f.filters = [{'not': {'filter': self_filters}}]
         return f
@@ -1406,9 +1406,9 @@ class S(PythonMixin):
                 facets[key] = [v for v in val['terms']]
             elif val['_type'] == 'range':
                 facets[key] = [v for v in val['ranges']]
-            elif val['_type'] == 'date_histogram':
-                facets[key] = [v for v in val['entries']]
             elif val['_type'] == 'histogram':
+                facets[key] = [v for v in val['entries']]
+            elif val['_type'] == 'date_histogram':
                 facets[key] = [v for v in val['entries']]
             elif val['_type'] == 'statistical':
                 facets[key] = val

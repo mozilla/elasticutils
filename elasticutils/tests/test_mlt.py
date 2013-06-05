@@ -59,6 +59,15 @@ class MoreLikeThisTest(ESTestCase):
                   min_term_freq=1, min_doc_freq=1)
         eq_(len(mlt), 5)
 
+    def test_mlt_deprecated_fields(self):
+        with self.assertRaises(DeprecationWarning):
+            MLT(1, self.get_s(), fields=['tag', 'foo'])
+
+    def test_mlt_iter(self):
+        mlt = MLT(1, self.get_s(), ['tag', 'foo'],
+                  min_term_freq=1, min_doc_freq=1)
+        eq_(len(list(mlt)), 5)
+
     def test_mlt_on_foo_with_filter(self):
         """Verify MLT with the foo field while filtering on tag."""
         # We need to pass min_term_freq and min_doc_freq, because the terms

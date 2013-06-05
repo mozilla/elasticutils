@@ -4,8 +4,36 @@ from unittest import TestCase
 from nose.tools import eq_
 
 from elasticutils import (
-    S, F, Q, InvalidFieldActionError, InvalidFacetType, SearchResults)
+    S, F, Q, BadSearch, InvalidFieldActionError, InvalidFacetType,
+    InvalidFlagsError, SearchResults, DefaultMappingType, MappingType,
+    DEFAULT_INDEXES, DEFAULT_DOCTYPES)
 from elasticutils.tests import ESTestCase, facet_counts_dict
+
+
+class FakeMappingType(MappingType):
+    @classmethod
+    def get_index(cls):
+        return 'index123'
+
+    @classmethod
+    def get_mapping_type_name(cls):
+        return 'doctype123'
+
+
+class STest(TestCase):
+    def test_untyped_s_get_indexes(self):
+        eq_(S().get_indexes(), DEFAULT_INDEXES)
+        eq_(S().indexes('abc').get_indexes(), ['abc'])
+
+    def test_typed_s_get_indexes(self):
+        eq_(S(FakeMappingType).get_indexes(), ['index123'])
+
+    def test_untyped_s_get_doctypes(self):
+        eq_(S().get_doctypes(), DEFAULT_DOCTYPES)
+        eq_(S().doctypes('abc').get_doctypes(), ['abc'])
+
+    def test_typed_s_get_doctypes(self):
+        eq_(S(FakeMappingType).get_doctypes(), ['doctype123'])
 
 
 class QTest(TestCase):
@@ -26,6 +54,10 @@ class QTest(TestCase):
         eq_(sorted(q.should_q), [])
         eq_(sorted(q.must_q), [])
         eq_(sorted(q.must_not_q), [('bar__text', 'def'), ('foo__text', 'abc')])
+
+    def test_q_must_should(self):
+        with self.assertRaises(InvalidFlagsError):
+            Q(foo__text='abc', must=True, should=True)
 
     def test_q_basic_add(self):
         """Adding one Q to another Q combines them."""
@@ -263,6 +295,25 @@ class QueryTest(ESTestCase):
         with self.assertRaises(InvalidFieldActionError):
             len(self.get_s().query(Q(foo__foo='awesome')))
 
+    def test_deprecated_q_or_(self):
+        s = self.get_s().query(or_={'foo': 'car', 'tag': 'boat'})
+        eq_(s._build_query(),
+            {
+                'query': {
+                    'bool': {
+                        'should': [
+                            {'term': {'foo': 'car'}},
+                            {'term': {'tag': 'boat'}}
+                        ]
+                    }
+                }
+            }
+        )
+
+    def test_bad_search(self):
+        with self.assertRaises(BadSearch):
+            len(S().doctypes('abc'))
+
     def test_query_raw(self):
         s = self.get_s().query_raw({'match': {'title': 'example'}})
         eq_(s._build_query(),
@@ -444,7 +495,12 @@ class QueryTest(ESTestCase):
         assert isinstance(self.get_s().execute(), SearchResults)
 
     def test_count(self):
-        assert isinstance(self.get_s().count(), int)
+        s = self.get_s()
+        assert isinstance(s.count(), int)
+
+        # Make sure it works with the cached count
+        s.execute()
+        assert isinstance(s.count(), int)
 
     def test_len(self):
         assert isinstance(len(self.get_s()), int)
@@ -455,6 +511,18 @@ class QueryTest(ESTestCase):
     def test_order_by(self):
         res = self.get_s().filter(tag='awesome').order_by('-width')
         eq_([d['id'] for d in res], [5, 3, 1])
+
+    def test_slice(self):
+        s = self.get_s().filter(tag='awesome')
+        eq_(s._build_query(),
+            {'filter': {'term': {'tag': 'awesome'}}})
+        assert isinstance(s[0], DefaultMappingType)
+
+        eq_(s[0:1]._build_query(),
+            {'filter': {'term': {'tag': 'awesome'}}, 'size': 1})
+
+        eq_(s[1:2]._build_query(),
+            {'filter': {'term': {'tag': 'awesome'}}, 'from': 1, 'size': 1})
 
     def test_explain(self):
         qs = self.get_s().query(foo='car')
@@ -495,7 +563,7 @@ class FilterTest(ESTestCase):
         {'id': 2, 'foo': 'bart', 'tag': 'boring', 'width': '7'},
         {'id': 3, 'foo': 'car', 'tag': 'awesome', 'width': '5'},
         {'id': 4, 'foo': 'duck', 'tag': 'boat', 'width': '11'},
-        {'id': 5, 'foo': 'train car', 'tag': 'awesome', 'width': '7'},
+        {'id': 5, 'foo': 'car', 'tag': 'awesome', 'width': '7'},
         {'id': 6, 'foo': 'caboose', 'tag': 'end', 'width': None}
         ]
 
@@ -514,6 +582,26 @@ class FilterTest(ESTestCase):
         eq_(s._build_query(), {'filter': {'term': {'tag': 'awesome'}}})
         eq_(s.count(), 3)
 
+    def test_filter_f_and_empty_f(self):
+        s = self.get_s().filter(F(tag='awesome') & F())
+        eq_(s._build_query(), {'filter': {'term': {'tag': 'awesome'}}})
+        eq_(s.count(), 3)
+
+    def test_filter_f_and_ff(self):
+        s = self.get_s().filter(F(tag='awesome') & F(foo='car', width='7'))
+        eq_(s._build_query(),
+            {
+                'filter': {
+                    'and': [
+                        {'term': {'width': '7'}},
+                        {'term': {'foo': 'car'}},
+                        {'term': {'tag': 'awesome'}}
+                    ]
+                }
+            }
+        )
+        eq_(s.count(), 1)
+
     def test_filter_empty_f_or_empty_f_or_f(self):
         s = self.get_s().filter(F() | F() | F(tag='awesome'))
         eq_(s._build_query(), {'filter': {'term': {'tag': 'awesome'}}})
@@ -521,6 +609,14 @@ class FilterTest(ESTestCase):
 
     def test_filter_empty_f_and_empty_f_and_f(self):
         s = self.get_s().filter(F() & F() & F(tag='awesome'))
+        eq_(s._build_query(), {'filter': {'term': {'tag': 'awesome'}}})
+        eq_(s.count(), 3)
+
+    def test_filter_not_not_f(self):
+        f = F(tag='awesome')
+        f = ~f
+        f = ~f
+        s = self.get_s().filter(f)
         eq_(s._build_query(), {'filter': {'term': {'tag': 'awesome'}}})
         eq_(s.count(), 3)
 
@@ -558,12 +654,12 @@ class FilterTest(ESTestCase):
 
         # This is kind of a crazy case.
         s = self.get_s().filter(or_={'foo': 'bar',
-                                     'or_': {'tag': 'boat', 'width': 5}})
+                                     'or_': {'tag': 'boat', 'width': '5'}})
         eq_(s._build_query(), {
                 'filter': {
                     'or': [
                         {'or': [
-                                {'term': {'width': 5}},
+                                {'term': {'width': '5'}},
                                 {'term': {'tag': 'boat'}}
                         ]},
                         {'term': {'foo': 'bar'}}
@@ -631,6 +727,9 @@ class FilterTest(ESTestCase):
     def test_filter_in(self):
         eq_(len(self.get_s().filter(foo__in=['car', 'bar'])), 3)
 
+    def test_filter_prefix(self):
+        eq_(len(self.get_s().filter(foo__prefix='c')), 3)
+
     def test_filter_bad_field_action(self):
         with self.assertRaises(InvalidFieldActionError):
             len(self.get_s().filter(F(tag__faux='awesome')))
@@ -691,21 +790,39 @@ class FilterTest(ESTestCase):
                 }
         })
 
+    def test_filter_range(self):
+        eq_(len(self.get_s().filter(id__gt=3)), 3)
+        eq_(len(self.get_s().filter(id__gte=3)), 4)
+        eq_(len(self.get_s().filter(id__lt=3)), 2)
+        eq_(len(self.get_s().filter(id__lte=3)), 3)
+
 
 class FacetTest(ESTestCase):
-    data = [
-        {'id': 1, 'foo': 'bar', 'tag': 'awesome', 'width': '2'},
-        {'id': 2, 'foo': 'bart', 'tag': 'boring', 'width': '7'},
-        {'id': 3, 'foo': 'car', 'tag': 'awesome', 'width': '5'},
-        {'id': 4, 'foo': 'duck', 'tag': 'boat', 'width': '11'},
-        {'id': 5, 'foo': 'train car', 'tag': 'awesome', 'width': '7'}
-        ]
-
     def test_facet(self):
+        FacetTest.create_index()
+        FacetTest.index_data([
+                {'id': 1, 'foo': 'bar', 'tag': 'awesome'},
+                {'id': 2, 'foo': 'bart', 'tag': 'boring'},
+                {'id': 3, 'foo': 'car', 'tag': 'awesome'},
+                {'id': 4, 'foo': 'duck', 'tag': 'boat'},
+                {'id': 5, 'foo': 'train car', 'tag': 'awesome'},
+            ])
+        FacetTest.refresh()
+
         qs = self.get_s().facet('tag')
         eq_(facet_counts_dict(qs, 'tag'), dict(awesome=3, boring=1, boat=1))
 
     def test_filtered_facet(self):
+        FacetTest.create_index()
+        FacetTest.index_data([
+                {'id': 1, 'foo': 'bar', 'tag': 'awesome', 'width': 1},
+                {'id': 2, 'foo': 'bart', 'tag': 'boring', 'width': 2},
+                {'id': 3, 'foo': 'car', 'tag': 'awesome', 'width': 1},
+                {'id': 4, 'foo': 'duck', 'tag': 'boat', 'width': 5},
+                {'id': 5, 'foo': 'train car', 'tag': 'awesome', 'width': 5},
+            ])
+        FacetTest.refresh()
+
         qs = self.get_s().query(foo='car').filter(width=5)
 
         # filter doesn't apply to facets
@@ -717,6 +834,16 @@ class FacetTest(ESTestCase):
             {'awesome': 1})
 
     def test_global_facet(self):
+        FacetTest.create_index()
+        FacetTest.index_data([
+                {'id': 1, 'foo': 'bar', 'tag': 'awesome'},
+                {'id': 2, 'foo': 'bart', 'tag': 'boring'},
+                {'id': 3, 'foo': 'car', 'tag': 'awesome'},
+                {'id': 4, 'foo': 'duck', 'tag': 'boat'},
+                {'id': 5, 'foo': 'train car', 'tag': 'awesome'}
+            ])
+        FacetTest.refresh()
+
         qs = self.get_s().query(foo='car').filter(width=5)
 
         # facet restricted to query
@@ -728,6 +855,16 @@ class FacetTest(ESTestCase):
             dict(awesome=3, boring=1, boat=1))
 
     def test_facet_raw(self):
+        FacetTest.create_index()
+        FacetTest.index_data([
+                {'id': 1, 'foo': 'bar', 'tag': 'awesome'},
+                {'id': 2, 'foo': 'bart', 'tag': 'boring'},
+                {'id': 3, 'foo': 'car', 'tag': 'awesome'},
+                {'id': 4, 'foo': 'duck', 'tag': 'boat'},
+                {'id': 5, 'foo': 'train car', 'tag': 'awesome'}
+            ])
+        FacetTest.refresh()
+
         qs = self.get_s().facet_raw(tags={'terms': {'field': 'tag'}})
         eq_(facet_counts_dict(qs, 'tags'),
             dict(awesome=3, boring=1, boat=1))
@@ -740,6 +877,16 @@ class FacetTest(ESTestCase):
 
     def test_facet_raw_overrides_facet(self):
         """facet_raw overrides facet with the same facet name."""
+        FacetTest.create_index()
+        FacetTest.index_data([
+                {'id': 1, 'foo': 'bar', 'tag': 'awesome'},
+                {'id': 2, 'foo': 'bart', 'tag': 'boring'},
+                {'id': 3, 'foo': 'car', 'tag': 'awesome'},
+                {'id': 4, 'foo': 'duck', 'tag': 'boat'},
+                {'id': 5, 'foo': 'train car', 'tag': 'awesome'}
+            ])
+        FacetTest.refresh()
+
         qs = (self.get_s()
               .query(foo='car')
               .facet('tag')
@@ -747,44 +894,85 @@ class FacetTest(ESTestCase):
         eq_(facet_counts_dict(qs, 'tag'),
             dict(awesome=3, boring=1, boat=1))
 
-
-class FacetNoDataTest(ESTestCase):
-    """This is for tests that generate their own data and need
-    to be cleaned up.
-
-    """
-
-    def test_facet_date_histogram(self):
-        """facet_raw with date_histogram works."""
-        today = datetime.now()
-        tomorrow = today + timedelta(days=1)
-
+    def test_facet_terms(self):
+        """Test terms facet"""
         FacetTest.create_index()
         FacetTest.index_data([
-                {'id': 1, 'created': today},
-                {'id': 2, 'created': today},
-                {'id': 3, 'created': tomorrow},
-                {'id': 4, 'created': tomorrow},
-                {'id': 5, 'created': tomorrow},
+                {'id': 1, 'color': 'red'},
+                {'id': 2, 'color': 'red'},
+                {'id': 3, 'color': 'red'},
+                {'id': 4, 'color': 'yellow'},
+                {'id': 5, 'color': 'yellow'},
+                {'id': 6, 'color': 'green'},
+                {'id': 7, 'color': 'blue'},
+                {'id': 8, 'color': 'white'},
+                {'id': 9, 'color': 'brown'},
             ])
         FacetTest.refresh()
 
         qs = (self.get_s()
               .facet_raw(created1={
-                    'date_histogram': {
-                        'interval': 'day', 'field': 'created'
-                        }
-                    }))
+                    'terms': {
+                        'field': 'color',
+                        'size': 2
+                    }
+              })
+        )
 
-        # TODO: This is a mediocre test because it doesn't test the
-        # dates and it probably should.
-        facet_counts = [item['count']
-                        for item in qs.facet_counts()['created1']]
-        eq_(sorted(facet_counts), [2, 3])
+        data = qs.facet_counts()
+        eq_(data,
+            {
+                u'created1': [
+                    {u'count': 3, u'term': u'red'},
+                    {u'count': 2, u'term': u'yellow'}
+                ]
+            }
+        )
 
-    def test_facet_normal_histogram(self):
-        """facet_raw with normal histogram works."""
+    def test_facet_range(self):
+        """Test range facet"""
+        FacetTest.create_index()
+        FacetTest.index_data([
+                {'id': 1, 'value': 1},
+                {'id': 2, 'value': 1},
+                {'id': 3, 'value': 1},
+                {'id': 4, 'value': 2},
+                {'id': 5, 'value': 2},
+                {'id': 6, 'value': 3},
+                {'id': 7, 'value': 3},
+                {'id': 8, 'value': 3},
+                {'id': 9, 'value': 4},
+            ])
+        FacetTest.refresh()
 
+        qs = (self.get_s()
+              .facet_raw(created1={
+                    'range': {
+                        'field': 'value',
+                        'ranges': [
+                            {'from': 0, 'to': 5},
+                            {'from': 5, 'to': 20}
+                        ]
+                    }
+              }
+              )
+        )
+
+        data = qs.facet_counts()
+        eq_(data,
+            {
+                u'created1': [
+                    {u'count': 9, u'from': 0.0, u'min': 1.0, u'max': 4.0,
+                     u'to': 5.0, u'total_count': 9, u'total': 20.0,
+                     u'mean': 2.2222222222222223},
+                    {u'count': 0, u'from': 5.0, u'total_count': 0,
+                     u'to': 20.0, u'total': 0.0, u'mean': 0.0}
+                ]
+            }
+        )
+
+    def test_facet_histogram(self):
+        """Test histogram facet"""
         FacetTest.create_index()
         FacetTest.index_data([
                 {'id': 1, 'value': 1},
@@ -815,6 +1003,75 @@ class FacetNoDataTest(ESTestCase):
                 ]
             })
 
+    def test_facet_date_histogram(self):
+        """facet_raw with date_histogram works."""
+        today = datetime.now()
+        tomorrow = today + timedelta(days=1)
+
+        FacetTest.create_index()
+        FacetTest.index_data([
+                {'id': 1, 'created': today},
+                {'id': 2, 'created': today},
+                {'id': 3, 'created': tomorrow},
+                {'id': 4, 'created': tomorrow},
+                {'id': 5, 'created': tomorrow},
+            ])
+        FacetTest.refresh()
+
+        qs = (self.get_s()
+              .facet_raw(created1={
+                    'date_histogram': {
+                        'interval': 'day', 'field': 'created'
+                        }
+                    }))
+
+        # TODO: This is a mediocre test because it doesn't test the
+        # dates and it probably should.
+        facet_counts = [item['count']
+                        for item in qs.facet_counts()['created1']]
+        eq_(sorted(facet_counts), [2, 3])
+
+    def test_facet_statistical(self):
+        """Test statistical facet"""
+        FacetTest.create_index()
+        FacetTest.index_data([
+                {'id': 1, 'value': 1},
+                {'id': 2, 'value': 1},
+                {'id': 3, 'value': 1},
+                {'id': 4, 'value': 2},
+                {'id': 5, 'value': 2},
+                {'id': 6, 'value': 3},
+                {'id': 7, 'value': 3},
+                {'id': 8, 'value': 3},
+                {'id': 9, 'value': 4},
+            ])
+        FacetTest.refresh()
+
+        qs = (self.get_s()
+              .facet_raw(created1={
+                    'statistical': {
+                        'field': 'value'
+                    }
+              })
+        )
+
+        data = qs.facet_counts()
+        eq_(data, 
+            {
+                u'created1': {
+                    u'count': 9,
+                    u'_type': u'statistical',
+                    u'min': 1.0,
+                    u'sum_of_squares': 54.0,
+                    u'max': 4.0,
+                    u'std_deviation': 1.0304020550550783,
+                    u'variance': 1.0617283950617287,
+                    u'total': 20.0,
+                    u'mean': 2.2222222222222223
+                }
+            }
+        )
+
     def test_invalid_field_type(self):
         """Invalid _type should raise InvalidFacetType."""
         FacetTest.create_index()
@@ -829,12 +1086,11 @@ class FacetNoDataTest(ESTestCase):
         # or do the right thing and mock the test.
         # Note: Previously this used histogram and statistical facets,
         # but those were implemented.
-        self.assertRaises(
-            InvalidFacetType,
-            lambda: (self.get_s()
-                     .facet_raw(created1={
+        with self.assertRaises(InvalidFacetType):
+            (self.get_s()
+                 .facet_raw(created1={
                         'terms_stats':{"key_field":"age","value_field":"age"}})
-                     .facet_counts()))
+                 .facet_counts())
 
 
 class HighlightTest(ESTestCase):
