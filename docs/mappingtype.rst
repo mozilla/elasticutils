@@ -18,7 +18,9 @@ When you do searches with MappingTypes, you get back those results as
 an iterable of MappingTypes by default.
 
 For example, say you had a description field and wanted to have a
-truncated version of it. You could do it this way::
+truncated version of it. You could do it this way:
+
+.. code-block:: python
 
     class MyMappingType(MappingType):
 
@@ -32,16 +34,18 @@ truncated version of it. You could do it this way::
     print list(results)[0].description_truncated()
 
 
-Lets you link database data to search results
----------------------------------------------
+Lets you link source data to search results
+-------------------------------------------
 
-You can relate a MappingType to a database model allowing you to link
-documents in the Elasticsearch index back to their origins in a
-lazy-loading way. This is done by subclassing MappingType and
-implementing the ``get_object()`` method. You can then access the
-origin using the ``object`` property.
+You can relate a MappingType to a database model or other source
+allowing you to link documents in the Elasticsearch index back to
+their origins in a lazy-loading way. This is done by subclassing
+MappingType and implementing the ``get_object()`` method. You can then
+access the original data using the ``object`` property.
 
-For example::
+For example:
+
+.. code-block:: python
 
     class MyMappingType(MappingType):
 
@@ -72,13 +76,17 @@ The most basic MappingType is the DefaultMappingType which is returned
 if you don't specify a MappingType and also don't call
 :py:meth:`elasticutils.S.values_dict` or
 s:py:meth:`elasticutils.S.values_list`. The DefaultMappingType lets
-you access search result fields as instance attributes or as keys::
+you access search result fields as instance attributes or as keys:
+
+.. code-block:: python
 
     res.description
     res['description']
 
+
 The latter syntax is helpful when there are attributes defined on the
-class that have the same name as the document field.
+class that have the same name as the document field or aren't valid
+Python names.
 
 
 For more information
@@ -105,7 +113,7 @@ Example
 Here's an example of a class that subclasses `MappingType` and
 `Indexable`. It's based on a model called `BlogEntry`.
 
-::
+.. code-block:: python
 
     class BlogEntryMappingType(MappingType, Indexable):
         @classmethod

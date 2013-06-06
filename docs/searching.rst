@@ -29,8 +29,8 @@ This creates an `untyped` :py:class:`elasticutils.S` using the
 defaults:
 
 * uses an :py:class:`pyelasticsearch.client.ElasticSearch` instance
-  configured to connect to ``http://localhost:9200`` -- call ``.es()``
-  to specify connection parameters
+  configured to connect to ``http://localhost:9200`` -- call
+  :py:meth:`elasticutils.S.es` to specify connection parameters
 * searches across all indexes -- call
   :py:meth:`elasticutils.S.indexes` to specify indexes
 * searches across all doctypes -- call
@@ -269,9 +269,9 @@ trucks".
 
 There are many different field actions to choose from:
 
-======================  =======================
-field action            elasticsearch query
-======================  =======================
+======================  =========================
+field action            elasticsearch query type
+======================  =========================
 (no action specified)   Term query
 term                    Term query
 terms                   Terms query
@@ -284,7 +284,7 @@ wildcard                Wildcard query
 text_phrase             Text phrase query
 match_phrase            Match phrase query [1]_
 query_string            Querystring query [3]_
-======================  =======================
+======================  =========================
 
 
 .. [1] Elasticsearch 0.19.9 renamed text queries to match queries. If
@@ -532,8 +532,12 @@ This uses the Elasticsearch Missing filter.
      Elasticsearch docs for missing filter
 
 
-Advanced filters: ``filter`` and ``F``
-======================================
+Advanced filters: ``F``
+=======================
+
+
+and vs. or
+----------
 
 Calling filter multiple times is equivalent to an "and"ing of the
 filters.
@@ -555,6 +559,9 @@ For example::
 
    q = S().filter(style='korean', price='FREE')
 
+
+The F class
+-----------
 
 Suppose you want either Korean or Mexican food. For that, you need an
 "or". You can do something like this::
@@ -599,12 +606,18 @@ If neither `some_crazy_thing` or `some_other_crazy_thing` are
 ``True``, then F will be empty. That's ok because empty filters are
 ignored.
 
-.. Note::
 
-   If ElasticUtils doesn't have support for filters you need, you can
-   subclass :py:class:`elasticutils.S` and add ``process_filter_X``
-   methods. See the documentation for :py:class:`elasticutils.S` for
-   more details.
+adding new filteractions
+------------------------
+
+You can subclass :py:class:`elasticutils.S` and add handling for
+additional filter actions. This is helpful in two circumstances:
+
+1. ElasticUtils doesn't have support for that filter type
+2. ElasticUtils doesn't support that filter type in a way you
+   need---for example, ElasticUtils uses different argument values
+
+See :py:class:`elasticutils.S` for more details on how to do this.
 
 
 Query-time field boosting: ``boost``
@@ -620,6 +633,10 @@ final score for the query.
 This is a useful way to weight queries for some fields over others.
 
 See :py:meth:`elasticutils.S.boost` for more details.
+
+.. Note::
+
+   Boosts are ignored if you use query_raw.
 
 
 Ordering: ``order_by``
@@ -881,43 +898,3 @@ This works regardless of what form the search results are in.
    http://www.elasticsearch.org/guide/reference/api/search/explain.html
      Elasticsearch docs on explain (which are pretty bereft of
      details).
-
-
-More like this: ``MLT``
-=======================
-
-ElasticUtils exposes Elasticsearch More Like This API with the `MLT`
-class.
-
-For example::
-
-    mlt = MLT(2034, index='addon_index', doctype='addon')
-
-
-This creates an `MLT` that will return documents that are like
-document with id 2034 of type `addon` in the `addon_index`.
-
-You can pass it an `S` instance and the `MLT` will derive the index,
-doctype, ElasticSearch object and also use the search specified by
-the `S` in the body of the More Like This request. This allows you to
-get documents like the one specified that also meet query and filter
-criteria. For example::
-
-    s = S().filter(product='firefox')
-    mlt = MLT(2034, s=s)
-
-
-See :py:class:`MLT` for more details.
-
-
-.. seealso::
-
-   http://www.elasticsearch.org/guide/reference/api/more-like-this.html
-     Elasticsearch guide on More Like This API
-
-   http://www.elasticsearch.org/guide/reference/query-dsl/mlt-query.html
-     Elasticsearch guide on the moreLikeThis query which specifies the
-     additional parameters you can use.
-
-   http://pyelasticsearch.readthedocs.org/en/latest/api/#pyelasticsearch.ElasticSearch.more_like_this
-     pyelasticsearch documentation for MLT

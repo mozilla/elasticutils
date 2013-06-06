@@ -116,9 +116,16 @@ The MappingType class
 
 
 The Indexable class
-=====================
+===================
 
 .. autoclass:: elasticutils.Indexable
+   :members:
+
+
+The DefaultMappingType class
+============================
+
+.. autoclass:: elasticutils.DefaultMappingType
    :members:
 
 

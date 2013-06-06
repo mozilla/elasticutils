@@ -82,14 +82,16 @@ Types and Mappings
 
 A `type` is a set of fields. A document is of a given type if it has
 those fields. Whenever you index a document, you specify which type
-the document is. This is sometimes called a "doctype", "doc type" or
-"mapping type".
+the document is. This is sometimes called a "doctype", "document type"
+or "doc type".
 
 A `mapping` is the definition of fields and how they should be indexed
-for a type.
+for a type. In ElasticUtils, we call a document type that has a
+defined mapping a "mapping type" mostly as a shorthand for "document
+type with a defined mapping" because that's a mouthful.
 
 Elasticsearch can infer mappings to some degree, but you get a lot
-more value by specifying them explicitly.
+more value by specifying mappings explicitly.
 
 To define a mapping, you use `.put_mapping()`.
 

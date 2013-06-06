@@ -26,22 +26,24 @@ Additionally, pyelasticsearch uses Requests which logs to the
 ``requests`` logger using the Python logging module. If you configure
 that to show INFO-level messages, then you'll see all that stuff.
 
-::
+First set up logging using something like this:
+
+.. code-block:: python
 
     import logging
 
+    # Set up the logging in some way. If you don't have logging
+    # set up, you can set it up like this.
+    logging.basicConfig()
+
+
+Then set the logging level for the pyelasticsearch and requests loggers
+to ``logging.DEBUG``:
+
+.. code-block:: python
+
     logging.getLogger('pyelasticsearch').setLevel(logging.DEBUG)
     logging.getLogger('requests').setLevel(logging.DEBUG)
-
-
-.. Note::
-
-   This assumes that logging is already set up with something like
-   this::
-
-       import logging
-
-       logging.basicConfig()
 
 
 pyelasticsearch will log lines like::
@@ -78,8 +80,7 @@ For example::
 .. Note::
 
    This is a "private" method, so we might change it at some point.
-   Having said that, it hasn't changed so far and is probably useful
-   for debugging.
+   Having said that, it hasn't changed so far and it is super helpful.
 
 
 elasticsearch-head
@@ -98,3 +99,11 @@ https://github.com/karmi/elasticsearch-paramedic
 
 elasticsearch-paramedic allows you to see the state and real-time
 statistics of your Elasticsearch cluster.
+
+
+es2unix
+=======
+
+https://github.com/elasticsearch/es2unix
+
+Use this for calling Elasticsearch API things instead of curl.

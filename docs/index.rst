@@ -81,6 +81,7 @@ User's Guide
    indexing
    mappingtype
    searching
+   mlt
    debugging
    api
 
