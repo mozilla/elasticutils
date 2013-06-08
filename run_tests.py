@@ -9,19 +9,15 @@ import nose
 # Set up the environment for our test project.
 ROOT = os.path.abspath(os.path.dirname(__file__))
 
-try:
-    # import to check for the existence of Django
-    import django
-    os.environ.update({'DJANGO_SETTINGS_MODULE': 'test_settings'})
-    sys.path.insert(0, ROOT)
+# import to check for the existence of Django
+import django
+os.environ.update({'DJANGO_SETTINGS_MODULE': 'test_settings'})
+sys.path.insert(0, ROOT)
 
-    # This can't be imported until after we've fiddled with the
-    # environment.
-    from django.test.utils import setup_test_environment
-    setup_test_environment()
-except ImportError:
-    # If django is not found, the Django tests will be skipped, so this is ok.
-    pass
+# This can't be imported until after we've fiddled with the
+# environment.
+from django.test.utils import setup_test_environment
+setup_test_environment()
 
 # Run nose.
 #
