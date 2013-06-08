@@ -1,12 +1,11 @@
 language: python
+
 services:
     - elasticsearch
+
 python:
     - "2.6"
     - "2.7"
-env:
-    - DJANGO=true
-    - DJANGO=false
 
 notifications:
   email: false
@@ -14,7 +13,6 @@ notifications:
 install:
     - virtualenv .
     - ./bin/pip install -r requirements-dev.txt
-    - "[ $DJANGO = true ] && bin/pip install -r requirements-dev.txt || echo"
 
 script:
     - ./bin/python run_tests.py
