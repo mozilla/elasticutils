@@ -723,6 +723,26 @@ class S(PythonMixin):
         """
         return self._clone(next_step=('filter', list(filters) + kw.items()))
 
+    def filter_raw(self, filter_):
+        """
+        Return a new S instance with a filter_raw.
+
+        :arg filter_: Python dict specifying the complete filter to send
+            to Elasticsearch
+
+        Example::
+
+            S().filter_raw({'term': {'title': 'example'}})
+
+
+        .. Note::
+
+           If there's a filter_raw in your S, then that's your
+           filter. All ``.filter()`` and anything else that affects the
+           filter clause is ignored.
+        """
+        return self._clone(next_step=('filter_raw', filter_))
+
     def boost(self, **kw):
         """
         Return a new S instance with field boosts.
@@ -907,6 +927,7 @@ class S(PythonMixin):
         Elasticsearch, and return it as a dict.
         """
         filters = []
+        filters_raw = None
         queries = []
         query_raw = None
         sort = []
@@ -950,6 +971,8 @@ class S(PythonMixin):
                 demote = value
             elif action == 'filter':
                 filters.extend(self._process_filters(value))
+            elif action == 'filter_raw':
+                filters_raw = value
             elif action == 'facet':
                 # value here is a (args, kwargs) tuple
                 facets.update(_process_facets(*value))
@@ -970,10 +993,15 @@ class S(PythonMixin):
                 raise NotImplementedError(action)
 
         qs = {}
-        if len(filters) > 1:
-            qs['filter'] = {'and': filters}
-        elif filters:
-            qs['filter'] = filters[0]
+
+        # If there's a filters_raw, we use that.
+        if filters_raw:
+            qs['filter'] = filters_raw
+        else:
+            if len(filters) > 1:
+                qs['filter'] = {'and': filters}
+            elif filters:
+                qs['filter'] = filters[0]
 
         # If there's a query_raw, we use that. Otherwise we use
         # whatever we got from query and demote.
