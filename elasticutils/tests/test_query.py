@@ -809,9 +809,22 @@ class FilterTest(ESTestCase):
         eq_(len(self.get_s().filter(id__lt=3)), 2)
         eq_(len(self.get_s().filter(id__lte=3)), 3)
 
+
     def test_filter_range_action(self):
         eq_(len(self.get_s().filter(id__range=(3, 10))), 4)
         eq_(len(self.get_s().filter(id__range=(0, 3))), 3)
+
+    def test_filter_raw(self):
+        s = self.get_s().filter_raw({'term': {'tag': 'awesome'}})
+        eq_(s._build_query(),
+            {'filter': {'term': {'tag': 'awesome'}}})
+
+    def test_filter_raw_overrides_everything(self):
+        s = self.get_s().filter_raw({'term': {'tag': 'awesome'}})
+        s = s.filter(tag='boring')
+        s = s.filter(F(tag='end'))
+        eq_(s._build_query(),
+            {'filter': {'term': {'tag': 'awesome'}}})
 
 
 class FacetTest(ESTestCase):
