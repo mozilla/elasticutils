@@ -76,7 +76,7 @@ class QTest(TestCase):
         q2 = Q(bar__text='def')
         q2 += Q(foo__text='abc')
         eq_(q1, q2)
-        
+
         q2 = Q(foo__text='abc')
         q2 += Q(bar__text='def')
         eq_(q1, q2)
@@ -176,6 +176,19 @@ class QueryTest(ESTestCase):
         eq_(len(self.get_s().query(Q(height__gte=7))), 3)
         eq_(len(self.get_s().query(Q(height__lt=10))), 4)
         eq_(len(self.get_s().query(Q(height__lte=7))), 4)
+
+    def test_q_range_action(self):
+        eq_(len(self.get_s().query(height__range=(10, 20))), 1)
+        eq_(len(self.get_s().query(height__range=(0, 7))), 4)
+        eq_(len(self.get_s().query(height__range=(5, 7))), 3)
+
+        eq_(len(self.get_s().query(Q(height__range=(10, 20)))), 1)
+        eq_(len(self.get_s().query(Q(height__range=(0, 7)))), 4)
+        eq_(len(self.get_s().query(Q(height__range=(5, 7)))), 3)
+
+        # Try a boosted query to verify it still works.
+        eq_(len(self.get_s().query(height__range=(5, 7))
+                            .boost(height__range=100)), 3)
 
     def test_q_text(self):
         eq_(len(self.get_s().query(foo__text='car')), 2)
@@ -796,6 +809,10 @@ class FilterTest(ESTestCase):
         eq_(len(self.get_s().filter(id__lt=3)), 2)
         eq_(len(self.get_s().filter(id__lte=3)), 3)
 
+    def test_filter_range_action(self):
+        eq_(len(self.get_s().filter(id__range=(3, 10))), 4)
+        eq_(len(self.get_s().filter(id__range=(0, 3))), 3)
+
 
 class FacetTest(ESTestCase):
     def test_facet(self):
@@ -1056,7 +1073,7 @@ class FacetTest(ESTestCase):
         )
 
         data = qs.facet_counts()
-        eq_(data, 
+        eq_(data,
             {
                 u'created1': {
                     u'count': 9,
@@ -1088,8 +1105,8 @@ class FacetTest(ESTestCase):
         # but those were implemented.
         with self.assertRaises(InvalidFacetType):
             (self.get_s()
-                 .facet_raw(created1={
-                        'terms_stats':{"key_field":"age","value_field":"age"}})
+                 .facet_raw(created1={'terms_stats': {'key_field': 'age',
+                                                      'value_field': 'age'}})
                  .facet_counts())
 
 

@@ -5,7 +5,7 @@ from operator import itemgetter
 
 from pyelasticsearch import ElasticSearch
 
-from elasticutils._version import __version__
+from elasticutils._version import __version__  # noqa
 
 
 log = logging.getLogger('elasticutils')
@@ -539,7 +539,7 @@ class S(PythonMixin):
         [(1, 'fred', 40), (2, 'brian', 30), (3, 'james', 45)]
         >>> list(S().values_list('id', 'name'))
         [(1, 'fred'), (2, 'brian'), (3, 'james')]
-        >>> list(S().values_list('name', 'id')
+        >>> list(S().values_list('name', 'id'))
         [('fred', 1), ('brian', 2), ('james', 3)]
 
         .. Note::
@@ -567,7 +567,7 @@ class S(PythonMixin):
 
         >>> list(S().values_dict())
         [{'id': 1, 'name': 'fred', 'age': 40}, ...]
-        >>> list(S().values_dict('id', 'name')
+        >>> list(S().values_dict('id', 'name'))
         [{'id': 1, 'name': 'fred'}, ...]
 
         """
@@ -629,7 +629,7 @@ class S(PythonMixin):
         Examples:
 
         >>> s = S().query(foo='bar')
-        >>> s = S().query(Q(foo=='bar'))
+        >>> s = S().query(Q(foo='bar'))
         >>> s = S().query(foo='bar', bat__text='baz')
         >>> s = S().query(foo='bar', should=True)
         >>> s = S().query(foo='bar', should=True).query(baz='bat', must=True)
@@ -1100,6 +1100,10 @@ class S(PythonMixin):
                 elif field_action in RANGE_ACTIONS:
                     rv.append({'range': {key: {field_action: val}}})
 
+                elif field_action == 'range':
+                    lower, upper = val
+                    rv.append({'range': {key: {'gte': lower, 'lte': upper}}})
+
                 else:
                     raise InvalidFieldActionError(
                         '%s is not a valid field action' % field_action)
@@ -1134,9 +1138,7 @@ class S(PythonMixin):
             # Note: query_string queries are not boosted with
             # .boost()---they're boosted in the query text itself.
             return {
-                'query_string':
-                    {'default_field': field_name,
-                     'query': val}
+                'query_string': {'default_field': field_name, 'query': val}
             }
 
         elif field_action in RANGE_ACTIONS:
@@ -1145,7 +1147,18 @@ class S(PythonMixin):
             return {
                 'range': {field_name: _boosted_value(
                         field_action, field_action, key, val, boost)}
+           }
+
+        elif field_action == 'range':
+            lower, upper = val
+            value = {
+                'gte': lower,
+                'lte': upper,
             }
+            if boost:
+                value['boost'] = boost
+
+            return {'range': {field_name: value}}
 
         raise InvalidFieldActionError(
             '%s is not a valid field action' % field_action)
@@ -1356,7 +1369,6 @@ class S(PythonMixin):
         """
         count = self.count()
         return self[:count].execute()
-
 
     def execute(self):
         """

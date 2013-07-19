@@ -7,7 +7,7 @@ from django.conf import settings
 from django.shortcuts import render
 from django.utils.decorators import decorator_from_middleware_with_args
 
-from elasticutils import F, InvalidFieldActionError, MLT, NoModelError
+from elasticutils import F, InvalidFieldActionError, MLT, NoModelError  # noqa
 from elasticutils import S as BaseS
 from elasticutils import get_es as base_get_es
 from elasticutils import Indexable as BaseIndexable
