@@ -29,6 +29,8 @@ The S class
 
        .. automethod:: elasticutils.S.filter
 
+       .. automethod:: elasticutils.S.filter_raw
+
        .. automethod:: elasticutils.S.order_by
 
        .. automethod:: elasticutils.S.boost

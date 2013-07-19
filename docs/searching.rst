@@ -494,12 +494,12 @@ field action         elasticsearch filter
 ===================  ====================
 in                   Terms filter
 gt, gte, lt, lte     Range filter
-range                Range filter [1]_
+range                Range filter [5]_
 prefix, startswith   Prefix filter
 (no action)          Term filter
 ===================  ====================
 
-.. [1] The ``range`` field action is a shortcut for defining both sides of
+.. [5] The ``range`` field action is a shortcut for defining both sides of
        the range at once. The range is inclusive on both sides and accepts
        a tuple with the lower value first and upper value second.
 
@@ -542,8 +542,8 @@ This uses the Elasticsearch Missing filter.
      Elasticsearch docs for missing filter
 
 
-Advanced filters: ``F``
-=======================
+Advanced filters: ``F`` and ``filter_raw``
+==========================================
 
 
 and vs. or
@@ -615,6 +615,22 @@ Additionally, you can create an empty F and build it incrementally::
 If neither `some_crazy_thing` or `some_other_crazy_thing` are
 ``True``, then F will be empty. That's ok because empty filters are
 ignored.
+
+
+filter_raw
+----------
+
+:py:meth:`elasticutils.S.filter_raw` lets you explicitly define
+the filter portion of an Elasticsearch search.
+
+For example::
+
+    qs = S().filter_raw({'term': {'title': 'foo'}})
+
+This will override all ``.filter()`` calls you've made in your
+:py:class:`elasticutils.S` before and after the `.filter_raw` call.
+
+This is helpful if ElasticUtils is missing functionality you need.
 
 
 adding new filteractions
