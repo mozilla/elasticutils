@@ -13,6 +13,16 @@ Version 0.8: In development
 
 **Changes:**
 
+* **Added support for ``range`` queries and filters.**
+
+  ``range`` is a nice shorthand for ``gte`` and ``lte``.
+
+* **S.query_raw added**
+
+  If :py:meth:`elasticutils.S.filter` isn't doing as it's told, then you
+  can skip it and use the Elasticsearch API to create the filter clause
+  of the search by hand with :py:meth:`elasticutils.S.filter_raw`.
+
 
 Version 0.7: Released June 12th, 2013
 =====================================
