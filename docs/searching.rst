@@ -279,6 +279,7 @@ text                    Text query
 match                   Match query [1]_
 prefix                  Prefix query [2]_
 gt, gte, lt, lte        Range query
+range                   Range query [4]_
 fuzzy                   Fuzzy query
 wildcard                Wildcard query
 text_phrase             Text phrase query
@@ -296,6 +297,10 @@ query_string            Querystring query [3]_
 
 .. [3] When doing ``query_string`` queries, if the query text is malformed
        it'll raise a `SearchPhaseExecutionException` exception.
+
+.. [4] The ``range`` field action is a shortcut for defining both sides of
+       the range at once. The range is inclusive on both sides and accepts
+       a tuple with the lower value first and upper value second.
 
 
 .. seealso::
@@ -489,9 +494,14 @@ field action         elasticsearch filter
 ===================  ====================
 in                   Terms filter
 gt, gte, lt, lte     Range filter
+range                Range filter [1]_
 prefix, startswith   Prefix filter
 (no action)          Term filter
 ===================  ====================
+
+.. [1] The ``range`` field action is a shortcut for defining both sides of
+       the range at once. The range is inclusive on both sides and accepts
+       a tuple with the lower value first and upper value second.
 
 You can also filter on fields that have ``None`` as a value or have no
 value::
