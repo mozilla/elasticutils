@@ -366,7 +366,7 @@ class PythonMixin(object):
                 # the results.
                 try:
                     return datetime.strptime(obj, '%Y-%m-%dT%H:%M:%S')
-                except ValueError:
+                except (TypeError, ValueError):
                     pass
 
         elif isinstance(obj, dict):
