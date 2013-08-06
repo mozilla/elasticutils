@@ -1945,7 +1945,7 @@ class Indexable(object):
         raise NotImplemented
 
     @classmethod
-    def index(cls, document, id_=None, force_insert=False, es=None,
+    def index(cls, document, id_=None, overwrite_existing=False, es=None,
               index=None):
         """Adds or updates a document to the index
 
@@ -1964,7 +1964,7 @@ class Indexable(object):
                will make up an id for your document and it'll look
                like a character name from a Lovecraft novel.
 
-        :arg force_insert: TODO
+        :arg overwrite_existing: TODO
 
         :arg es: The `ElasticSearch` to use. If you don't specify an
             `ElasticSearch`, it'll use `cls.get_es()`.
@@ -1990,7 +1990,7 @@ class Indexable(object):
             cls.get_mapping_type_name(),
             document,
             id=id_,
-            force_insert=force_insert)
+            overwrite_existing=overwrite_existing)
 
     @classmethod
     def bulk_index(cls, documents, id_field='id', es=None, index=None):
