@@ -1,7 +1,7 @@
 import logging
 
 from django.conf import settings
-from celery.decorators import task
+from celery.task import task
 
 from elasticutils.utils import chunked
 
@@ -10,7 +10,7 @@ log = logging.getLogger('elasticutils')
 
 
 @task
-def index_objects(mapping_type, ids, chunk_size=100, **kw):
+def index_objects(mapping_type, ids, chunk_size=100):
     """Index documents of a specified mapping type.
 
     This allows for asynchronous indexing.
@@ -60,7 +60,7 @@ def index_objects(mapping_type, ids, chunk_size=100, **kw):
 
 
 @task
-def unindex_objects(mapping_type, ids, **kw):
+def unindex_objects(mapping_type, ids):
     """Remove documents of a specified mapping_type from the index.
 
     This allows for asynchronous deleting.
