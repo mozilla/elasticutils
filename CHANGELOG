@@ -11,6 +11,12 @@ Version 0.8: In development
 
 **API-breaking changes:**
 
+* **pyelasticsearch v0.6 or later now required.**
+
+* **celery 2.5.5 or later now required.**
+
+  You can ignore this if you're not using the Django celery tasks.
+
 **Changes:**
 
 * **Added support for ``range`` queries and filters.**
