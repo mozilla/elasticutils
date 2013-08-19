@@ -23,7 +23,7 @@ Run::
 
     $ virtualenv ./venv
     $ . ./venv/bin/activate
-    $ pip install -r requirements-dev.txt
+    $ pip install -r requirements/dev.txt
     $ python setup.py develop
 
 

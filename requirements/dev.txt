@@ -1,0 +1,5 @@
+-r django.txt
+nose
+Sphinx
+
+pyelasticsearch==0.6

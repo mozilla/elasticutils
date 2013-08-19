@@ -6,12 +6,15 @@ What's new in ElasticUtils
    :local:
 
 
-Version 0.8: In development
-===========================
+Version 0.8: August 19th, 2013
+==============================
 
 **API-breaking changes:**
 
 * **pyelasticsearch v0.6 or later now required.**
+
+  Further, since pyelasticsearch has released versions that aren't
+  backwards compatible, we're now pegging on specific versions.
 
 * **celery 2.5.5 or later now required.**
 
@@ -28,6 +31,8 @@ Version 0.8: In development
   If :py:meth:`elasticutils.S.filter` isn't doing as it's told, then you
   can skip it and use the Elasticsearch API to create the filter clause
   of the search by hand with :py:meth:`elasticutils.S.filter_raw`.
+
+* Moved requirements files to ``requirements/``.
 
 
 Version 0.7: Released June 12th, 2013

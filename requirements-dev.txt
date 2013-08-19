@@ -1,5 +1,0 @@
--r requirements-django.txt
-nose
-Sphinx
-
-pyelasticsearch
