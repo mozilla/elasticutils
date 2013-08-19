@@ -1,9 +1,9 @@
 include README.rst CHANGELOG LICENSE CONTRIBUTORS MANIFEST.in
-include requirements*.txt
 include run_tests.py
 include test_settings.py
 include docs/Makefile docs/conf.py
 include .travis.yml
 
+recursive-include requirements *.txt
 recursive-include docs *.rst *.py
 recursive-include elasticutils *.html
