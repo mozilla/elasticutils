@@ -6,6 +6,24 @@ What's new in ElasticUtils
    :local:
 
 
+Version 0.8.1: September 13th, 2013
+===================================
+
+**API-breaking changes:**
+
+* **Indexable.index overwrite_existing argument default changed**
+
+  In v0.8, we added the ``overwrite_existing`` argument, but made
+  it default to False. That's different than what pyelasticsearch
+  does.
+
+  In v0.8.1, we changed the default ot True which is in line with
+  what pyelasticsearch does.
+
+  If you were depending on the old behavior, then you need to
+  update your indexing code to set ``overwrite_existing=False``.
+
+
 Version 0.8: August 19th, 2013
 ==============================
 
@@ -19,6 +37,21 @@ Version 0.8: August 19th, 2013
 * **celery 2.5.5 or later now required.**
 
   You can ignore this if you're not using the Django celery tasks.
+
+* **Indexable.index arguments changed**
+
+  pyelasticsearch changed arguments, so we did, too. We dropped
+  the ``force_insert`` argument (which wasn't working) and picked
+  up ``overwrite_existing``.
+
+  ``overwrite_existing`` defaults to False which means it will
+  **not** overwrite existing documents in the index.
+
+  .. Note::
+
+     This was a mistake since pyelasticsearch defaults to True.
+     We changed this in 0.8.1.
+
 
 **Changes:**
 

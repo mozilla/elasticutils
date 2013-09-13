@@ -1965,7 +1965,7 @@ class Indexable(object):
                like a character name from a Lovecraft novel.
 
         :arg overwrite_existing: if ``True`` overwrites existing documents
-+            of the same ID and doctype
+             of the same ID and doctype
 
         :arg es: The `ElasticSearch` to use. If you don't specify an
             `ElasticSearch`, it'll use `cls.get_es()`.
