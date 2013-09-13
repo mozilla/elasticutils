@@ -1945,7 +1945,7 @@ class Indexable(object):
         raise NotImplemented
 
     @classmethod
-    def index(cls, document, id_=None, overwrite_existing=False, es=None,
+    def index(cls, document, id_=None, overwrite_existing=True, es=None,
               index=None):
         """Adds or updates a document to the index
 
@@ -1964,7 +1964,8 @@ class Indexable(object):
                will make up an id for your document and it'll look
                like a character name from a Lovecraft novel.
 
-        :arg overwrite_existing: TODO
+        :arg overwrite_existing: if ``True`` overwrites existing documents
++            of the same ID and doctype
 
         :arg es: The `ElasticSearch` to use. If you don't specify an
             `ElasticSearch`, it'll use `cls.get_es()`.
