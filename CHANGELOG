@@ -59,7 +59,7 @@ Version 0.8: August 19th, 2013
 
   ``range`` is a nice shorthand for ``gte`` and ``lte``.
 
-* **S.query_raw added**
+* **S.filter_raw added**
 
   If :py:meth:`elasticutils.S.filter` isn't doing as it's told, then you
   can skip it and use the Elasticsearch API to create the filter clause
