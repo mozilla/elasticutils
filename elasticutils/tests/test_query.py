@@ -505,7 +505,27 @@ class QueryTest(ESTestCase):
             })
 
     def test_execute(self):
-        assert isinstance(self.get_s().execute(), SearchResults)
+        s = self.get_s()
+        results = s.execute()
+        assert isinstance(results, SearchResults)
+
+        cached = s.execute()
+        assert cached is results
+
+        # Test caching of empty results
+        try:
+            self.teardown_class()
+            self.create_index(settings={'mappings': self.mapping})
+            self.refresh()
+
+            s = self.get_s()
+            results = s.execute()
+            assert isinstance(results, SearchResults)
+
+            cached = s.execute()
+            assert cached is results
+        finally:
+            self.setup_class()
 
     def test_count(self):
         s = self.get_s()
