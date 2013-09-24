@@ -11,6 +11,7 @@ from elasticutils._version import __version__  # noqa
 log = logging.getLogger('elasticutils')
 
 
+# Note: Don't change these--they're not part of the API.
 DEFAULT_URLS = ['http://localhost:9200']
 DEFAULT_DOCTYPES = None
 DEFAULT_INDEXES = None
