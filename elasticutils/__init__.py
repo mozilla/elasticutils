@@ -1451,7 +1451,7 @@ class S(PythonMixin):
                 facets[key] = [v for v in val['entries']]
             elif val['_type'] == 'date_histogram':
                 facets[key] = [v for v in val['entries']]
-            elif val['_type'] == 'statistical':
+            elif val['_type'] in ('filter', 'query', 'statistical'):
                 facets[key] = val
             else:
                 raise InvalidFacetType(
