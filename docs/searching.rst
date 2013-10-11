@@ -874,6 +874,45 @@ For example::
    http://www.elasticsearch.org/guide/reference/modules/scripting.html
      Elasticsearch docs on scripting
 
+Filter and query facets
+-----------------------
+
+You can also define arbitrary facets for queries and facets as documented
+in Elasticsearch's docs.
+
+For example::
+
+    q = (S().query(title='taco trucks')
+            .facet_raw(korean_or_mexican={
+                'filter': {
+                    'or': [
+                        {'term': {'style': 'korean'}},
+                        {'term': {'style': 'mexican'}},
+                    ]
+                }
+            }))
+
+Then access the custom facet via the name you passed into ``facet_raw``::
+
+  counts = q.facet_counts()
+  korean_or_mexican_count = counts['korean_or_mexican']['count']
+
+The same can be done with queries::
+
+  q = (S().query(title='taco trucks')
+        .facet_raw(korean={
+            'query': {
+                'term': {'style': 'korean'},
+            }
+        }))
+
+.. seealso::
+
+  http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/search-facets-query-facet.html
+    Elasticsearch docs on query facets
+
+  http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/search-facets-filter-facet.html
+    Elasticsearch docs on filter facets
 
 .. _scores-and-explanations:
 
