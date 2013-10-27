@@ -4,8 +4,8 @@ With `test_utils` you can use this testcase.
 from django.test import TestCase
 
 from django.conf import settings
-from pyelasticsearch.exceptions import (
-    Timeout, ConnectionError, ElasticHttpNotFoundError)
+from elasticsearch.exceptions import ConnectionError, NotFoundError
+from elasticsearch.helpers import bulk_index
 
 # Try really really hard to find a valid skip thing.
 try:
@@ -76,8 +76,8 @@ class ESTestCase(TestCase):
             return
 
         try:
-            cls.get_es().health()
-        except (Timeout, ConnectionError):
+            cls.get_es().cluster.health()
+        except ConnectionError:
             cls.skip_tests = True
             return
 
@@ -92,8 +92,8 @@ class ESTestCase(TestCase):
         # clean up after itself.
         for index in settings.ES_INDEXES.values():
             try:
-                cls.get_es().delete_index(index)
-            except ElasticHttpNotFoundError:
+                cls.get_es().indices.delete(index)
+            except NotFoundError:
                 pass
 
     def setUp(self):
@@ -142,7 +142,7 @@ class ESTestCase(TestCase):
         """
         settings = settings or {}
 
-        cls.get_es().create_index(index, **settings)
+        cls.get_es().indices.create(index, **settings)
 
     @classmethod
     def index_data(cls, documents, index, doctype, id_field='id'):
@@ -157,14 +157,15 @@ class ESTestCase(TestCase):
             document
 
         """
-        cls.get_es().bulk_index(index, doctype, documents, id_field)
+        documents = (dict(d, _id=d[id_field]) for d in documents)
+        bulk_index(cls.get_es(), documents, index=index, doc_type=doctype)
         cls.refresh(index)
 
     @classmethod
     def cleanup_index(cls, index):
         try:
-            cls.get_es().delete_index(index)
-        except ElasticHttpNotFoundError:
+            cls.get_es().indices.delete(index)
+        except NotFoundError:
             pass
 
     @classmethod
@@ -175,5 +176,5 @@ class ESTestCase(TestCase):
             to refresh all of them
 
         """
-        cls.get_es().refresh(index)
-        cls.get_es().health(wait_for_status='yellow')
+        cls.get_es().indices.refresh(index)
+        cls.get_es().cluster.health(wait_for_status='yellow')

@@ -1,7 +1,7 @@
 import logging
 from functools import wraps
 
-import pyelasticsearch
+import elasticsearch
 
 from django.conf import settings
 from django.shortcuts import render
@@ -18,19 +18,12 @@ log = logging.getLogger('elasticutils')
 
 
 ES_EXCEPTIONS = (
-    pyelasticsearch.exceptions.ConnectionError,
-    pyelasticsearch.exceptions.ElasticHttpError,
-    pyelasticsearch.exceptions.ElasticHttpNotFoundError,
-    # If the response isn't json (e.g. when Zeus sends an html
-    # response about how the ES cluster is down, because it's being
-    # "helpful")
-    pyelasticsearch.exceptions.InvalidJsonResponseError,
-    pyelasticsearch.exceptions.Timeout
+    elasticsearch.ElasticsearchException,
 )
 
 
 def get_es(**overrides):
-    """Return a pyelasticsearch ElasticSearch object using settings
+    """Return a elasticsearch Elasticsearch object using settings
     from ``settings.py``.
 
     :arg overrides: Allows you to override defaults to create the
@@ -77,13 +70,7 @@ class ESExceptionMiddleware(object):
       Returned when ``ES_DISABLED`` is True.
 
     HTTP 503
-      Returned when any of the following exceptions are thrown:
-
-      * pyelasticsearch.exceptions.ConnectionError
-      * pyelasticsearch.exceptions.ElasticHttpError
-      * pyelasticsearch.exceptions.ElasticHttpNotFoundError
-      * pyelasticsearch.exceptions.InvalidJsonResponseError
-      * pyelasticsearch.exceptions.Timeout
+      Returned when any elasticsearch exception is thrown.
 
       Template variables:
 
@@ -175,7 +162,7 @@ class S(BaseS):
         return super(S, self).__init__(mapping_type)
 
     def get_es(self, default_builder=get_es):
-        """Returns the pyelasticsearch ElasticSearch object to use.
+        """Returns the elasticsearch Elasticsearch object to use.
 
         This uses the django get_es builder by default which takes
         into account settings in ``settings.py``.
@@ -301,7 +288,7 @@ class Indexable(BaseIndexable):
             ElasticSearch object. You can override any of the arguments
             listed in :py:func:`elasticutils.get_es`.
 
-        :returns: a pyelasticsearch `ElasticSearch` instance
+        :returns: a elasticsearch `Elasticsearch` instance
 
         """
         return get_es(**overrides)

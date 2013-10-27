@@ -2,7 +2,7 @@ import time
 from unittest import TestCase
 
 from nose import SkipTest
-import pyelasticsearch
+import elasticsearch
 
 from elasticutils import get_es, S
 
@@ -12,8 +12,8 @@ class ESTestCase(TestCase):
 
     :property index_name: name of the index to use
     :property mapping_type_name: the mapping type name
-    :property es_settings: settings to use to build a pyelasticsearch 
-        ElasticSearch object.
+    :property es_settings: settings to use to build a elasticsearch 
+        Elasticsearch object.
     :property mapping: the mapping to use when creating an index
     :property data: any data to add to the index in setup_class
     :property skip_tests: if Elasticsearch isn't available, then this
@@ -40,8 +40,8 @@ class ESTestCase(TestCase):
         """
         # Note: TestCase has no setup_class
         try:
-            get_es().health()
-        except pyelasticsearch.exceptions.ConnectionError:
+            get_es().cluster.health()
+        except elasticsearch.TransportError:
             cls.skip_tests = True
             return
 
@@ -86,14 +86,13 @@ class ESTestCase(TestCase):
     def create_index(cls, settings=None):
         es = cls.get_es()
         try:
-            es.delete_index(cls.index_name)
-        except pyelasticsearch.exceptions.ElasticHttpNotFoundError:
+            es.indices.delete(cls.index_name)
+        except elasticsearch.NotFoundError:
             pass
+        body = {}
         if settings:
-            settings = {'settings': settings}
-        else:
-            settings = {}
-        es.create_index(cls.index_name, **settings)
+            body['settings'] = settings
+        es.indices.create(cls.index_name, body=body)
 
     @classmethod
     def index_data(cls, data, index=None, doctype=None):
@@ -112,8 +111,8 @@ class ESTestCase(TestCase):
     def cleanup_index(cls):
         es = cls.get_es()
         try:
-            es.delete_index(cls.index_name)
-        except pyelasticsearch.exceptions.ElasticHttpNotFoundError:
+            es.indices.delete(cls.index_name)
+        except elasticsearch.NotFoundError:
             pass
 
     @classmethod
@@ -126,7 +125,7 @@ class ESTestCase(TestCase):
             Elasticsearch to refresh
 
         """
-        cls.get_es().refresh(cls.index_name)
+        cls.get_es().indices.refresh(cls.index_name)
         if timesleep:
             time.sleep(timesleep)
 
