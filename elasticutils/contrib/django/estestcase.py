@@ -91,10 +91,7 @@ class ESTestCase(TestCase):
         # This is here in case the previous test run failed and didn't
         # clean up after itself.
         for index in settings.ES_INDEXES.values():
-            try:
-                cls.get_es().indices.delete(index)
-            except NotFoundError:
-                pass
+            cls.get_es().indices.delete(index=index, ignore=404)
 
     def setUp(self):
         """Skips the test if this class is skipping tests."""
@@ -142,7 +139,7 @@ class ESTestCase(TestCase):
         """
         settings = settings or {}
 
-        cls.get_es().indices.create(index, **settings)
+        cls.get_es().indices.create(index=index, **settings)
 
     @classmethod
     def index_data(cls, documents, index, doctype, id_field='id'):
@@ -163,10 +160,7 @@ class ESTestCase(TestCase):
 
     @classmethod
     def cleanup_index(cls, index):
-        try:
-            cls.get_es().indices.delete(index)
-        except NotFoundError:
-            pass
+        cls.get_es().indices.delete(index=index, ignore=404)
 
     @classmethod
     def refresh(cls, index):
@@ -176,5 +170,5 @@ class ESTestCase(TestCase):
             to refresh all of them
 
         """
-        cls.get_es().indices.refresh(index)
+        cls.get_es().indices.refresh(index=index)
         cls.get_es().cluster.health(wait_for_status='yellow')

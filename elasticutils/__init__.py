@@ -1990,14 +1990,10 @@ class Indexable(object):
             index = cls.get_index()
 
         kw = {}
-        if overwrite_existing:
+        if not overwrite_existing:
             kw['op_type'] = 'create'
-        es.index(
-            index,
-            cls.get_mapping_type_name(),
-            document,
-            id=id_,
-            **kw)
+        es.index(index=index, doc_type=cls.get_mapping_type_name(),
+                 body=document, id=id_, **kw)
 
     @classmethod
     def bulk_index(cls, documents, id_field='id', es=None, index=None):
@@ -2034,9 +2030,8 @@ class Indexable(object):
 
         documents = (dict(d, _id=d[id_field]) for d in documents)
 
-        bulk_index(es, documents, 
-                      index=index,
-                      doc_type=cls.get_mapping_type_name())
+        bulk_index(es, documents, index=index,
+                   doc_type=cls.get_mapping_type_name())
 
     @classmethod
     def unindex(cls, id_, es=None, index=None):
@@ -2058,7 +2053,7 @@ class Indexable(object):
         if index is None:
             index = cls.get_index()
 
-        es.delete(index, cls.get_mapping_type_name(), id_)
+        es.delete(index=index, doc_type=cls.get_mapping_type_name(), id=id_)
 
     @classmethod
     def refresh_index(cls, es=None, index=None):
@@ -2083,4 +2078,4 @@ class Indexable(object):
         if index is None:
             index = cls.get_index()
 
-        es.indices.refresh(index)
+        es.indices.refresh(index=index)
