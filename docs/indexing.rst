@@ -101,12 +101,16 @@ For example:
 
     es = get_es()
     es.put_mapping('blog-index', 'blog-entry-type', {
-        'id': {'type': 'integer'},
-        'title': {'type': 'string'},
-        'content': {'type': 'string'},
-        'tags': {'type': 'string'},
-        'created': {'type': 'date'}
-        })
+        'blog-entry-type': {
+            'properties': {
+                'id': {'type': 'integer'},
+                'title': {'type': 'string'},
+                'content': {'type': 'string'},
+                'tags': {'type': 'string'},
+                'created': {'type': 'date'}
+            }
+        }
+    })
 
 
 You can also define mappings when you create the index:
@@ -117,11 +121,13 @@ You can also define mappings when you create the index:
     es.create_index('blog-index', settings={
         'mappings': {
             'blog-entry-type': {
-                'id': {'type': 'integer'},
-                'title': {'type': 'string'},
-                'content': {'type': 'string'},
-                'tags': {'type': 'string'},
-                'created': {'type': 'date'}
+                'properties': {
+                    'id': {'type': 'integer'},
+                    'title': {'type': 'string'},
+                    'content': {'type': 'string'},
+                    'tags': {'type': 'string'},
+                    'created': {'type': 'date'}
+                }
             }}})
 
 
