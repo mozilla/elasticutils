@@ -182,6 +182,33 @@ def _process_facets(facets, flags):
     return rv
 
 
+def _facet_counts(items):
+    """Returns facet counts as dict.
+
+    Given the `items()` on the raw dictionary from Elasticsearch this processes
+    it and returns the counts keyed on the facet name provided in the original
+    query.
+
+    """
+    facets = {}
+    for key, val in items:
+        if val['_type'] == 'terms':
+            facets[key] = [v for v in val['terms']]
+        elif val['_type'] == 'range':
+            facets[key] = [v for v in val['ranges']]
+        elif val['_type'] == 'histogram':
+            facets[key] = [v for v in val['entries']]
+        elif val['_type'] == 'date_histogram':
+            facets[key] = [v for v in val['entries']]
+        elif val['_type'] in ('filter', 'query', 'statistical'):
+            facets[key] = val
+        else:
+            raise InvalidFacetType(
+                'Facet _type "%s". key "%s" val "%r"' %
+                (val['_type'], key, val))
+    return facets
+
+
 class F(object):
     """
     Filter objects.
@@ -1441,23 +1468,7 @@ class S(PythonMixin):
         >>> facet_counts = s.facet_counts()
 
         """
-        facets = {}
-        for key, val in self._raw_facets().items():
-            if val['_type'] == 'terms':
-                facets[key] = [v for v in val['terms']]
-            elif val['_type'] == 'range':
-                facets[key] = [v for v in val['ranges']]
-            elif val['_type'] == 'histogram':
-                facets[key] = [v for v in val['entries']]
-            elif val['_type'] == 'date_histogram':
-                facets[key] = [v for v in val['entries']]
-            elif val['_type'] in ('filter', 'query', 'statistical'):
-                facets[key] = val
-            else:
-                raise InvalidFacetType(
-                    'Facet _type "%s". key "%s" val "%r"' %
-                    (val['_type'], key, val))
-        return facets
+        return _facet_counts(self._raw_facets().items())
 
 
 class MLT(PythonMixin):
@@ -1618,6 +1629,7 @@ class SearchResults(object):
         self.response = response
         self.took = response.get('took', 0)
         self.count = response.get('hits', {}).get('total', 0)
+        self.facets = _facet_counts(response.get('facets', {}).items())
         self.results = results
         self.fields = fields
 
