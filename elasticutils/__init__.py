@@ -13,7 +13,7 @@ log = logging.getLogger('elasticutils')
 
 
 # Note: Don't change these--they're not part of the API.
-DEFAULT_URLS = ['http://localhost:9200']
+DEFAULT_URLS = ['localhost']
 DEFAULT_DOCTYPES = None
 DEFAULT_INDEXES = None
 DEFAULT_TIMEOUT = 5
@@ -122,7 +122,7 @@ def get_es(urls=None, timeout=DEFAULT_TIMEOUT, force_new=False, **settings):
         # Returns a new Elasticsearch object
         es = get_es(force_new=True)
 
-        es = get_es(urls=['localhost:9200'])
+        es = get_es(urls=['localhost'])
 
         es = get_es(urls=['localhost:9200'], timeout=10,
                     max_retries=3)
