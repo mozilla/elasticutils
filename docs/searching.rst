@@ -28,8 +28,8 @@ search.
 This creates an `untyped` :py:class:`elasticutils.S` using the
 defaults:
 
-* uses an :py:class:`pyelasticsearch.client.ElasticSearch` instance
-  configured to connect to ``http://localhost:9200`` -- call
+* uses an :py:class:`elasticsearch.client.Elasticsearch` instance
+  configured to connect to ``localhost`` -- call
   :py:meth:`elasticutils.S.es` to specify connection parameters
 * searches across all indexes -- call
   :py:meth:`elasticutils.S.indexes` to specify indexes
@@ -164,16 +164,15 @@ Specifying connection parameters: ``es``
 ----------------------------------------
 
 :py:class:`elasticutils.S` will generate an
-:py:class:`pyelasticsearch.client.ElasticSearch` object that connects
-to ``http://localhost:9200`` by default. That's usually not what
-you want. You can use the :py:meth:`elasticutils.S.es` method to
-specify the arguments used to create the pyelasticsearch ElasticSearch
-object.
+:py:class:`elasticsearch.client.Elasticsearch` object that connects
+to ``localhost`` by default. That's usually not what you want. You can use the
+:py:meth:`elasticutils.S.es` method to specify the arguments used to create the
+elasticsearch-py Elasticsearch object.
 
 Examples::
 
-    q = S().es(urls=['http://localhost:9200'])
-    q = S().es(urls=['http://localhost:9200'], timeout=10)
+    q = S().es(urls=['localhost'])
+    q = S().es(urls=['localhost:9200'], timeout=10)
 
 See :py:func:`elasticutils.get_es` for the list of arguments you
 can pass in.

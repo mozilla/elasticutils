@@ -18,7 +18,7 @@ Requirements
 
 ElasticUtils requires:
 
-* pyelasticsearch == 0.6
+* elasticsearch >= 0.4.3
 
 
 Installation

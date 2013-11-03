@@ -14,11 +14,11 @@ Elasticsearch guide
     This is the canonical documentation.
 
 
-pyelasticsearch documentation
+elasticsearch-py documentation
 
-    https://pyelasticsearch.readthedocs.org/en/latest/
+    https://elasticsearch-py.readthedocs.org/en/latest/
 
-    ElasticUtils sits on top of pyelasticsearch, so their
+    ElasticUtils sits on top of elasticsearch-py, so their
     documentation is very helpful.
 
 

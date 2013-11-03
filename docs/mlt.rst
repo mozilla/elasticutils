@@ -35,5 +35,5 @@ See :py:class:`elasticutils.MLT` for more details.
      Elasticsearch guide on the moreLikeThis query which specifies the
      additional parameters you can use.
 
-   http://pyelasticsearch.readthedocs.org/en/latest/api/#pyelasticsearch.ElasticSearch.more_like_this
-     pyelasticsearch documentation for MLT
+   http://elasticsearch-py.readthedocs.org/en/latest/api.html#elasticsearch.Elasticsearch.mlt
+     elasticsearch-py documentation for MLT

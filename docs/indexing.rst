@@ -13,16 +13,16 @@ ElasticUtils is primarily an API for searching. However, before you
 can search, you need to create an index and index your documents.
 
 This chapter covers the indexing side of things. It does so
-lightly---for more details, read through the `pyelasticsearch
-documentation <http://pyelasticsearch.readthedocs.org/en/latest/>`_
+lightly---for more details, read through the `elasticsearch-py
+documentation <http://elasticsearch-py.readthedocs.org/en/latest/>`_
 and the `Elasticsearch guide <http://www.elasticsearch.org/guide/>`_.
 
 
-Getting an ElasticSearch object
+Getting an Elasticsearch object
 ===============================
 
-ElasticUtils uses `pyelasticsearch` which comes with a handy
-`ElasticSearch` object. This lets you:
+ElasticUtils uses `elasticsearch-py` which comes with a handy
+`Elasticsearch` object. This lets you:
 
 * create indexes
 * create mappings
@@ -31,15 +31,15 @@ ElasticUtils uses `pyelasticsearch` which comes with a handy
 * etc.
 
 To access this, you use :py:func:`elasticutils.get_es` which creates
-an `ElasticSearch` object for you.
+an `Elasticsearch` object for you.
 
 See :py:func:`elasticutils.get_es` for more details.
 
 
 .. seealso::
 
-   http://pyelasticsearch.readthedocs.org/en/latest/api/
-     pyelasticsearch ElasticSearch documentation.
+   http://elasticsearch-py.readthedocs.org/en/latest/api.html#elasticsearch
+     elasticsearch-py Elasticsearch documentation.
 
 
 Indexes
@@ -48,14 +48,14 @@ Indexes
 An `index` is a collection of documents.
 
 Before you do anything, you need to have an index. You can create one
-with `.create_index()`.
+with `.indices.create()`.
 
 For example:
 
 .. code-block:: python
 
     es = get_es()
-    es.create_index('blog-index')
+    es.indices.create(index='blog-index')
 
 
 You can pass in settings, too. For example, you can set the refresh
@@ -63,16 +63,16 @@ interval when creating the index:
 
 .. code-block:: python
 
-    es.create_index('blog-index', settings={'refresh_interval': '5s'})
+    es.indices.create(index='blog-index', body{'refresh_interval': '5s'})
 
 
 .. seealso::
 
-   http://pyelasticsearch.readthedocs.org/en/latest/api/#pyelasticsearch.ElasticSearch.create_index
-     pyelasticsearch create_index API documentation
+   http://elasticsearch-py.readthedocs.org/en/latest/api.html#elasticsearch.client.IndicesClient.create
+     elasticsearch-py indices.create API documentation
 
    http://www.elasticsearch.org/guide/reference/api/admin-indices-create-index/
-     Elasticsearch create_index API documentation
+     Elasticsearch create index API documentation
 
 
 .. _indexing-types-and-mappings:
@@ -93,33 +93,17 @@ type with a defined mapping" because that's a mouthful.
 Elasticsearch can infer mappings to some degree, but you get a lot
 more value by specifying mappings explicitly.
 
-To define a mapping, you use `.put_mapping()`.
+To define a mapping, you use `.indices.put_mapping()`.
 
 For example:
 
 .. code-block:: python
 
     es = get_es()
-    es.put_mapping('blog-index', 'blog-entry-type', {
-        'blog-entry-type': {
-            'properties': {
-                'id': {'type': 'integer'},
-                'title': {'type': 'string'},
-                'content': {'type': 'string'},
-                'tags': {'type': 'string'},
-                'created': {'type': 'date'}
-            }
-        }
-    })
-
-
-You can also define mappings when you create the index:
-
-.. code-block:: python
-
-    es = get_es()
-    es.create_index('blog-index', settings={
-        'mappings': {
+    es.indices.put_mapping(
+        index='blog-index',
+        doc_type='blog-entry-type',
+        body={
             'blog-entry-type': {
                 'properties': {
                     'id': {'type': 'integer'},
@@ -128,7 +112,30 @@ You can also define mappings when you create the index:
                     'tags': {'type': 'string'},
                     'created': {'type': 'date'}
                 }
-            }}})
+            }
+        }
+    )
+
+
+You can also define mappings when you create the index:
+
+.. code-block:: python
+
+    es = get_es()
+    es.indices.create(
+        index='blog-index',
+        body={
+            'mappings': {
+                'blog-entry-type': {
+                    'id': {'type': 'integer'},
+                    'title': {'type': 'string'},
+                    'content': {'type': 'string'},
+                    'tags': {'type': 'string'},
+                    'created': {'type': 'date'}
+                }
+            }
+        }
+    )
 
 
 .. Note::
@@ -141,8 +148,8 @@ You can also define mappings when you create the index:
 
 .. seealso::
 
-   http://pyelasticsearch.readthedocs.org/en/latest/api/#pyelasticsearch.ElasticSearch.put_mapping
-     pyelasticsearch put_mapping API documentation
+   http://elasticsearch-py.readthedocs.org/en/latest/api.html#elasticsearch.client.IndicesClient.put_mapping
+     elasticsearch-py indices.put_mapping API documentation
 
    http://www.elasticsearch.org/guide/reference/api/admin-indices-put-mapping/
      Elasticsearch put_mapping API documentation
@@ -169,30 +176,32 @@ For example:
         'created': '20130423T16:50:22'
         }
 
-    es.index('blog-index', 'blog-entry-type', entry, 1)
+    es.index(index='blog-index', doc_type='blog-entry-type', body=entry, id=1)
 
 
 If you're indexing a bunch of documents at the same time, you should
-use `.bulk_index()`.
+use `elasticsearch.helpers.bulk_index()`.
 
 For example:
 
 .. code-block:: python
 
+    from elasticsearch.helpers import bulk_index
+
     es = get_es()
 
-    entries = { ... }
+    entries = [{ '_id': 42, ... }, { '_id': 47, ... }]
 
-    es.bulk_index('blog-index', 'blog-entry-type', entries, id_field='id')
+    bulk_index(es, entries, index='blog-index', doc_type='blog-entry-type')
 
 
 .. seealso::
 
-   http://pyelasticsearch.readthedocs.org/en/latest/api/#pyelasticsearch.ElasticSearch.index
-     pyelasticsearch index API documentation
+   http://elasticsearch-py.readthedocs.org/en/latest/api.html#elasticsearch.Elasticsearch.index
+     elasticsearch-py index API documentation
 
-   http://pyelasticsearch.readthedocs.org/en/latest/api/#pyelasticsearch.ElasticSearch.bulk_index
-     pyelasticsearch bulk_index API documentation
+   http://elasticsearch-py.readthedocs.org/en/latest/helpers.html#elasticsearch.helpers.bulk_index
+     elasticsearch-py bulk_index API documentation
 
    http://www.elasticsearch.org/guide/reference/api/index\_/
      Elasticsearch index API documentation
@@ -212,13 +221,13 @@ For example:
 
     es = get_es()
 
-    es.delete('blog-index', 'blog-entry-type', 1)
+    es.delete(index='blog-index', doc_type='blog-entry-type', id=1)
 
 
 .. seealso::
 
-   http://pyelasticsearch.readthedocs.org/en/latest/api/#pyelasticsearch.ElasticSearch.delete
-     pyelasticsearch delete API documentation
+   http://elasticsearch-py.readthedocs.org/en/latest/api.html#elasticsearch.Elasticsearch.delete
+     elasticsearch-py delete API documentation
 
    http://www.elasticsearch.org/guide/reference/api/delete/
      Elasticsearch delete API documentation
@@ -230,7 +239,7 @@ Refreshing
 After you index documents, they're not available for searches until
 after the index is refreshed. By default, the index refreshes every
 second. If you need the documents to show up in searches before that,
-call `.refresh()`.
+call `indices.refresh()`.
 
 For example:
 
@@ -238,13 +247,13 @@ For example:
 
     es = get_es()
 
-    es.refresh('blog-index')
+    es.indices.refresh(index='blog-index')
 
 
 .. seealso::
 
-   http://pyelasticsearch.readthedocs.org/en/latest/api/#pyelasticsearch.ElasticSearch.refresh
-     pyelasticsearch refresh API documentation
+   http://elasticsearch-py.readthedocs.org/en/latest/api.html#elasticsearch.client.IndicesClient.refresh
+     elasticsearch-py indices.refresh API documentation
 
    http://www.elasticsearch.org/guide/reference/api/admin-indices-refresh/
      Elasticsearch refresh API documentation
@@ -253,7 +262,7 @@ For example:
 Delete indexes
 ==============
 
-You can delete indexes with `.delete_index()`.
+You can delete indexes with `.indices.delete()`.
 
 For example:
 
@@ -261,13 +270,13 @@ For example:
 
     es = get_es()
 
-    es.delete_index('blog-index')
+    es.indices.delete(index='blog-index')
 
 
 .. seealso::
 
-   http://pyelasticsearch.readthedocs.org/en/latest/api/#pyelasticsearch.ElasticSearch.delete_index
-     pyelasticsearch delete_index API documentation
+   http://elasticsearch-py.readthedocs.org/en/latest/api.html#elasticsearch.client.IndicesClient.delete
+     elasticsearch-py indices.delete API documentation
 
    http://www.elasticsearch.org/guide/reference/api/admin-indices-delete-index/
      Elasticsearch delete index API documentation

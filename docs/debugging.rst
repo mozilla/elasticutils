@@ -17,14 +17,20 @@ Want to see how a score for a search result was calculated? See
 Logging
 =======
 
-pyelasticsearch logs to the ``pyelasticsearch`` logger using the
-Python logging module. If you configure that to show DEBUG-level
-messages, then it'll show the requests in curl form, responses, and
-when it marks servers as dead.
+elasticsearch-py logs to the ``elasticsearch`` and ``elasticsearch.trace``
+loggers using the Python logging module.
 
-Additionally, pyelasticsearch uses Requests which logs to the
-``requests`` logger using the Python logging module. If you configure
-that to show INFO-level messages, then you'll see all that stuff.
+If you configure ``elasticsearch.trace`` to show INFO-level messages, then
+it'll show the requests in curl form, responses if you enable DEBUG.
+
+``elasticsearch`` logger will give you information about node failures
+(WARNING-level), their resurrection (INFO) and every request in a short form
+(DEBUG). Additionally it will log a WARNING for any failed request.
+
+Elasticsearch-py uses urllib3 by default which logs to the ``urllib3`` logger
+using the Python logging module. If you configure that to show INFO-level
+messages, then you'll see all that stuff. If you configured your
+elasticsearch-py client to use other transport use it's logging capabilities.
 
 First set up logging using something like this:
 
@@ -37,30 +43,36 @@ First set up logging using something like this:
     logging.basicConfig()
 
 
-Then set the logging level for the pyelasticsearch and requests loggers
+Then set the logging level for the elasticsearch-py and urllib3 loggers
 to ``logging.DEBUG``:
 
 .. code-block:: python
 
-    logging.getLogger('pyelasticsearch').setLevel(logging.DEBUG)
-    logging.getLogger('requests').setLevel(logging.DEBUG)
+    logging.getLogger('elasticsearch').setLevel(logging.DEBUG)
+    logging.getLogger('urllib3').setLevel(logging.DEBUG)
 
 
-pyelasticsearch will log lines like::
+elasticsearch-py will log lines like::
 
-    DEBUG:pyelasticsearch:Making a request equivalent to this: curl
-    -XGET 'http://localhost:9200/fooindex/testdoc/_search' -d '{"fa
-    cets": {"topics": {"terms": {"field": "topics"}}}}'
+    INFO:elasticsearch:GET http://localhost:9200/_search [status:200
+    request:0.001s]
 
 
-You can copy and paste the curl line and it'll work on the command
-line.
+Or you can enable the ``elasticsearch.trace`` logger and have it log a shell
+transcript of your session using curl:
+
+.. code-block:: python
+
+    tracer = logging.getLogger('elasticsearch.trace')
+    tracer.setLevel(logging.DEBUG)
+    tracer.addHandler(logging.FileHandler('/tmp/elasticsearch-py.sh'))
+
 
 .. Note::
 
-   If you add a ``pretty=1`` to the query string of the url that
-   you're curling, then Elasticsearch will return a prettified
-   response that's easier to read.
+   The trace logger will always point to localhost:9200 and add ``?pretty`` to
+   the query string of the url so that you're curling, then Elasticsearch will
+   return a prettified response that's easier to read.
 
 
 Seeing the query

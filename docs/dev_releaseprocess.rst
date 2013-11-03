@@ -5,8 +5,8 @@
 1. Checkout master tip.
 
 2. Check to make sure ``setup.py``, requirements files, and
-   ``odcs/installation.rst``  have correct version of
-   pyelasticsearch.
+   ``docs/installation.rst``  have correct version of
+   elasticsearch-py.
 
 3. Update version numbers in ``elasticutils/_version.py``.
 

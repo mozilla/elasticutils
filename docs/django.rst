@@ -103,12 +103,13 @@ file:
    The timeout in seconds for creating the Elasticsearch connection.
 
 
-ElasticSearch
+Elasticsearch
 =============
 
 The `get_es()` in the Django contrib will use Django settings listed
-above to build the pyelasticsearch ElasticSearch object.
+above to build the elasticsearch-py Elasticsearch_ object.
 
+.. _Elasticsearch: http://elasticsearch-py.readthedocs.org/en/latest/api.html#elasticsearch
 
 Using with Django ORM models
 ============================
