@@ -71,8 +71,8 @@ transcript of your session using curl:
 .. Note::
 
    The trace logger will always point to localhost:9200 and add ``?pretty`` to
-   the query string of the url so that you're curling, then Elasticsearch will
-   return a prettified response that's easier to read.
+   the query string of the url so that when you're curling, then Elasticsearch
+   will return a prettified response that's easier to read.
 
 
 Seeing the query
