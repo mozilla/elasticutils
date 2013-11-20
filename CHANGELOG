@@ -9,7 +9,52 @@ What's new in ElasticUtils
 Version 0.9: In development
 ===========================
 
+.. Note::
+
+   This is a *big* change. We switched from pyelasticsearch to
+   elasticsearch-py. The Elasticsearch object you get back from
+   ``get_es`` is pretty different. When you upgrade to v0.9, you'll
+   probably need to rewrite code.
+
+   If this terrifies you, read through these notes carefully and/or
+   stay with v0.8.
+
+
 **API-breaking changes:**
+
+* **elasticsearch-py v0.4.3 or later now required.**
+
+  ElasticUtils now uses elasticsearch-py.
+
+* **pyelasticsearch no longer needed**
+
+  You can remove pyelasticsearch and its requirements.
+
+* **thrift now supported!**
+
+  elasticsearch-py supports http, thrift and memcache protocols, so
+  you can use any of them now.
+
+* **pyelasticsearch -> elasticsearch-py changes.**
+
+  If you called ``.get_es()`` and got a pyelasticsearch `ElasticSearch`
+  object and did things with that (create index, create mappings, delete
+  indexes, indexing, cluster health, ...), you're going to need to make
+  some changes.
+
+  You can either:
+
+  1. rewrite that code to use elasticsearch-py `Elasticsearch`
+     equivalents, or
+
+  2. write and use your own ``get_es()`` function that returns
+     a pyelasticsearch `ElasticSearch` object
+
+  Rewriting shouldn't be too hard. The `elasticsearcy-py documentation
+  <https://elasticsearch-py.readthedocs.org/en/latest/>`_ is pretty good
+  and for most things, there's a 1-to-1 translation. Also, in many cases
+  it's cleaner, so you'll probably be removing code.
+
 
 **Changes:**
 
