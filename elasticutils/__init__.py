@@ -464,6 +464,7 @@ class S(PythonMixin):
         self.steps = []
         self.start = 0
         self.stop = None
+        self.search_type = None
         self.as_list = self.as_dict = False
         self.field_boosts = {}
         self._results_cache = None
@@ -1324,9 +1325,14 @@ class S(PythonMixin):
             raise BadSearch(
                 'You must specify an index if you are specifying doctypes.')
 
+        extra_search_kwargs = {}
+        if self.search_type:
+            extra_search_kwargs['search_type'] = self.search_type
+
         hits = es.search(body=qs,
                          index=self.get_indexes(),
-                         doc_type=self.get_doctypes())
+                         doc_type=self.get_doctypes(),
+                         **extra_search_kwargs)
 
         log.debug('[%s] %s' % (hits['took'], qs))
         return hits
