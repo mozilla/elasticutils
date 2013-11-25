@@ -736,6 +736,24 @@ See :py:meth:`elasticutils.S.highlight` for more details.
      Elasticsearch docs for highlight
 
 
+Suggestions: ``suggest``
+========================
+
+Spelling suggestions can be retrieved by using the
+:py:meth:`elasticutils.S.suggest` method:
+
+::
+
+    q = S().query(text='Aice').suggest('mysuggest', 'Alice', field='text')
+    print q.suggestions()['mysuggest'][0]['options']
+
+
+.. seealso::
+
+   http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/search-suggesters.html
+     Elasticsearch docs for suggesters
+
+
 .. _queries-chapter-facets-section:
 
 Facets

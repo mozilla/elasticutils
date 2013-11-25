@@ -1349,6 +1349,43 @@ class SearchTypeTest(ESTestCase):
         eq_(len(s[:1]), 2)
 
 
+class SuggestionTest(ESTestCase):
+    @classmethod
+    def setup_class(cls):
+        super(SuggestionTest, cls).setup_class()
+        if cls.skip_tests:
+            return
+
+        cls.create_index()
+        cls.index_data([
+                {'id': 1, 'name': 'bar'},
+                {'id': 2, 'name': 'mark', 'location': 'mart'},
+                {'id': 3, 'name': 'car'},
+                {'id': 4, 'name': 'duck'},
+                {'id': 5, 'name': 'train car'}
+            ])
+        cls.refresh()
+
+    def test_suggestions(self):
+        """Make sure correct suggestions are being returned.
+
+        Test adding multiple ``suggest()`` clauses to the query, including
+        different fields.
+
+        """
+        s = (self.get_s().query(name__text='mary')
+                         .suggest('mysuggest', 'mary'))
+        suggestions = s.suggestions()
+        options = [o['text'] for o in suggestions['mysuggest'][0]['options']]
+        eq_(options, ['mark', 'mart'])
+
+        s = (self.get_s().query(name__text='mary')
+                         .suggest('mysuggest', 'mary', field='name'))
+        suggestions = s.suggestions()
+        options = [o['text'] for o in suggestions['mysuggest'][0]['options']]
+        eq_(options, ['mark'])
+
+
 def test_to_python():
     def check_to_python(obj, expected):
         eq_(S().to_python(obj), expected)

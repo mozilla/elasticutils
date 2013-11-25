@@ -45,6 +45,8 @@ The S class
 
        .. automethod:: elasticutils.S.search_type
 
+       .. automethod:: elasticutils.S.suggest
+
        .. automethod:: elasticutils.S.values_list
 
        .. automethod:: elasticutils.S.values_dict
