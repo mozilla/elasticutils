@@ -1284,6 +1284,46 @@ class HighlightTest(ESTestCase):
         eq_(list(s)[0]._highlight, {})
 
 
+class SearchTypeTest(ESTestCase):
+    # Set the mapping so shard allocation is controlled manually
+    mapping = {
+        ESTestCase.mapping_type_name: {
+            'properties': {
+                'id': {'type': 'integer'},
+                'shard': {'type': 'integer'},
+                'text': {'type': 'string'},
+            },
+            'order': {
+                '_routing': {
+                    'required': True,
+                    'path': 'shard',
+                },
+            },
+        }
+    }
+
+    @classmethod
+    def setup_class(cls):
+        super(SearchTypeTest, cls).setup_class()
+        if cls.skip_tests:
+            return
+
+        cls.create_index()
+        # These records will be allocated into different shards
+        cls.index_data([
+            {'id': 1, 'shard': 1, 'text': 'asdf'},
+            {'id': 2, 'shard': 2, 'text': 'asdf'},
+        ])
+        cls.refresh()
+
+    def test_query_and_fetch(self):
+        s = self.get_s()
+        s.search_type = 'query_and_fetch'
+
+        # query_and_fetch combines results from every shard
+        eq_(len(s[:1]), 2)
+
+
 def test_to_python():
     def check_to_python(obj, expected):
         eq_(S().to_python(obj), expected)

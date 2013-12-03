@@ -485,6 +485,7 @@ class S(PythonMixin):
             new.steps.append(next_step)
         new.start = self.start
         new.stop = self.stop
+        new.search_type = self.search_type
         new.field_boosts = self.field_boosts.copy()
         return new
 
