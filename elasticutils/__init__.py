@@ -464,7 +464,6 @@ class S(PythonMixin):
         self.steps = []
         self.start = 0
         self.stop = None
-        self.search_type = None
         self.as_list = self.as_dict = False
         self.field_boosts = {}
         self._results_cache = None
@@ -485,7 +484,6 @@ class S(PythonMixin):
             new.steps.append(next_step)
         new.start = self.start
         new.stop = self.stop
-        new.search_type = self.search_type
         new.field_boosts = self.field_boosts.copy()
         return new
 
@@ -899,6 +897,14 @@ class S(PythonMixin):
         """
         return self._clone(next_step=('highlight', (fields, kwargs)))
 
+    def search_type(self, search_type):
+        """Set ElasticSearch search type.
+
+        :arg search_type: The search type to set.
+
+        """
+        return self._clone(next_step=('search_type', search_type))
+
     def extra(self, **kw):
         """
         Return a new S instance with extra args combined with existing
@@ -944,6 +950,7 @@ class S(PythonMixin):
         highlight_options = {}
         explain = False
         as_list = as_dict = False
+        search_type = None
         for action, value in self.steps:
             if action == 'order_by':
                 sort = []
@@ -988,6 +995,8 @@ class S(PythonMixin):
                 else:
                     highlight_fields |= set(value[0])
                 highlight_options.update(value[1])
+            elif action == 'search_type':
+                search_type = value
             elif action in ('es', 'indexes', 'doctypes', 'boost'):
                 # Ignore these--we use these elsewhere, but want to
                 # make sure lack of handling it here doesn't throw an
@@ -1062,6 +1071,7 @@ class S(PythonMixin):
             qs['explain'] = True
 
         self.fields, self.as_list, self.as_dict = fields, as_list, as_dict
+        self.search_type = search_type
         return qs
 
     def _build_highlight(self, fields, options):

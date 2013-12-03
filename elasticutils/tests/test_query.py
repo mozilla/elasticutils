@@ -1317,8 +1317,7 @@ class SearchTypeTest(ESTestCase):
         cls.refresh()
 
     def test_query_and_fetch(self):
-        s = self.get_s()
-        s.search_type = 'query_and_fetch'
+        s = self.get_s().search_type('query_and_fetch')
 
         # query_and_fetch combines results from every shard
         eq_(len(s[:1]), 2)
