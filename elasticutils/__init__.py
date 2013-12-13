@@ -2042,8 +2042,13 @@ class Indexable(object):
 
         documents = (dict(d, _id=d[id_field]) for d in documents)
 
-        bulk_index(es, documents, index=index,
-                   doc_type=cls.get_mapping_type_name())
+        bulk_index(
+            es,
+            documents,
+            index=index,
+            doc_type=cls.get_mapping_type_name(),
+            raise_on_error=True
+        )
 
     @classmethod
     def unindex(cls, id_, es=None, index=None):
