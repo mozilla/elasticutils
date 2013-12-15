@@ -1319,7 +1319,8 @@ class SearchTypeTest(ESTestCase):
     def test_query_and_fetch(self):
         s = self.get_s().search_type('query_and_fetch')
 
-        # query_and_fetch combines results from every shard
+        # query_and_fetch combines results from every shard, therefore
+        # limiting the query to 1 result will still produce two
         eq_(len(s[:1]), 2)
 
 

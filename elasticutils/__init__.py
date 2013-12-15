@@ -902,6 +902,8 @@ class S(PythonMixin):
 
         :arg search_type: The search type to set.
 
+        If called multiple times, the last search type will be in effect.
+
         """
         return self._clone(next_step=('search_type', search_type))
 
