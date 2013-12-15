@@ -426,7 +426,7 @@ class S(PythonMixin):
     An `S` is lazy in the sense that it doesn't do an Elasticsearch
     search request until it's forced to evaluate by either iterating
     over it, calling ``.count``, doing ``len(s)``, or calling
-    ``.facet_count``.
+    ``.facet_count`` or ``.suggestions``.
 
 
     **Adding support for other queries**

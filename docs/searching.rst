@@ -126,7 +126,8 @@ The search won't execute until you do one of the following:
 2. call :py:func:`len` on a :py:class:`elasticutils.S`
 3. call the :py:meth:`elasticutils.S.execute`,
    :py:meth:`elasticutils.S.all`,
-   :py:meth:`elasticutils.S.count` or
+   :py:meth:`elasticutils.S.count`,
+   :py:meth:`elasticutils.S.suggestions` or
    :py:meth:`elasticutils.S.facet_counts` methods
 
 Once you execute the search, then it will cache the results and
@@ -739,8 +740,9 @@ See :py:meth:`elasticutils.S.highlight` for more details.
 Suggestions: ``suggest``
 ========================
 
-Spelling suggestions can be retrieved by using the
-:py:meth:`elasticutils.S.suggest` method:
+Spelling suggestions can be asked for by using the
+:py:meth:`elasticutils.S.suggest` method, and then retrieved
+in :py:meth:`elasticutils.S.suggestions`:
 
 ::
 
