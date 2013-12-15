@@ -1308,7 +1308,13 @@ class SearchTypeTest(ESTestCase):
         if cls.skip_tests:
             return
 
-        cls.create_index()
+        # Explicitly create an index with 2 shards. The default
+        # ES configuration is 5 shards, and should work as well,
+        # but that could have been overridden (even though it is
+        # a bad practice to create an index with one shard only).
+        cls.create_index(settings={
+            'number_of_shards': 2,
+        })
         # These records will be allocated into different shards
         cls.index_data([
             {'id': 1, 'shard': 1, 'text': 'asdf'},
