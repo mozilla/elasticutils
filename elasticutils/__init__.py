@@ -621,7 +621,9 @@ class S(PythonMixin):
                     .order_by('-title')
 
 
-        You can also sort by the computed field ``_score``.
+        You can also sort by the computed field ``_score`` or pass a dict as
+        a sort field in order to use more advanced sort options.  Read the
+        Elasticsearch documentation for details.
 
         .. Note::
 
@@ -973,7 +975,7 @@ class S(PythonMixin):
             if action == 'order_by':
                 sort = []
                 for key in value:
-                    if key.startswith('-'):
+                    if isinstance(key, basestring) and key.startswith('-'):
                         sort.append({key[1:]: 'desc'})
                     else:
                         sort.append(key)
