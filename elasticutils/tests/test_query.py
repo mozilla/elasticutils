@@ -545,6 +545,10 @@ class QueryTest(ESTestCase):
         res = self.get_s().filter(tag='awesome').order_by('-width')
         eq_([d['id'] for d in res], [5, 3, 1])
 
+    def test_order_by_dict(self):
+        res = self.get_s().filter(tag='awesome').order_by({'width': 'desc'})
+        eq_([d['id'] for d in res], [5, 3, 1])
+
     def test_slice(self):
         s = self.get_s().filter(tag='awesome')
         eq_(s._build_query(),
