@@ -194,21 +194,65 @@ def _facet_counts(items):
     """
     facets = {}
     for key, val in items:
-        if val['_type'] == 'terms':
-            facets[key] = [v for v in val['terms']]
-        elif val['_type'] == 'range':
-            facets[key] = [v for v in val['ranges']]
-        elif val['_type'] == 'histogram':
-            facets[key] = [v for v in val['entries']]
-        elif val['_type'] == 'date_histogram':
-            facets[key] = [v for v in val['entries']]
-        elif val['_type'] in ('filter', 'query', 'statistical'):
-            facets[key] = val
-        else:
+        facets[key] = FacetResult(val, key)
+    return facets
+
+
+class FacetResult(object):
+    def __init__(self, val, k, *args, **kwargs):
+        if val['_type'] not in (
+                                'terms',
+                                'range',
+                                'histogram',
+                                'date_histogram',
+                                'filter',
+                                'query',
+                                'statistical',
+                                ):
             raise InvalidFacetType(
                 'Facet _type "%s". key "%s" val "%r"' %
-                (val['_type'], key, val))
-    return facets
+                (val['_type'], k, val))
+        for key, v in val.items():
+            setattr(self, key, v)
+        if hasattr(self, 'entries'):
+            self.data = self.entries[:]
+        elif hasattr(self, 'ranges'):
+            self.data = self.ranges[:]
+        elif hasattr(self, 'terms'):
+            self.data = self.terms[:]
+        else:
+            self.data = []
+        
+        
+    def __iter__(self):
+        self.i = -1
+        return self
+    
+    def __next__(self):
+        if self.i < len(self.data)-1:
+            self.i += 1         
+            return self.data[self.i]
+        else:
+            raise StopIteration
+        
+    def next(self): #__next__ in python3k
+        return self.__next__()
+
+    
+    def __getitem__(self, key):
+        try:
+            k = getattr(self, key)
+        except AttributeError as ex:
+            raise KeyError(ex)
+        return k
+    
+    def __eq__(self, k):
+        s=self.__dict__.copy()
+        if len(s['data']):
+            return k == s['data']
+        del s['data']
+        return k == s
+        
 
 
 class F(object):
