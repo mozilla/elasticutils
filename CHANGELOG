@@ -6,6 +6,29 @@ What's new in ElasticUtils
    :local:
 
 
+Version 0.8.2: January 6th, 2014
+================================
+
+**Changes:**
+
+* **Allow pyelasticsearch 0.6.1.**
+
+  This alleviates part of the problem in issue #163.
+
+* **Add tox.ini file.**
+
+  We're testing with Python 2.6 and 2.7 on Django 1.4, 1.5 and 1.6.
+
+* **Add caching for empty results.**
+
+  ElasticUtils will now correctly remember when it got no results from
+  a search and won't redo the search.
+
+* **Add support for query and filter facets.**
+
+* **Attach facets to search result objects.**
+
+
 Version 0.8.1: September 13th, 2013
 ===================================
 
