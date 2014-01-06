@@ -28,7 +28,7 @@ setup(
     license='BSD',
     packages=find_packages(),
     install_requires=[
-        'pyelasticsearch==0.6'
+        'pyelasticsearch >=0.6, <=0.6.1'
     ],
     include_package_data=True,
     classifiers=[
