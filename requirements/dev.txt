@@ -1,3 +1,5 @@
+-e .
+
 -r django.txt
 nose
 Sphinx
