@@ -765,6 +765,15 @@ The facet counts are available through
     counts = q.facet_counts()
 
 
+Also, you can get them with the ``facets`` attribute of the search results::
+
+    q = (S().query(title='taco trucks')
+            .facet('style', 'location'))
+
+    results = q.execute()
+    counts = results.facets
+
+
 .. seealso::
 
    http://www.elasticsearch.org/guide/reference/api/search/facets/
