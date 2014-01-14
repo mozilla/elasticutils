@@ -28,6 +28,8 @@ Version 0.8.2: January 6th, 2014
 
 * **Attach facets to search result objects.**
 
+* **order_by() accepts a dict as the sort field so you can do advanced sorts.**
+
 
 Version 0.8.1: September 13th, 2013
 ===================================
