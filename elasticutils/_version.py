@@ -4,4 +4,4 @@
 # * 0.3a1   - alpha version
 # * 0.3.dev - version in development
 __version__ = '0.8.2'
-__releasedate__ = '20140106'
+__releasedate__ = '20140113'
