@@ -10,7 +10,7 @@ log = logging.getLogger('elasticutils')
 
 
 @task
-def index_objects(mapping_type, ids, chunk_size=100):
+def index_objects(mapping_type, ids, chunk_size=100, index=None, es=None):
     """Index documents of a specified mapping type.
 
     This allows for asynchronous indexing.
@@ -27,12 +27,15 @@ def index_objects(mapping_type, ids, chunk_size=100):
     :arg mapping_type: the mapping type for these ids
     :arg ids: the list of ids of things to index
     :arg chunk_size: the size of the chunk for bulk indexing
-
     .. Note::
 
        The default chunk_size is 100. The number of documents you can
        bulk index at once depends on the size of the documents.
 
+    :arg index: The name of the index to use. If you don't specify one
+        it'll use `mapping_type.get_index()`.
+    :arg es: The `Elasticsearch` to use. If you don't specify an
+        `Elasticsearch`, it'll use `mapping_type.get_es()`.
     """
     if settings.ES_DISABLED:
         return
@@ -56,11 +59,11 @@ def index_objects(mapping_type, ids, chunk_size=100):
                         obj, repr(exc)))
 
         if documents:
-            mapping_type.bulk_index(documents, id_field='id')
+            mapping_type.bulk_index(documents, id_field='id', index=index, es=es)
 
 
 @task
-def unindex_objects(mapping_type, ids):
+def unindex_objects(mapping_type, ids, index=None, es=None):
     """Remove documents of a specified mapping_type from the index.
 
     This allows for asynchronous deleting.
@@ -73,9 +76,15 @@ def unindex_objects(mapping_type, ids):
             from elasticutils.contrib.django import tasks
             tasks.unindex_objects.delay(MyMappingType, [instance.id])
 
+    :arg mapping_type: the mapping type for these ids
+    :arg ids: the list of ids of things to remove
+    :arg index: The name of the index to use. If you don't specify one
+        it'll use `mapping_type.get_index()`.
+    :arg es: The `Elasticsearch` to use. If you don't specify an
+        `Elasticsearch`, it'll use `mapping_type.get_es()`.
     """
     if settings.ES_DISABLED:
         return
 
     for id_ in ids:
-        mapping_type.unindex(id_)
+        mapping_type.unindex(id_, index=index, es=es)
