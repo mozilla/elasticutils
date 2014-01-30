@@ -83,6 +83,6 @@ class TestTasks(ESTestCase):
         eq_(MockMappingType.index_kwarg, None)
         eq_(MockMappingType.es_kwarg, None)
 
-        index_objects(MockMappingType, [1, 2, 3], index='crazy_index', es='crazy_es')
+        index_objects(MockMappingType, [1, 2, 3], es='crazy_es', index='crazy_index')
         eq_(MockMappingType.index_kwarg, 'crazy_index')
         eq_(MockMappingType.es_kwarg, 'crazy_es')
