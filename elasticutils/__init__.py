@@ -173,6 +173,8 @@ def _process_facets(facets, flags):
         facet_type = {'terms': {'field': fieldname}}
         if flags.get('global_'):
             facet_type['global'] = flags['global_']
+        if flags.get('size'):
+            facet_type['terms']['size'] = flags['size']
         elif flags.get('filtered'):
             # Note: This is an indicator that the facet_filter should
             # get filled in later when we know all the filters.
@@ -874,6 +876,13 @@ class S(PythonMixin):
         """
         Return a new S instance with facet args combined with existing
         set.
+        
+        :arg args: The list of facets to return.
+
+        Additional keyword options:
+
+        * ``size`` -- Maximum number of terms to return for each facet.
+
         """
         return self._clone(next_step=('facet', (args, kw)))
 

@@ -763,6 +763,14 @@ The facet counts are available through
             .facet('style', 'location'))
     counts = q.facet_counts()
 
+You can also restrict the number of terms returned per facet by passing a ``size`` keyword argument to
+:py:meth:`elasticutils.S.facet`.
+
+::
+
+    q = S().query(title='taco trucks')
+            .facet('style', 'location', size=5)
+
 
 Also, you can get them with the ``facets`` attribute of the search results::
 
