@@ -127,20 +127,6 @@ class ESTestCase(TestCase):
         cls.get_es().indices.refresh(cls.index_name)
         cls.get_es().cluster.health(wait_for_status='yellow')
     
-    @classmethod
-    def skip_unless_version(cls, min_version):
-        """Checks that the available elasticsearch server is at least the `min_version` supplied.
-
-        : arg min_version: tuple of version numbers that represent the minimum version required.
-
-        """
-        es = cls.get_es()
-        info = es.info()
-        number_string = info['version']['number']
-        number = tuple([int(x) for x in number_string.split('.')])
-        if number < min_version:
-            raise SkipTest("Test requires minimum version of {}".format(min_version))
-
 
 def facet_counts_dict(qs, field):
     return dict((t['term'], t['count']) for t in qs.facet_counts()[field])
