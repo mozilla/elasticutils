@@ -866,6 +866,21 @@ class FacetTest(ESTestCase):
         qs = self.get_s().facet('tag')
         eq_(facet_counts_dict(qs, 'tag'), dict(awesome=3, boring=1, boat=1))
 
+    def test_facet_with_size(self):
+        FacetTest.create_index()
+        FacetTest.index_data([
+                {'id': 1, 'foo': 'bar', 'tag': 'awesome'},
+                {'id': 2, 'foo': 'bart', 'tag': 'boring'},
+                {'id': 3, 'foo': 'car', 'tag': 'awesome'},
+                {'id': 4, 'foo': 'duck', 'tag': 'boat'},
+                {'id': 5, 'foo': 'train car', 'tag': 'awesome'},
+                {'id': 6, 'foo': 'canoe', 'tag': 'boat'},
+            ])
+        FacetTest.refresh()
+
+        qs = self.get_s().facet('tag', size=2)
+        eq_(facet_counts_dict(qs, 'tag'), dict(awesome=3, boat=2))
+
     def test_filtered_facet(self):
         FacetTest.create_index()
         FacetTest.index_data([
