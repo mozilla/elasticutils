@@ -62,6 +62,14 @@ Version 0.9: In development
 
 * **unindex_objects celery task can now take es and index args**
 
+* **added .suggestions()**
+
+* **add .query_and_fetch() support**
+
+* **add .search_type()**
+
+* **.facet() can now take a size keyword argument**
+
 
 Version 0.8.2: January 6th, 2014
 ================================
