@@ -1314,6 +1314,10 @@ def test_to_python():
             {'date': u'\x00013-05-15T15:00:00'},
             {'date': u'\x00013-05-15T15:00:00'},
         ),
+        (
+            {'date': '2013-05-15T15:00:00.123456'},
+            {'date': datetime(2013, 5, 15, 15, 0, 0, 123456)}
+        ),
     ]
 
     for obj, expected in tests:
