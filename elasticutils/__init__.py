@@ -898,9 +898,17 @@ class S(PythonMixin):
         return self._clone(next_step=('highlight', (fields, kwargs)))
 
     def search_type(self, search_type):
-        """Set ElasticSearch search type.
+        """Set Elasticsearch search type for distributed search behaviour.
 
         :arg search_type: The search type to set.
+
+        The search type affects how much results are fetched from each shard,
+        and how are they then merged back. This can affect the accuracy of the
+        results and the execution speed.
+
+        For the list of possible values and additional documentation,
+        consult the Elasticsearch reference:
+        http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/search-request-search-type.html
 
         If called multiple times, the last search type will be in effect.
 
