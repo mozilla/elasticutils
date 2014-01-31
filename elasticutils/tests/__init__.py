@@ -128,10 +128,10 @@ class ESTestCase(TestCase):
     @classmethod
     def skip_unless_version(cls, min_version):
         """Checks that the available elasticsearch server is at least the `min_version` supplied.
-        
+
         : arg min_version: tuple of version numbers that represent the minimum version required.
+
         """
-        
         es = cls.get_es()
         info = es.info()
         number_string = info['version']['number']
