@@ -1,5 +1,6 @@
+-e .
+
 -r django.txt
 nose
 Sphinx
-
-elasticsearch>=0.4.3
+tox
