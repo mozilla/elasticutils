@@ -58,6 +58,10 @@ Version 0.9: In development
 
 **Changes:**
 
+* **index_objects celery task can now take es and index args**
+
+* **unindex_objects celery task can now take es and index args**
+
 
 Version 0.8.2: January 6th, 2014
 ================================
