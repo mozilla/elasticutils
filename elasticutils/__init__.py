@@ -387,7 +387,12 @@ class PythonMixin(object):
 
         """
         if isinstance(obj, basestring):
-            if len(obj) == 19:
+            if len(obj) == 26:
+                try:
+                    return datetime.strptime(obj, '%Y-%m-%dT%H:%M:%S.%f')
+                except (TypeError, ValueError):
+                    pass
+            elif len(obj) == 19:
                 try:
                     return datetime.strptime(obj, '%Y-%m-%dT%H:%M:%S')
                 except (TypeError, ValueError):
