@@ -43,6 +43,8 @@ The S class
 
        .. automethod:: elasticutils.S.highlight
 
+       .. automethod:: elasticutils.S.search_type
+
        .. automethod:: elasticutils.S.values_list
 
        .. automethod:: elasticutils.S.values_dict
