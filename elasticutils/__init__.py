@@ -974,6 +974,8 @@ class S(PythonMixin):
 
         .. Note::
 
+           Suggestions are only supported since Elasticsearch 0.90.
+
            Calling this multiple times will add multiple suggest clauses to
            the query.
         """
@@ -1552,6 +1554,10 @@ class S(PythonMixin):
 
         >>> s = S().query(name='Aice').suggest(name='Aice')
         >>> suggestions = s.suggestions()['name']
+
+        .. Note::
+
+           Suggestions are only supported since Elasticsearch 0.90.
 
         """
         return self._do_search().response.get('suggest', {})

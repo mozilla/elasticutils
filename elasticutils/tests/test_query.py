@@ -7,7 +7,7 @@ from elasticutils import (
     S, F, Q, BadSearch, InvalidFieldActionError, InvalidFacetType,
     InvalidFlagsError, SearchResults, DefaultMappingType, MappingType,
     DEFAULT_INDEXES, DEFAULT_DOCTYPES)
-from elasticutils.tests import ESTestCase, facet_counts_dict
+from elasticutils.tests import ESTestCase, facet_counts_dict, require_version
 
 
 class FakeMappingType(MappingType):
@@ -1366,6 +1366,7 @@ class SuggestionTest(ESTestCase):
             ])
         cls.refresh()
 
+    @require_version('0.90')
     def test_suggestions(self):
         """Make sure correct suggestions are being returned.
 

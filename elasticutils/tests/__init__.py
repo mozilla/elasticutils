@@ -1,4 +1,6 @@
 import time
+from distutils.version import LooseVersion
+from functools import wraps
 from unittest import TestCase
 
 from nose import SkipTest
@@ -12,7 +14,7 @@ class ESTestCase(TestCase):
 
     :property index_name: name of the index to use
     :property mapping_type_name: the mapping type name
-    :property es_settings: settings to use to build a elasticsearch 
+    :property es_settings: settings to use to build a elasticsearch
         Elasticsearch object.
     :property mapping: the mapping to use when creating an index
     :property data: any data to add to the index in setup_class
@@ -142,3 +144,31 @@ class ESTestCase(TestCase):
 
 def facet_counts_dict(qs, field):
     return dict((t['term'], t['count']) for t in qs.facet_counts()[field])
+
+
+def require_version(minimum_version):
+    """Skip the test if the Elasticsearch version is less than specified.
+
+    :arg minimum_version: string; the minimum Elasticsearch version required
+
+    """
+
+    def decorated(test):
+        """Decorator to only run the test if ES version is greater or
+        equal than specified.
+
+        """
+
+        @wraps(test)
+        def test_with_version(self):
+            "Only run the test if ES version is not less than specified."
+            actual_version = self.get_es().info()['version']['number']
+
+            if LooseVersion(actual_version) >= LooseVersion(minimum_version):
+                test(self)
+            else:
+                raise SkipTest
+
+        return test_with_version
+
+    return decorated

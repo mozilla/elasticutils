@@ -750,6 +750,10 @@ in :py:meth:`elasticutils.S.suggestions`:
     print q.suggestions()['mysuggest'][0]['options']
 
 
+.. Note::
+
+   Spelling suggestions are only supported since Elasticsearch 0.90.
+
 .. seealso::
 
    http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/search-suggesters.html
