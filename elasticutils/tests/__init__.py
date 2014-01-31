@@ -116,18 +116,14 @@ class ESTestCase(TestCase):
             pass
 
     @classmethod
-    def refresh(cls, timesleep=0):
+    def refresh(cls):
         """Refresh index after indexing.
 
         This refreshes the index specified by `self.index_name`.
 
-        :arg timesleep: int; number of seconds to sleep after telling
-            Elasticsearch to refresh
-
         """
         cls.get_es().indices.refresh(cls.index_name)
-        if timesleep:
-            time.sleep(timesleep)
+        cls.get_es().cluster.health(wait_for_status='yellow')
 
 
 def facet_counts_dict(qs, field):
