@@ -814,6 +814,52 @@ Also, you can get them with the ``facets`` attribute of the search results::
      Elasticsearch docs on terms facet
 
 
+Facet Results
+-------------
+
+The execution methods :py:meth:`elasticutils.S.facet_counts` and :py:meth:`elasticutils.S.execute` will return a dictionary containing the named parameter and a :py:class:`elasticutils.FacetResult` object.
+
+For example::
+
+    facet_counts = S().facet('primary_country_id').facet_counts()
+
+    >>> facet_counts
+    {u'primary_country_id': <elasticutils.FacetResult at 0x45f12d0>}
+
+The FacetResult object contains all of the information returned in the facet stanza.
+
+In the above case, we faceted on primary_country_id as a terms facet. To see the facet results simply iterate over the FacetResult object::
+
+    for facet_result in facet_counts['primary_country_id']:
+        print facet_result
+	{u'count': 187293, u'term': 41}
+	{u'count': 24177, u'term': 9}
+	{u'count': 17200, u'term': 50}
+	{u'count': 13015, u'term': 15}
+	{u'count': 10296, u'term': 30}
+	{u'count': 8824, u'term': 32}
+	{u'count': 7703, u'term': 6}
+	{u'count': 7502, u'term': 23}
+	{u'count': 5614, u'term': 2}
+	{u'count': 5214, u'term': 33}
+
+And to get the "other", "missing" and "total" information from the facetresult::
+
+    >>> facet_counts['primary_country_id'].missing
+    3475
+
+    >>> facet_counts['primary_country_id'].other
+    25273
+
+    >>> facet_counts['primary_country_id'].total
+    312111
+
+FacetResult is backwords compatible with older versions of ElasticUtils, so you shouldn't need to change anything when upgrading::
+
+    facet_counts = S().facet_raw(primary_country_id={'statistical':{"field":"primary_country_id"}}).facet_counts()
+    >>> facet_counts['primary_country_id'].max == facet_counts['primary_country_id']['max']
+    True
+
 
 Facets and scope (filters and global)
 -------------------------------------
