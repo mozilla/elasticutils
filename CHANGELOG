@@ -22,9 +22,15 @@ Version 0.9: In development
 
 **API-breaking changes:**
 
-* **elasticsearch-py v0.4.3 or later now required.**
+* **elasticsearch-py >= v0.4.3 and < 1.0 required.**
 
   ElasticUtils now uses elasticsearch-py.
+
+  .. Note::
+
+     You have to use elasticsearch-py >= v0.4.3 and < 1.0. ElasticUtils
+     does not support elasticsearch-py 1.0. Support for later versions
+     will come in a future ElasticUtils release.
 
 * **pyelasticsearch no longer needed**
 
