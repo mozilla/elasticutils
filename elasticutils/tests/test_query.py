@@ -10,6 +10,89 @@ from elasticutils import (
 from elasticutils.tests import ESTestCase, facet_counts_dict, require_version
 
 
+def eqish_(item1, item2):
+    """Compare two trees ignoring order of things in lists
+
+    Note: This is really goofy, but works for our specific purposes. If you
+    have other needs, you'll likely need to find a new solution here.
+
+    """
+    def _eqish(part1, part2):
+        if type(part1) != type(part2) or bool(part1) != bool(part2):
+            return False
+
+        if isinstance(part1, (tuple, list)):
+            # This is kind of awful, but what we need to do is make
+            # sure everything in the list part1 is in the list part2
+            # in an eqish way.
+            part2_left = list(part2)
+
+            for mem1 in part1:
+                for i, mem2 in enumerate(part2_left):
+                    if _eqish(mem1, mem2):
+                        del part2_left[i]
+                        break
+                else:
+                    return False
+            return True
+
+        elif isinstance(part1, dict):
+            if sorted(part1.keys()) != sorted(part2.keys()):
+                return False
+            for mem in part1.keys():
+                if not _eqish(part1[mem], part2[mem]):
+                    return False
+            return True
+
+        else:
+            return part1 == part2
+
+    if not _eqish(item1, item2):
+        raise AssertionError('{0} != {1}'.format(item1, item2))
+
+
+class TestEqish(TestCase):
+    def test_good(self):
+        eqish_('a', 'a')
+        eqish_(True, True)
+        eqish_(1, 1)
+        eqish_([1, 2, 3], [1, 2, 3])
+        eqish_([1, 2, 3], [3, 2, 1])
+        eqish_({'a': [1, 2, 3]},
+               {'a': [3, 2, 1]})
+        eqish_({'a': {'b': [1, 2, 3]}},
+               {'a': {'b': [3, 2, 1]}})
+        eqish_(
+            {
+                'filter': {
+                    'or': [
+                        {'term': {'foo': 'bar'}},
+                        {'or': [
+                            {'term': {'tag': 'boat'}},
+                            {'term': {'width': '5'}}
+                        ]}
+                    ]}
+            },
+            {
+                'filter': {
+                    'or': [
+                        {'or': [
+                            {'term': {'width': '5'}},
+                            {'term': {'tag': 'boat'}}
+                        ]},
+                        {'term': {'foo': 'bar'}}
+                    ]}
+            }
+        )
+
+
+    def test_bad(self):
+        self.assertRaises(AssertionError,
+                          lambda: eqish_({'a': [1, 2, 3]}, {'b': [1, 2, 3]}))
+        self.assertRaises(AssertionError,
+                          lambda: eqish_({'a': [1, 2, 3]}, {'a': [2, 3, 4]}))
+
+
 class FakeMappingType(MappingType):
     @classmethod
     def get_index(cls):
@@ -310,7 +393,7 @@ class QueryTest(ESTestCase):
 
     def test_deprecated_q_or_(self):
         s = self.get_s().query(or_={'foo': 'car', 'tag': 'boat'})
-        eq_(s._build_query(),
+        eqish_(s._build_query(),
             {
                 'query': {
                     'bool': {
@@ -351,7 +434,7 @@ class QueryTest(ESTestCase):
         list(q1)
 
         # Verify it's producing the correct query.
-        eq_(q1._build_query(),
+        eqish_(q1._build_query(),
             {
                 'query': {
                     'bool': {
@@ -373,7 +456,7 @@ class QueryTest(ESTestCase):
         list(q1)
 
         # Verify it's producing the correct query.
-        eq_(q1._build_query(),
+        eqish_(q1._build_query(),
             {
                 'query': {
                     'bool': {
@@ -626,7 +709,7 @@ class FilterTest(ESTestCase):
 
     def test_filter_f_and_ff(self):
         s = self.get_s().filter(F(tag='awesome') & F(foo='car', width='7'))
-        eq_(s._build_query(),
+        eqish_(s._build_query(),
             {
                 'filter': {
                     'and': [
@@ -678,7 +761,7 @@ class FilterTest(ESTestCase):
     def test_filter_or_3(self):
         s = self.get_s().filter(F(tag='awesome') | F(tag='boat') |
                                 F(tag='boring'))
-        eq_(s._build_query(), {
+        eqish_(s._build_query(), {
                 'filter': {
                     'or': [
                         {'term': {'tag': 'awesome'}},
@@ -692,7 +775,7 @@ class FilterTest(ESTestCase):
         # This is kind of a crazy case.
         s = self.get_s().filter(or_={'foo': 'bar',
                                      'or_': {'tag': 'boat', 'width': '5'}})
-        eq_(s._build_query(), {
+        eqish_(s._build_query(), {
                 'filter': {
                     'or': [
                         {'or': [
@@ -721,7 +804,7 @@ class FilterTest(ESTestCase):
         eq_(s.count(), 3)
 
         s = self.get_s().filter(~(F(tag='boring') | F(tag='boat')))
-        eq_(s._build_query(), {
+        eqish_(s._build_query(), {
                 'filter': {
                     'not': {
                         'filter': {
@@ -736,7 +819,7 @@ class FilterTest(ESTestCase):
         eq_(s.count(), 4)
 
         s = self.get_s().filter(~F(tag='boat')).filter(~F(foo='bar'))
-        eq_(s._build_query(), {
+        eqish_(s._build_query(), {
                 'filter': {
                     'and': [
                         {'not': {'filter': {'term': {'tag': 'boat'}}}},
@@ -747,7 +830,7 @@ class FilterTest(ESTestCase):
         eq_(s.count(), 4)
 
         s = self.get_s().filter(~F(tag='boat', foo='barf'))
-        eq_(s._build_query(), {
+        eqish_(s._build_query(), {
                 'filter': {
                     'not': {
                         'filter': {
