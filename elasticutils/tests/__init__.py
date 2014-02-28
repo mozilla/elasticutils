@@ -70,6 +70,11 @@ class ESTestCase(TestCase):
             raise SkipTest
         super(ESTestCase, self).setUp()
 
+    def shortDescription(self):
+        # Prevent the docstring being used as the test name because
+        # that's irritating as all hell when trying to fix tests.
+        pass
+
     @classmethod
     def get_es(cls):
         return get_es(**cls.es_settings)
