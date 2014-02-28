@@ -20,6 +20,13 @@ Version 0.9: In development
    stay with v0.8.
 
 
+.. Note::
+
+   This version supports Elasticsearch 0.20 through 0.90. It does not
+   yet support Elasticsearch 1.0. Support for 1.0 and later will be in
+   a later version of ElasticUtils.
+
+
 **API-breaking changes:**
 
 * **elasticsearch-py >= v0.4.3 and < 1.0 required.**
@@ -68,7 +75,7 @@ Version 0.9: In development
 
 * **unindex_objects celery task can now take es and index args**
 
-* **added .suggestions()**
+* **added .suggestions() support**
 
 * **add .query_and_fetch() support**
 
