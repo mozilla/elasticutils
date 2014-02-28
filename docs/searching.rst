@@ -125,7 +125,7 @@ The search won't execute until you do one of the following:
 1. use the :py:class:`elasticutils.S` in an iterable context
 2. call :py:func:`len` on a :py:class:`elasticutils.S`
 3. call the :py:meth:`elasticutils.S.execute`,
-   :py:meth:`elasticutils.S.all`,
+   :py:meth:`elasticutils.S.everything`,
    :py:meth:`elasticutils.S.count`,
    :py:meth:`elasticutils.S.suggestions` or
    :py:meth:`elasticutils.S.facet_counts` methods

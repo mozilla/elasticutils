@@ -68,8 +68,15 @@ Version 0.9: In development
   and for most things, there's a 1-to-1 translation. Also, in many cases
   it's cleaner, so you'll probably be removing code.
 
+* **.all() no longer returns all results**
+
+  If you were using `.all()` to return all search results, you should
+  change it to `.everything()`.
+
 
 **Changes:**
+
+* **added .everything() which does what .all() did**
 
 * **index_objects celery task can now take es and index args**
 

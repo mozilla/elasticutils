@@ -1481,22 +1481,29 @@ class S(PythonMixin):
         return len(self._do_search())
 
     def all(self):
+        """No-op that returns a clone of self
+
+        This is here to make it more Django QuerySet-like and work
+        with better with things that accept QuerySets.
         """
-        Executes search and returns ALL search results.
+        return self._clone()
+
+    def everything(self):
+        """Executes search and returns ALL search results.
 
         :returns: `SearchResults` instance
 
         For example:
 
         >>> s = S().query(name__prefix='Jimmy')
-        >>> all_results = s.all()
+        >>> all_results = s.everything()
 
         .. Warning::
 
-           This returns ALL search results. The way it does this is by
-           calling ``.count()`` first to figure out how many to return,
-           then by slicing by that size and returning a list of ALL
-           search results.
+           This returns ALL possible search results. The way it does
+           this is by calling ``.count()`` first to figure out how
+           many to return, then by slicing by that size and returning
+           ALL possible search results.
 
            Don't use this if you've got 1000s of results!
 
