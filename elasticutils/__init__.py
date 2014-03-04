@@ -876,7 +876,7 @@ class S(PythonMixin):
         """
         Return a new S instance with facet args combined with existing
         set.
-        
+
         :arg args: The list of facets to return.
 
         Additional keyword options:
@@ -1447,7 +1447,7 @@ class S(PythonMixin):
         >>> count = s.count()
 
         """
-        if self._results_cache:
+        if self._results_cache is not None:
             return self._results_cache.count
         else:
             return self[:0].raw()['hits']['total']
