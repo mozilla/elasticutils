@@ -1129,7 +1129,7 @@ class S(PythonMixin):
             # None as a shell, so if it's explicitly set to None, then
             # we update it.
             for facet in facets.values():
-                if facet.get('facet_filter', 1) is None:
+                if facet.get('facet_filter', 1) is None and 'filter' in qs:
                     facet['facet_filter'] = qs['filter']
 
         if facets_raw:
