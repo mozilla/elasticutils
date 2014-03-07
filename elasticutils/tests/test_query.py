@@ -1001,6 +1001,24 @@ class FacetTest(ESTestCase):
         eq_(facet_counts_dict(qs.facet('tag', filtered=True), 'tag'),
             {'awesome': 1})
 
+    def test_filtered_facet_no_filters(self):
+        FacetTest.create_index()
+        FacetTest.index_data([
+                {'id': 1, 'foo': 'bar', 'tag': 'awesome', 'width': 1},
+                {'id': 2, 'foo': 'bart', 'tag': 'boring', 'width': 2},
+                {'id': 3, 'foo': 'car', 'tag': 'awesome', 'width': 1},
+                {'id': 4, 'foo': 'duck', 'tag': 'boat', 'width': 5},
+                {'id': 5, 'foo': 'train car', 'tag': 'awesome', 'width': 5},
+            ])
+        FacetTest.refresh()
+
+        qs = self.get_s().query(foo='car')
+
+        # filtered=True doesn't cause a KeyError when there are no
+        # filters
+        eq_(facet_counts_dict(qs.facet('tag', filtered=True), 'tag'),
+            {'awesome': 2})
+
     def test_global_facet(self):
         FacetTest.create_index()
         FacetTest.index_data([
