@@ -131,7 +131,7 @@ class ESTestCase(TestCase):
         """
         cls.get_es().indices.refresh(cls.index_name)
         cls.get_es().cluster.health(wait_for_status='yellow')
-    
+
 
 def facet_counts_dict(qs, field):
     return dict((t['term'], t['count']) for t in qs.facet_counts()[field])

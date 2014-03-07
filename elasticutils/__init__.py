@@ -222,37 +222,16 @@ class FacetResult(object):
             self.data = self.terms[:]
         else:
             self.data = []
-        
-        
-    def __iter__(self):
-        self.i = -1
-        return self
-    
-    def __next__(self):
-        if self.i < len(self.data)-1:
-            self.i += 1         
-            return self.data[self.i]
-        else:
-            raise StopIteration
-        
-    def next(self): #__next__ in python3k
-        return self.__next__()
 
-    
+    def __iter__(self):
+        return iter(self.data)
+
     def __getitem__(self, key):
         try:
             k = getattr(self, key)
         except AttributeError as ex:
             raise KeyError(ex)
         return k
-    
-    def __eq__(self, k):
-        s=self.__dict__.copy()
-        if len(s['data']):
-            return k == s['data']
-        del s['data']
-        return k == s
-        
 
 
 class F(object):
