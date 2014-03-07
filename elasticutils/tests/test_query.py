@@ -618,6 +618,17 @@ class QueryTest(ESTestCase):
         s.execute()
         assert isinstance(s.count(), int)
 
+    def test_count_empty_results(self):
+        s = self.get_s()
+        s.execute()
+
+        # Simulate a situation where the result cache had 0 objects
+        s._results_cache.objects = []
+        s._results_cache.count = 123
+
+        # Ensure that we are still retrieving the cached result count
+        eq_(s.count(), 123)
+
     def test_len(self):
         assert isinstance(len(self.get_s()), int)
 
