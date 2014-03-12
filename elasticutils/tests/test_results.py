@@ -136,14 +136,14 @@ class TestResultsWithData(ESTestCase):
         """Calling values_dict() with no args fetches all fields."""
         eq_(S().query(fld1=2)
                .values_dict()
-               ._build_query(),
+               .build_search(),
             {"query": {"term": {"fld1": 2}}})
 
     def test_values_list_no_args(self):
         """Calling values() with no args fetches only id."""
         eq_(S().query(fld1=2)
                .values_list()
-               ._build_query(),
+               .build_search(),
             {'query': {"term": {"fld1": 2}}})
 
 

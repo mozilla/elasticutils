@@ -1,7 +1,37 @@
 from itertools import islice
 
 
+from elasticsearch.serializer import JSONSerializer
+
+
+def to_json(data):
+    """Convert Python structure to JSON used by Elasticsearch
+
+    This is a helper method that uses the elasticsearch-py
+    JSONSerializer to serialize the structure. This is the serializer
+    that elasticsearch-py uses to serialize data for Elasticsearch and
+    handles dates.
+
+    :arg data: Python structure (e.g. dict, list, ...)
+
+    :returns: string
+
+    Examples:
+
+    >>> to_json({'query': {'match': {'message': 'test message'}}})
+    '{"query": {"match": {"message": "test message"}}}'
+
+    >>> from elasticutils import S
+    >>> some_s = S().query(message__match='test message')
+    >>> to_json(some_s.build_search())
+    '{"query": {"match": {"message": "test message"}}}'
+
+    """
+    return JSONSerializer().dumps(data)
+
+
 def chunked(iterable, n):
+
     """Returns chunks of n length of iterable
 
     If len(iterable) % n != 0, then the last chunk will have length

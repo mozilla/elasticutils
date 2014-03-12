@@ -504,11 +504,11 @@ class S(PythonMixin):
 
     def __repr__(self):
         try:
-            return '<S {0}>'.format(repr(self._build_query()))
+            return '<S {0}>'.format(repr(self.build_search()))
         except RuntimeError:
-            # This happens when you're debugging _build_query and try
-            # to repr the instance you're calling it on. Then that
-            # calls _build_query and ...
+            # This can happen when you're debugging build_search() and
+            # try to repr the instance you're calling it on. Then that
+            # calls build_search() and CLOWN SHOES!
             return repr(self.steps)
 
     def _clone(self, next_step=None):
@@ -959,8 +959,7 @@ class S(PythonMixin):
         return self._clone(next_step=('search_type', search_type))
 
     def suggest(self, name, term, **kwargs):
-        """
-        Set suggestion options.
+        """Set suggestion options.
 
         :arg name: The name to use for the suggestions.
         :arg term: The term to suggest similar looking terms for.
@@ -998,8 +997,8 @@ class S(PythonMixin):
         return new
 
     def __getitem__(self, k):
+        """Handles slice and indexes for Elasticsearch results"""
         new = self._clone()
-        # TODO: validate numbers and ranges
         if isinstance(k, slice):
             new.start, new.stop = k.start or 0, k.stop
             return new
@@ -1007,10 +1006,17 @@ class S(PythonMixin):
             new.start, new.stop = k, k + 1
             return list(new)[0]
 
-    def _build_query(self):
-        """
-        Loop self.steps to build the query format that will be sent to
-        Elasticsearch, and return it as a dict.
+    def build_search(self):
+        """Builds the Elasticsearch search body represented by this S.
+
+        Loop over self.steps to build the search body that will be
+        sent to Elasticsearch. This returns a Python dict.
+
+        If you want the JSON that actually gets sent, then pass the return
+        value through :py:func:`elasticutils.utils.to_json`.
+
+        :returns: a Python dict
+
         """
         filters = []
         filters_raw = None
@@ -1028,6 +1034,7 @@ class S(PythonMixin):
         explain = False
         as_list = as_dict = False
         search_type = None
+
         for action, value in self.steps:
             if action == 'order_by':
                 sort = []
@@ -1240,7 +1247,7 @@ class S(PythonMixin):
         return rv
 
     def _process_query(self, query):
-        """Takes a key/val pair and returns ES JSON API"""
+        """Takes a key/val pair and returns the Elasticsearch code for it"""
         key, val = query
         field_name, field_action = split_field_action(key)
 
@@ -1413,7 +1420,7 @@ class S(PythonMixin):
         Build query and passes to Elasticsearch, then returns the raw
         format returned.
         """
-        qs = self._build_query()
+        qs = self.build_search()
         es = self.get_es()
 
         index = self.get_indexes()
@@ -1670,7 +1677,7 @@ class MLT(PythonMixin):
         params = dict(self.query_params)
         mlt_fields = self.mlt_fields or params.pop('mlt_fields', [])
 
-        body = self.s._build_query() if self.s else ''
+        body = self.s.build_search() if self.s else ''
 
         hits = es.mlt(
             index=self.index, doc_type=self.doctype, id=self.id,

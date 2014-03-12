@@ -393,7 +393,7 @@ class QueryTest(ESTestCase):
 
     def test_deprecated_q_or_(self):
         s = self.get_s().query(or_={'foo': 'car', 'tag': 'boat'})
-        eqish_(s._build_query(),
+        eqish_(s.build_search(),
             {
                 'query': {
                     'bool': {
@@ -412,7 +412,7 @@ class QueryTest(ESTestCase):
 
     def test_query_raw(self):
         s = self.get_s().query_raw({'match': {'title': 'example'}})
-        eq_(s._build_query(),
+        eq_(s.build_search(),
             {'query': {'match': {'title': 'example'}}})
 
     def test_query_raw_overrides_everything(self):
@@ -421,7 +421,7 @@ class QueryTest(ESTestCase):
         s = s.demote(0.5, title__text='bar')
         s = s.boost(title=5.0)
 
-        eq_(s._build_query(),
+        eq_(s.build_search(),
             {'query': {'match': {'title': 'example'}}})
 
     def test_boost(self):
@@ -434,7 +434,7 @@ class QueryTest(ESTestCase):
         list(q1)
 
         # Verify it's producing the correct query.
-        eqish_(q1._build_query(),
+        eqish_(q1.build_search(),
             {
                 'query': {
                     'bool': {
@@ -456,7 +456,7 @@ class QueryTest(ESTestCase):
         list(q1)
 
         # Verify it's producing the correct query.
-        eqish_(q1._build_query(),
+        eqish_(q1.build_search(),
             {
                 'query': {
                     'bool': {
@@ -480,16 +480,16 @@ class QueryTest(ESTestCase):
                          for clause in search['query']['bool']['must']])
 
         q1 = self.get_s().boost(foo=4.0).query(foo='car', foo__prefix='car')
-        eq_(_get_queries(q1._build_query())['term']['foo']['boost'], 4.0)
-        eq_(_get_queries(q1._build_query())['prefix']['foo']['boost'], 4.0)
+        eq_(_get_queries(q1.build_search())['term']['foo']['boost'], 4.0)
+        eq_(_get_queries(q1.build_search())['prefix']['foo']['boost'], 4.0)
 
         q1 = q1.boost(foo=2.0)
-        eq_(_get_queries(q1._build_query())['term']['foo']['boost'], 2.0)
-        eq_(_get_queries(q1._build_query())['prefix']['foo']['boost'], 2.0)
+        eq_(_get_queries(q1.build_search())['term']['foo']['boost'], 2.0)
+        eq_(_get_queries(q1.build_search())['prefix']['foo']['boost'], 2.0)
 
         q1 = q1.boost(foo__prefix=4.0)
-        eq_(_get_queries(q1._build_query())['term']['foo']['boost'], 2.0)
-        eq_(_get_queries(q1._build_query())['prefix']['foo']['boost'], 4.0)
+        eq_(_get_queries(q1.build_search())['term']['foo']['boost'], 2.0)
+        eq_(_get_queries(q1.build_search())['prefix']['foo']['boost'], 4.0)
 
         # Note: We don't actually want to test whether the score for
         # an item goes up by adding a boost to the search because
@@ -508,7 +508,7 @@ class QueryTest(ESTestCase):
 
         eq_((s.query(Q(foo='should', should=True),
                      bar='must')
-             ._build_query()),
+             .build_search()),
             {
                 'query': {
                     'bool': {
@@ -524,7 +524,7 @@ class QueryTest(ESTestCase):
 
         eq_((s.query(Q(foo='should', should=True),
                      bar='must_not', must_not=True)
-             ._build_query()),
+             .build_search()),
             {
                 'query': {
                     'bool': {
@@ -541,7 +541,7 @@ class QueryTest(ESTestCase):
         eq_((s.query(Q(foo='should', should=True),
                      bar='must_not', must_not=True)
              .query(Q(baz='must'))
-             ._build_query()),
+             .build_search()),
             {
                 'query': {
                     'bool': {
@@ -562,7 +562,7 @@ class QueryTest(ESTestCase):
         # foo term query and the must=True doesn't apply to
         # anything--it shouldn't override the should=True in the Q.
         eq_((s.query(Q(foo='should', should=True), must=True)
-             ._build_query()),
+             .build_search()),
             {
                 'query': {
                     'bool': {
@@ -580,7 +580,7 @@ class QueryTest(ESTestCase):
                 return {'funkyquery': {'field': key, 'value': val}}
 
         s = FunkyS().query(foo__funkyquery='bar')
-        eq_(s._build_query(),
+        eq_(s.build_search(),
             {
                 'query': {
                     'funkyquery': {'field': 'foo', 'value': 'bar'}
@@ -650,30 +650,30 @@ class QueryTest(ESTestCase):
 
     def test_slice(self):
         s = self.get_s().filter(tag='awesome')
-        eq_(s._build_query(),
+        eq_(s.build_search(),
             {'filter': {'term': {'tag': 'awesome'}}})
         assert isinstance(s[0], DefaultMappingType)
 
-        eq_(s[0:1]._build_query(),
+        eq_(s[0:1].build_search(),
             {'filter': {'term': {'tag': 'awesome'}}, 'size': 1})
 
-        eq_(s[1:2]._build_query(),
+        eq_(s[1:2].build_search(),
             {'filter': {'term': {'tag': 'awesome'}}, 'from': 1, 'size': 1})
 
     def test_explain(self):
         qs = self.get_s().query(foo='car')
 
-        assert 'explain' not in qs._build_query()
+        assert 'explain' not in qs.build_search()
 
         qs = qs.explain(True)
 
         # You put the explain in...
-        assert qs._build_query()['explain'] == True
+        assert qs.build_search()['explain'] == True
 
         qs = qs.explain(False)
 
         # You take the explain out...
-        assert 'explain' not in qs._build_query()
+        assert 'explain' not in qs.build_search()
 
         # Shake it all about...
         qs = qs.explain(True)
@@ -705,27 +705,27 @@ class FilterTest(ESTestCase):
 
     def test_filter_empty_f(self):
         s = self.get_s().filter(F())
-        eq_(s._build_query(), {})
+        eq_(s.build_search(), {})
         eq_(s.count(), 6)
 
     def test_filter_empty_f_or_f(self):
         s = self.get_s().filter(F() | F(tag='awesome'))
-        eq_(s._build_query(), {'filter': {'term': {'tag': 'awesome'}}})
+        eq_(s.build_search(), {'filter': {'term': {'tag': 'awesome'}}})
         eq_(s.count(), 3)
 
     def test_filter_empty_f_and_f(self):
         s = self.get_s().filter(F() & F(tag='awesome'))
-        eq_(s._build_query(), {'filter': {'term': {'tag': 'awesome'}}})
+        eq_(s.build_search(), {'filter': {'term': {'tag': 'awesome'}}})
         eq_(s.count(), 3)
 
     def test_filter_f_and_empty_f(self):
         s = self.get_s().filter(F(tag='awesome') & F())
-        eq_(s._build_query(), {'filter': {'term': {'tag': 'awesome'}}})
+        eq_(s.build_search(), {'filter': {'term': {'tag': 'awesome'}}})
         eq_(s.count(), 3)
 
     def test_filter_f_and_ff(self):
         s = self.get_s().filter(F(tag='awesome') & F(foo='car', width='7'))
-        eqish_(s._build_query(),
+        eqish_(s.build_search(),
             {
                 'filter': {
                     'and': [
@@ -740,12 +740,12 @@ class FilterTest(ESTestCase):
 
     def test_filter_empty_f_or_empty_f_or_f(self):
         s = self.get_s().filter(F() | F() | F(tag='awesome'))
-        eq_(s._build_query(), {'filter': {'term': {'tag': 'awesome'}}})
+        eq_(s.build_search(), {'filter': {'term': {'tag': 'awesome'}}})
         eq_(s.count(), 3)
 
     def test_filter_empty_f_and_empty_f_and_f(self):
         s = self.get_s().filter(F() & F() & F(tag='awesome'))
-        eq_(s._build_query(), {'filter': {'term': {'tag': 'awesome'}}})
+        eq_(s.build_search(), {'filter': {'term': {'tag': 'awesome'}}})
         eq_(s.count(), 3)
 
     def test_filter_not_not_f(self):
@@ -753,12 +753,12 @@ class FilterTest(ESTestCase):
         f = ~f
         f = ~f
         s = self.get_s().filter(f)
-        eq_(s._build_query(), {'filter': {'term': {'tag': 'awesome'}}})
+        eq_(s.build_search(), {'filter': {'term': {'tag': 'awesome'}}})
         eq_(s.count(), 3)
 
     def test_filter_empty_f_not(self):
         s = self.get_s().filter(~F())
-        eq_(s._build_query(), {})
+        eq_(s.build_search(), {})
         eq_(s.count(), 6)
 
     def test_filter(self):
@@ -777,7 +777,7 @@ class FilterTest(ESTestCase):
     def test_filter_or_3(self):
         s = self.get_s().filter(F(tag='awesome') | F(tag='boat') |
                                 F(tag='boring'))
-        eqish_(s._build_query(), {
+        eqish_(s.build_search(), {
                 'filter': {
                     'or': [
                         {'term': {'tag': 'awesome'}},
@@ -791,7 +791,7 @@ class FilterTest(ESTestCase):
         # This is kind of a crazy case.
         s = self.get_s().filter(or_={'foo': 'bar',
                                      'or_': {'tag': 'boat', 'width': '5'}})
-        eqish_(s._build_query(), {
+        eqish_(s.build_search(), {
                 'filter': {
                     'or': [
                         {'or': [
@@ -810,7 +810,7 @@ class FilterTest(ESTestCase):
 
     def test_filter_not(self):
         s = self.get_s().filter(~F(tag='awesome'))
-        eq_(s._build_query(), {
+        eq_(s.build_search(), {
                 'filter': {
                     'not': {
                         'filter': {'term': {'tag': 'awesome'}}
@@ -820,7 +820,7 @@ class FilterTest(ESTestCase):
         eq_(s.count(), 3)
 
         s = self.get_s().filter(~(F(tag='boring') | F(tag='boat')))
-        eqish_(s._build_query(), {
+        eqish_(s.build_search(), {
                 'filter': {
                     'not': {
                         'filter': {
@@ -835,7 +835,7 @@ class FilterTest(ESTestCase):
         eq_(s.count(), 4)
 
         s = self.get_s().filter(~F(tag='boat')).filter(~F(foo='bar'))
-        eqish_(s._build_query(), {
+        eqish_(s.build_search(), {
                 'filter': {
                     'and': [
                         {'not': {'filter': {'term': {'tag': 'boat'}}}},
@@ -846,7 +846,7 @@ class FilterTest(ESTestCase):
         eq_(s.count(), 4)
 
         s = self.get_s().filter(~F(tag='boat', foo='barf'))
-        eqish_(s._build_query(), {
+        eqish_(s.build_search(), {
                 'filter': {
                     'not': {
                         'filter': {
@@ -920,7 +920,7 @@ class FilterTest(ESTestCase):
                 return {'funkyfilter': {'field': key, 'value': val}}
 
         s = FunkyS().filter(foo__funkyfilter='bar')
-        eq_(s._build_query(), {
+        eq_(s.build_search(), {
                 'filter': {
                     'funkyfilter': {'field': 'foo', 'value': 'bar'}
                 }
@@ -939,14 +939,14 @@ class FilterTest(ESTestCase):
 
     def test_filter_raw(self):
         s = self.get_s().filter_raw({'term': {'tag': 'awesome'}})
-        eq_(s._build_query(),
+        eq_(s.build_search(),
             {'filter': {'term': {'tag': 'awesome'}}})
 
     def test_filter_raw_overrides_everything(self):
         s = self.get_s().filter_raw({'term': {'tag': 'awesome'}})
         s = s.filter(tag='boring')
         s = s.filter(F(tag='end'))
-        eq_(s._build_query(),
+        eq_(s.build_search(),
             {'filter': {'term': {'tag': 'awesome'}}})
 
 
