@@ -73,6 +73,13 @@ Version 0.9: In development
   If you were using `.all()` to return all search results, you should
   change it to `.everything()`.
 
+* **`S._build_query()` was changed to `S.build_search()`**
+
+  This makes the method public and also changes the name and documentation
+  to be more correct.
+
+  If you really need a `S._build_query()`, add it to your `S` subclass.
+
 
 **Changes:**
 
