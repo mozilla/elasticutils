@@ -75,11 +75,11 @@ transcript of your session using curl:
    will return a prettified response that's easier to read.
 
 
-Getting the generated search body
-=================================
+Getting the search body
+=======================
 
 The `S` class has a `build_search()` method that you can use to see
-the body of the Elasticsearch search request it generated with the
+the body of the Elasticsearch search request it generates with the
 parameters you've specified. This is helpful in debugging ElasticUtils
 and figuring out whether it's doing things poorly.
 
@@ -92,7 +92,7 @@ For example::
 We also have :py:func:`elasticutils.utils.to_json` which takes the output
 of :py:meth:`elasticutils.S.build_search` and returns the JSON
 string. This is helpful if you need to take the search body that
-ElasticUtils generated and tinker with it using curl or
+ElasticUtils generates and tinker with it using curl or
 elasticsearch-head.
 
 
