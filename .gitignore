@@ -1,6 +1,7 @@
 *.py[oc]
-build/
-dist/
-*.egg-info
-docs/_build/
-.coverage
+/build/
+/dist/
+/*.egg-info
+/docs/_build/
+/.coverage
+/.tox/
