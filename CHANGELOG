@@ -80,6 +80,23 @@ Version 0.9: In development
 
   If you really need a `S._build_query()`, add it to your `S` subclass.
 
+* **Search results metadata is now in the `es_meta` object**
+
+  Previously, you would access search results metadata like this::
+
+      obj._id
+      obj._highlight
+      obj._score
+      etc.
+
+  In order to make those accessible in Django templates, we moved them into
+  an es_meta object. You can now access them like this::
+
+      obj.es_meta.id
+      obj.es_meta.highlight
+      obj.es_meta.score
+      etc.
+
 
 **Changes:**
 

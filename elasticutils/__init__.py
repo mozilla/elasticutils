@@ -904,8 +904,8 @@ class S(PythonMixin):
         * ``pre_tags`` -- List of tags before highlighted portion
         * ``post_tags`` -- List of tags after highlighted portion
 
-        Results will have a ``_highlight`` property which contains
-        the highlighted field excerpts.
+        Results will have a ``highlight`` attribute on the ``es_meta``
+        object which contains the highlighted field excerpts.
 
         For example::
 
@@ -913,8 +913,8 @@ class S(PythonMixin):
                     .highlight('title', 'content'))
 
             for result in q:
-                print result._highlight['title']
-                print result._highlight['content']
+                print result.es_meta.highlight['title']
+                print result.es_meta.highlight['content']
 
 
         If you pass in ``None``, it will clear the highlight.
@@ -1816,20 +1816,31 @@ class ObjectSearchResults(SearchResults):
         return self.objects.__iter__()
 
 
+class Metadata(object):
+    def __init__(self, **kwargs):
+        self.__dict__.update(kwargs)
+
+
 def decorate_with_metadata(obj, result):
-    """Return obj decorated with result-scope metadata."""
-    # Elasticsearch id
+    """Return obj decorated with es_meta object"""
+    # Create es_meta object with Elasticsearch metadata about this
+    # search result
+    obj.es_meta = Metadata(
+        # Elasticsearch id
+        id=result.get('_id', 0),
+        # Source data
+        source=result.get('_source', {}),
+        # The search result score
+        score=result.get('_score', None),
+        # The document type
+        type=result.get('_type', None),
+        # Explanation of score
+        explanation=result.get('_explanation', {}),
+        # Highlight bits
+        highlight=result.get('highlight', {})
+    )
+    # Put the id on the object for convenience
     obj._id = result.get('_id', 0)
-    # Source data
-    obj._source = result.get('_source', {})
-    # The search result score
-    obj._score = result.get('_score')
-    # The document type
-    obj._type = result.get('_type')
-    # Explanation structure
-    obj._explanation = result.get('_explanation', {})
-    # Highlight bits
-    obj._highlight = result.get('highlight', {})
     return obj
 
 

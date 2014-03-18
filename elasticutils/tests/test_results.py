@@ -106,31 +106,34 @@ class TestResultsWithData(ESTestCase):
         """Test default results form has metadata."""
         searcher = list(self.get_s().query(foo='bar'))
         assert hasattr(searcher[0], '_id')
-        assert hasattr(searcher[0], '_score')
-        assert hasattr(searcher[0], '_source')
-        assert hasattr(searcher[0], '_type')
-        assert hasattr(searcher[0], '_explanation')
-        assert hasattr(searcher[0], '_highlight')
+        assert hasattr(searcher[0].es_meta, 'id')
+        assert hasattr(searcher[0].es_meta, 'score')
+        assert hasattr(searcher[0].es_meta, 'source')
+        assert hasattr(searcher[0].es_meta, 'type')
+        assert hasattr(searcher[0].es_meta, 'explanation')
+        assert hasattr(searcher[0].es_meta, 'highlight')
 
     def test_values_list_form_has_metadata(self):
         """Test default results form has metadata."""
         searcher = list(self.get_s().query(foo='bar').values_list('id'))
         assert hasattr(searcher[0], '_id')
-        assert hasattr(searcher[0], '_score')
-        assert hasattr(searcher[0], '_source')
-        assert hasattr(searcher[0], '_type')
-        assert hasattr(searcher[0], '_explanation')
-        assert hasattr(searcher[0], '_highlight')
+        assert hasattr(searcher[0].es_meta, 'id')
+        assert hasattr(searcher[0].es_meta, 'score')
+        assert hasattr(searcher[0].es_meta, 'source')
+        assert hasattr(searcher[0].es_meta, 'type')
+        assert hasattr(searcher[0].es_meta, 'explanation')
+        assert hasattr(searcher[0].es_meta, 'highlight')
 
     def test_values_dict_form_has_metadata(self):
         """Test default results form has metadata."""
         searcher = list(self.get_s().query(foo='bar').values_dict())
         assert hasattr(searcher[0], '_id')
-        assert hasattr(searcher[0], '_score')
-        assert hasattr(searcher[0], '_source')
-        assert hasattr(searcher[0], '_type')
-        assert hasattr(searcher[0], '_explanation')
-        assert hasattr(searcher[0], '_highlight')
+        assert hasattr(searcher[0].es_meta, 'id')
+        assert hasattr(searcher[0].es_meta, 'score')
+        assert hasattr(searcher[0].es_meta, 'source')
+        assert hasattr(searcher[0].es_meta, 'type')
+        assert hasattr(searcher[0].es_meta, 'explanation')
+        assert hasattr(searcher[0].es_meta, 'highlight')
 
     def test_values_dict_no_args(self):
         """Calling values_dict() with no args fetches all fields."""

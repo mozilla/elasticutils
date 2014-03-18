@@ -99,7 +99,7 @@ print [item['title']
 # [u'Awesome Bar']
 
 # Do a query and use the highlighter to denote the matching text.
-print [(item['title'], item._highlight['title'])
+print [(item['title'], item.es_meta.highlight['title'])
        for item in basic_s.query(title__text='cookie').highlight('title')]
 # Prints:
 # [

@@ -352,10 +352,10 @@ class QueryTest(ESTestCase):
 
     def test_q_demote(self):
         s = self.get_s().query(foo__text='car')
-        scores = [(sr['id'], sr._score) for sr in s.values_dict('id')]
+        scores = [(sr['id'], sr.es_meta.score) for sr in s.values_dict('id')]
 
         s = s.demote(0.5, width__term='5')
-        demoted_scores = [(sr['id'], sr._score) for sr in s.values_dict('id')]
+        demoted_scores = [(sr['id'], sr.es_meta.score) for sr in s.values_dict('id')]
 
         # These are both sorted by scores. We're demoting one result
         # so the top result in each list is different.
@@ -363,10 +363,10 @@ class QueryTest(ESTestCase):
 
         # Now we do the whole thing again with Qs.
         s = self.get_s().query(Q(foo__text='car'))
-        scores = [(sr['id'], sr._score) for sr in s.values_dict('id')]
+        scores = [(sr['id'], sr.es_meta.score) for sr in s.values_dict('id')]
 
         s = s.demote(0.5, Q(width__term='5'))
-        demoted_scores = [(sr['id'], sr._score) for sr in s.values_dict('id')]
+        demoted_scores = [(sr['id'], sr.es_meta.score) for sr in s.values_dict('id')]
 
         # These are both sorted by scores. We're demoting one result
         # so the top result in each list is different.
@@ -679,7 +679,7 @@ class QueryTest(ESTestCase):
         qs = qs.explain(True)
 
         res = list(qs)
-        assert res[0]._explanation
+        assert res[0].es_meta.explanation
 
 
 class FilterTest(ESTestCase):
@@ -1364,7 +1364,7 @@ class HighlightTest(ESTestCase):
         result = list(s)[0]
         # The highlit text from the foo field should be in index 1 of the
         # excerpts.
-        eq_(result._highlight['foo'], [u'train <em>car</em>'])
+        eq_(result.es_meta.highlight['foo'], [u'train <em>car</em>'])
 
         s = (self.get_s().query(foo__text='car')
                          .filter(id=5)
@@ -1373,7 +1373,7 @@ class HighlightTest(ESTestCase):
         result = list(s)[0]
         # The highlit text from the foo field should be in index 1 of the
         # excerpts.
-        eq_(result._highlight['foo'], [u'train <em>car</em>'])
+        eq_(result.es_meta.highlight['foo'], [u'train <em>car</em>'])
 
     def test_highlight_on_list_results(self):
         """Make sure highlighting with list-style results works.
@@ -1389,7 +1389,7 @@ class HighlightTest(ESTestCase):
         result = list(s)[0]
         # The highlit text from the foo field should be in index 1 of the
         # excerpts.
-        eq_(result._highlight['foo'], [u'train <em>car</em>'])
+        eq_(result.es_meta.highlight['foo'], [u'train <em>car</em>'])
 
     def test_highlight_options(self):
         """Make sure highlighting with options works."""
@@ -1401,7 +1401,7 @@ class HighlightTest(ESTestCase):
         result = list(s)[0]
         # The highlit text from the foo field should be in index 1 of the
         # excerpts.
-        eq_(result._highlight['foo'], [u'train <b>car</b>'])
+        eq_(result.es_meta.highlight['foo'], [u'train <b>car</b>'])
 
     def test_highlight_cumulative(self):
         """Make sure highlighting fields are cumulative and none clears them."""
@@ -1409,15 +1409,15 @@ class HighlightTest(ESTestCase):
         s = (self.get_s().query(foo__text='car')
                          .filter(id=5)
                          .highlight())
-        eq_(list(s)[0]._highlight, {})
+        eq_(list(s)[0].es_meta.highlight, {})
 
         # Add a field and that gets highlighted.
         s = s.highlight('foo')
-        eq_(list(s)[0]._highlight['foo'], [u'train <em>car</em>'])
+        eq_(list(s)[0].es_meta.highlight['foo'], [u'train <em>car</em>'])
 
         # Set it back to no fields and no highlight.
         s = s.highlight(None)
-        eq_(list(s)[0]._highlight, {})
+        eq_(list(s)[0].es_meta.highlight, {})
 
 
 class SearchTypeTest(ESTestCase):

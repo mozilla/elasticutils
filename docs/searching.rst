@@ -954,23 +954,24 @@ The same can be done with queries::
   http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/search-facets-filter-facet.html
     Elasticsearch docs on filter facets
 
+
 .. _scores-and-explanations:
 
 Scores and explanations
 =======================
 
-Seeing the score: _score
-------------------------
+Seeing the score: score
+-----------------------
 
 Wondering what the score for a document was? ElasticUtils puts that in
-the ``_score`` on the search result. For example, let's search an
-index that holds knowledge base articles for ones with the word
-"crash" in them and print out the scores::
+the ``score`` attribute of the ``es_meta`` object of the search result.
+For example, let's search an index that holds knowledge base articles
+for ones with the word "crash" in them and print out the scores::
 
     q = S().query(title__text='crash', content__text='crash')
 
     for result in q:
-        print result._score
+        print result.es_meta.score
 
 This works regardless of what form the search results are in.
 
@@ -983,8 +984,8 @@ that should have shown up higher? Wonder how that score was computed?
 You can set the search to pass the ``explain`` flag to Elasticsearch
 with :py:meth:`elasticutils.S.explain`.
 
-This returns data that will be in every item in the search results
-list as ``_explanation``.
+ElasticUtils puts the explanation in the ``explanation`` attribute
+of the ``es_meta`` object of the search result.
 
 For example, let's do a query on a search corpus of knowledge base
 articles for articles with the word "crash" in them::
@@ -993,7 +994,7 @@ articles for articles with the word "crash" in them::
             .explain())
 
     for result in q:
-        print result._explanation
+        print result.es_meta.explanation
 
 
 This works regardless of what form the search results are in.
