@@ -50,28 +50,28 @@ Version 0.9: In development
 
 * **pyelasticsearch -> elasticsearch-py changes.**
 
-  If you called ``.get_es()`` and got a pyelasticsearch `ElasticSearch`
-  object and did things with that (create index, create mappings, delete
-  indexes, indexing, cluster health, ...), you're going to need to make
-  some changes.
+  If you called ``elasticutils.get_es()`` and got a pyelasticsearch
+  `ElasticSearch` object and did things with that (create index, create
+  mappings, delete indexes, indexing, cluster health, ...), you're going
+  to need to make some changes.
 
   You can either:
 
   1. rewrite that code to use elasticsearch-py `Elasticsearch`
      equivalents, or
 
-  2. write and use your own ``get_es()`` function that returns
-     a pyelasticsearch `ElasticSearch` object
+  2. write a different function that returns a pyelasticsearch `ElasticSearch`
+     object and use that
 
   Rewriting shouldn't be too hard. The `elasticsearcy-py documentation
   <https://elasticsearch-py.readthedocs.org/en/latest/>`_ is pretty good
   and for most things, there's a 1-to-1 translation. Also, in many cases
   it's cleaner, so you'll probably be removing code.
 
-* **.all() no longer returns all results**
+* **S.all() no longer returns all results**
 
-  If you were using `.all()` to return all search results, you should
-  change it to `.everything()`.
+  If you were using `S.all()` to return all search results, you should
+  change it to `S.everything()`.
 
 * **`S._build_query()` was changed to `S.build_search()`**
 
@@ -87,7 +87,9 @@ Version 0.9: In development
       obj._id
       obj._highlight
       obj._score
+
       etc.
+
 
   In order to make those accessible in Django templates, we moved them into
   an es_meta object. You can now access them like this::
@@ -95,24 +97,25 @@ Version 0.9: In development
       obj.es_meta.id
       obj.es_meta.highlight
       obj.es_meta.score
+
       etc.
 
 
 **Changes:**
 
-* **added .everything() which does what .all() did**
+* **added S.everything() which does what S.all() did**
 
 * **index_objects celery task can now take es and index args**
 
 * **unindex_objects celery task can now take es and index args**
 
-* **added .suggestions() support**
+* **added S.suggestions() support**
 
-* **add .query_and_fetch() support**
+* **added S.query_and_fetch() support**
 
-* **add .search_type()**
+* **added S.search_type()**
 
-* **.facet() can now take a size keyword argument**
+* **S.facet() can now take a size keyword argument**
 
 
 Version 0.8.2: January 6th, 2014
