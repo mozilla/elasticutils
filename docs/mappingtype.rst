@@ -75,7 +75,7 @@ DefaultMappingType
 The most basic MappingType is the DefaultMappingType which is returned
 if you don't specify a MappingType and also don't call
 :py:meth:`elasticutils.S.values_dict` or
-s:py:meth:`elasticutils.S.values_list`. The DefaultMappingType lets
+:py:meth:`elasticutils.S.values_list`. The DefaultMappingType lets
 you access search result fields as instance attributes or as keys:
 
 .. code-block:: python

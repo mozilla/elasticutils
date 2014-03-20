@@ -123,7 +123,7 @@ def get_es(urls=None, timeout=DEFAULT_TIMEOUT, force_new=False, **settings):
         object rather than pulling it from cache.
     :arg settings: other settings to pass into Elasticsearch
         constructor; See
-        `<http://elasticsearch.readthedocs.org/>`_ for more details.
+        `<http://elasticsearch-py.readthedocs.org/>`_ for more details.
 
     Examples::
 
@@ -444,20 +444,27 @@ class S(PythonMixin):
 
     The API for `S` takes inspiration from Django's QuerySet.
 
-    `S` can be either typed or untyped. An untyped `S` returns dict
-    results by default.
+    `S` can be either typed or untyped. An untyped `S` returns results
+    as an iterable of :py:class:`elasticutils.DefaultMappingType`
+    instances.
 
     An `S` is lazy in the sense that it doesn't do an Elasticsearch
-    search request until it's forced to evaluate by either iterating
-    over it, calling ``.count``, doing ``len(s)``, or calling
-    ``.facet_count`` or ``.suggestions``.
+    search request until it's forced to evaluate by:
+
+    1. use the :py:class:`elasticutils.S` in an iterable context
+    2. call :py:func:`len` on a :py:class:`elasticutils.S`
+    3. call the :py:meth:`elasticutils.S.execute`,
+       :py:meth:`elasticutils.S.everything`,
+       :py:meth:`elasticutils.S.count`,
+       :py:meth:`elasticutils.S.suggestions` or
+       :py:meth:`elasticutils.S.facet_counts` methods
 
 
     **Adding support for other queries**
 
     You can add support for queries that S doesn't have support for by
-    subclassing S with a method called ``process_query_ACTION``.  This
-    method takes a key, value and an action.
+    subclassing S with a method called ``process_query_<ACTION>``.
+    This method takes a key, value and an action.
 
     For example::
 
@@ -496,7 +503,7 @@ class S(PythonMixin):
     **Adding support for other filters**
 
     You can add support for filters that S doesn't have support for by
-    subclassing S with a method called ``process_filter_ACTION``.
+    subclassing S with a method called ``process_filter_<ACTION>``.
     This method takes a key, value and an action.
 
     For example::
@@ -515,7 +522,7 @@ class S(PythonMixin):
     def __init__(self, type_=None):
         """Create and return an S.
 
-        :arg type_: class; the model that this S is based on
+        :arg type_: class; the MappingType for this S
 
         """
         self.type = type_
@@ -1468,14 +1475,14 @@ class S(PythonMixin):
 
     def count(self):
         """
-        Executes search and returns number of results as an integer.
+        Returns the total number of results Elasticsearch thinks will
+        match this search.
 
         :returns: integer
 
         For example:
 
-        >>> s = S().query(name__prefix='Jimmy')
-        >>> count = s.count()
+        >>> all_jimmies = S().query(name__prefix='Jimmy').count()
 
         """
         if self._results_cache is not None:
@@ -1484,29 +1491,25 @@ class S(PythonMixin):
             return self[:0].raw()['hits']['total']
 
     def __len__(self):
-        """
-        Executes search and returns the number of results you'd get.
+        """Executes search and returns the number of results you'd get.
 
-        Executes search and returns number of results as an integer.
+        Executes search and returns number of results returned as an
+        integer.
 
         :returns: integer
 
         For example:
 
-        >>> s = S().query(name__prefix='Jimmy')
-        >>> count = len(s)
-        >>> results = s().execute()
-        >>> count = len(results)
-        True
+        >>> some_s = S().query(name__prefix='Jimmy')
+        >>> length = len(some_s)
 
-        .. Note::
-
-           This is very different than calling ``.count()``. If you
-           call ``.count()`` you get the total number of results
-           that Elasticsearch thinks matches your search. If you call
-           ``len(s)``, then you get the number of results you'd get
-           if you executed the search. This factors in slices and
-           default from and size values.
+        This is very different than calling
+        :py:meth:`elasticutils.S.count`. If you call
+        :py:meth:`elasticutils.S.count` you get the total number of
+        results that Elasticsearch thinks matches your search. If you
+        call ``len()``, then you get the number of results you got
+        from the search which factors in slices and default from and
+        size values.
 
         """
         return len(self._do_search())
@@ -1516,6 +1519,7 @@ class S(PythonMixin):
 
         This is here to make it more Django QuerySet-like and work
         with better with things that accept QuerySets.
+
         """
         return self._clone()
 
@@ -1877,10 +1881,10 @@ class MappingType(object):
 
     To extend this class:
 
-    1. implement ``get_index``.
-    2. implement ``get_mapping_type_name``.
-    3. if this ties back to a model, implement ``get_model`` and
-       possibly also ``get_object``.
+    1. implement ``get_index()``.
+    2. implement ``get_mapping_type_name()``.
+    3. if this ties back to a model, implement ``get_model()`` and
+       possibly also ``get_object()``.
 
     For example::
 
@@ -1971,7 +1975,11 @@ class MappingType(object):
         """Return the model class related to this MappingType.
 
         This can be any class that has an instance related to this
-        Mappingtype by id.
+        MappingType by id.
+
+        For example, if you're using Django and your MappingType is
+        related to a Django model--this should return the Django
+        model.
 
         By default, raises NoModelError.
 

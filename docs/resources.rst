@@ -9,7 +9,14 @@ Documentation
 
 Elasticsearch guide
 
-    http://www.elasticsearch.org/guide/
+    Elasticsearch documentation
+      http://www.elasticsearch.org/guide/
+
+    Elasticsearch 0.90 guide
+      http://www.elasticsearch.org/guide/en/elasticsearch/reference/0.90/index.html
+
+    Elasticsearch 1.x guide
+      http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/index.html
 
     This is the canonical documentation.
 

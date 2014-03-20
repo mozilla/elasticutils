@@ -63,7 +63,7 @@ interval when creating the index:
 
 .. code-block:: python
 
-    es.indices.create(index='blog-index', body{'refresh_interval': '5s'})
+    es.indices.create(index='blog-index', body={'refresh_interval': '5s'})
 
 
 .. seealso::

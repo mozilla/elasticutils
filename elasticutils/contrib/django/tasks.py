@@ -27,15 +27,18 @@ def index_objects(mapping_type, ids, chunk_size=100, es=None, index=None):
     :arg mapping_type: the mapping type for these ids
     :arg ids: the list of ids of things to index
     :arg chunk_size: the size of the chunk for bulk indexing
-    .. Note::
 
-       The default chunk_size is 100. The number of documents you can
-       bulk index at once depends on the size of the documents.
+        .. Note::
+
+           The default chunk_size is 100. The number of documents you
+           can bulk index at once depends on the size of the
+           documents.
 
     :arg es: The `Elasticsearch` to use. If you don't specify an
         `Elasticsearch`, it'll use `mapping_type.get_es()`.
     :arg index: The name of the index to use. If you don't specify one
         it'll use `mapping_type.get_index()`.
+
     """
     if settings.ES_DISABLED:
         return

@@ -164,51 +164,12 @@ Here's one that uses `Indexable` and handles indexing:
     class MyMappingType(MappingType, Indexable):
         @classmethod
         def get_model(cls):
-            return MyModel
-
-        @classmethod
-        def extract_document(cls, obj_id, obj=None):
-            if obj is None:
-                obj = cls.get_model().get(pk=obj_id)
-
-            return {
-                'id': obj.id,
-                'name': obj.name,
-                'bio': obj.bio,
-                'age': obj.age
-                }
-
-
-    searcher = MyMappingType.search()
-
-
-This example doesn't specify a mapping. That's ok because
-Elasticsearch will infer from the shape of the data how it should
-analyze and store the data.
-
-If you want to specify this explicitly (and I suggest you do for
-anything that involves strings), then you want to additionally
-override `.get_mapping()`. Let's refine the above example by
-explicitly specifying `.get_mapping()`.
-
-.. code-block:: python
-
-    from django.models import Model
-    from elasticutils.contrib.django import Indexable, MappingType
-
-
-    class MyModel(Model):
-        # Django model ...
-
-
-    class MyMappingType(MappingType, Indexable):
-        @classmethod
-        def get_model(cls):
+            """Returns the Django model this MappingType relates to"""
             return MyModel
 
         @classmethod
         def get_mapping(cls):
-            """Returns an Elasticsearch mapping."""
+            """Returns an Elasticsearch mapping for this MappingType"""
             return {
                 'properties': {
                     # The id is an integer, so store it as such. Elasticsearch
@@ -228,8 +189,8 @@ explicitly specifying `.get_mapping()`.
                 }
             }
 
-        @classmethod
         def extract_document(cls, obj_id, obj=None):
+            """Converts this instance into an Elasticsearch document"""
             if obj is None:
                 obj = cls.get_model().get(pk=obj_id)
 
