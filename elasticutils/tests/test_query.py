@@ -951,8 +951,16 @@ class FilterTest(ESTestCase):
 
 
 class FacetTest(ESTestCase):
+    def setUp(self):
+        super(FacetTest, self).setUp()
+        self.cleanup_index()
+        self.create_index()
+
+    def tearDown(self):
+        super(FacetTest, self).tearDown()
+        self.cleanup_index()
+
     def test_facet(self):
-        FacetTest.create_index()
         FacetTest.index_data([
                 {'id': 1, 'foo': 'bar', 'tag': 'awesome'},
                 {'id': 2, 'foo': 'bart', 'tag': 'boring'},
@@ -966,7 +974,6 @@ class FacetTest(ESTestCase):
         eq_(facet_counts_dict(qs, 'tag'), dict(awesome=3, boring=1, boat=1))
 
     def test_facet_with_size(self):
-        FacetTest.create_index()
         FacetTest.index_data([
                 {'id': 1, 'foo': 'bar', 'tag': 'awesome'},
                 {'id': 2, 'foo': 'bart', 'tag': 'boring'},
@@ -981,7 +988,6 @@ class FacetTest(ESTestCase):
         eq_(facet_counts_dict(qs, 'tag'), dict(awesome=3, boat=2))
 
     def test_filtered_facet(self):
-        FacetTest.create_index()
         FacetTest.index_data([
                 {'id': 1, 'foo': 'bar', 'tag': 'awesome', 'width': 1},
                 {'id': 2, 'foo': 'bart', 'tag': 'boring', 'width': 2},
@@ -1002,7 +1008,6 @@ class FacetTest(ESTestCase):
             {'awesome': 1})
 
     def test_filtered_facet_no_filters(self):
-        FacetTest.create_index()
         FacetTest.index_data([
                 {'id': 1, 'foo': 'bar', 'tag': 'awesome', 'width': 1},
                 {'id': 2, 'foo': 'bart', 'tag': 'boring', 'width': 2},
@@ -1020,7 +1025,6 @@ class FacetTest(ESTestCase):
             {'awesome': 2})
 
     def test_global_facet(self):
-        FacetTest.create_index()
         FacetTest.index_data([
                 {'id': 1, 'foo': 'bar', 'tag': 'awesome'},
                 {'id': 2, 'foo': 'bart', 'tag': 'boring'},
@@ -1041,7 +1045,6 @@ class FacetTest(ESTestCase):
             dict(awesome=3, boring=1, boat=1))
 
     def test_facet_raw(self):
-        FacetTest.create_index()
         FacetTest.index_data([
                 {'id': 1, 'foo': 'bar', 'tag': 'awesome'},
                 {'id': 2, 'foo': 'bart', 'tag': 'boring'},
@@ -1063,7 +1066,6 @@ class FacetTest(ESTestCase):
 
     def test_facet_raw_overrides_facet(self):
         """facet_raw overrides facet with the same facet name."""
-        FacetTest.create_index()
         FacetTest.index_data([
                 {'id': 1, 'foo': 'bar', 'tag': 'awesome'},
                 {'id': 2, 'foo': 'bart', 'tag': 'boring'},
@@ -1082,7 +1084,6 @@ class FacetTest(ESTestCase):
 
     def test_facet_terms(self):
         """Test terms facet"""
-        FacetTest.create_index()
         FacetTest.index_data([
                 {'id': 1, 'color': 'red'},
                 {'id': 2, 'color': 'red'},
@@ -1116,7 +1117,6 @@ class FacetTest(ESTestCase):
 
     def test_facet_terms_other(self):
         """Test terms facet"""
-        FacetTest.create_index()
         FacetTest.index_data([
                 {'id': 1, 'color': 'red'},
                 {'id': 2, 'color': 'red'},
@@ -1144,7 +1144,6 @@ class FacetTest(ESTestCase):
 
     def test_facet_terms_missing(self):
         """Test terms facet"""
-        FacetTest.create_index()
         FacetTest.index_data([
                 {'id': 1, 'color': 'red'},
                 {'id': 2, 'color': 'red'},
@@ -1171,7 +1170,6 @@ class FacetTest(ESTestCase):
 
     def test_facet_range(self):
         """Test range facet"""
-        FacetTest.create_index()
         FacetTest.index_data([
                 {'id': 1, 'value': 1},
                 {'id': 2, 'value': 1},
@@ -1210,7 +1208,6 @@ class FacetTest(ESTestCase):
 
     def test_facet_histogram(self):
         """Test histogram facet"""
-        FacetTest.create_index()
         FacetTest.index_data([
                 {'id': 1, 'value': 1},
                 {'id': 2, 'value': 1},
@@ -1243,7 +1240,6 @@ class FacetTest(ESTestCase):
         today = datetime.now()
         tomorrow = today + timedelta(days=1)
 
-        FacetTest.create_index()
         FacetTest.index_data([
                 {'id': 1, 'created': today},
                 {'id': 2, 'created': today},
@@ -1268,7 +1264,6 @@ class FacetTest(ESTestCase):
 
     def test_facet_statistical(self):
         """Test statistical facet"""
-        FacetTest.create_index()
         FacetTest.index_data([
                 {'id': 1, 'value': 1},
                 {'id': 2, 'value': 1},
@@ -1303,7 +1298,6 @@ class FacetTest(ESTestCase):
 
     def test_filter_facet(self):
         """Test filter facet"""
-        FacetTest.create_index()
         FacetTest.index_data([
             {'id': 1, 'color': 'red'},
             {'id': 2, 'color': 'red'},
@@ -1333,7 +1327,6 @@ class FacetTest(ESTestCase):
 
     def test_query_facet(self):
         """Test query facet"""
-        FacetTest.create_index()
         FacetTest.index_data([
             {'id': 1, 'color': 'red'},
             {'id': 2, 'color': 'red'},
@@ -1361,7 +1354,6 @@ class FacetTest(ESTestCase):
 
     def test_invalid_field_type(self):
         """Invalid _type should raise InvalidFacetType."""
-        FacetTest.create_index()
         FacetTest.index_data([
                 {'id': 1, 'age': 30},
                 {'id': 2, 'age': 40}
@@ -1381,21 +1373,13 @@ class FacetTest(ESTestCase):
 
 
 class HighlightTest(ESTestCase):
-    @classmethod
-    def setup_class(cls):
-        super(HighlightTest, cls).setup_class()
-        if cls.skip_tests:
-            return
-
-        cls.create_index()
-        cls.index_data([
-                {'id': 1, 'foo': 'bar', 'tag': 'awesome', 'width': '2'},
-                {'id': 2, 'foo': 'bart', 'tag': 'boring', 'width': '7'},
-                {'id': 3, 'foo': 'car', 'tag': 'awesome', 'width': '5'},
-                {'id': 4, 'foo': 'duck', 'tag': 'boat', 'width': '11'},
-                {'id': 5, 'foo': 'train car', 'tag': 'awesome', 'width': '7'}
-            ])
-        cls.refresh()
+    data = [
+        {'id': 1, 'foo': 'bar', 'tag': 'awesome', 'width': '2'},
+        {'id': 2, 'foo': 'bart', 'tag': 'boring', 'width': '7'},
+        {'id': 3, 'foo': 'car', 'tag': 'awesome', 'width': '5'},
+        {'id': 4, 'foo': 'duck', 'tag': 'boat', 'width': '11'},
+        {'id': 5, 'foo': 'train car', 'tag': 'awesome', 'width': '7'}
+    ]
 
     def test_highlight_with_dict_results(self):
         """Make sure highlighting with dict-style results works.
@@ -1487,8 +1471,7 @@ class SearchTypeTest(ESTestCase):
     @classmethod
     def setup_class(cls):
         super(SearchTypeTest, cls).setup_class()
-        if cls.skip_tests:
-            return
+        cls.cleanup_index()
 
         # Explicitly create an index with 2 shards. The default
         # ES configuration is 5 shards, and should work as well,
@@ -1513,21 +1496,13 @@ class SearchTypeTest(ESTestCase):
 
 
 class SuggestionTest(ESTestCase):
-    @classmethod
-    def setup_class(cls):
-        super(SuggestionTest, cls).setup_class()
-        if cls.skip_tests:
-            return
-
-        cls.create_index()
-        cls.index_data([
-                {'id': 1, 'name': 'bar'},
-                {'id': 2, 'name': 'mark', 'location': 'mart'},
-                {'id': 3, 'name': 'car'},
-                {'id': 4, 'name': 'duck'},
-                {'id': 5, 'name': 'train car'}
-            ])
-        cls.refresh()
+    data = [
+        {'id': 1, 'name': 'bar'},
+        {'id': 2, 'name': 'mark', 'location': 'mart'},
+        {'id': 3, 'name': 'car'},
+        {'id': 4, 'name': 'duck'},
+        {'id': 5, 'name': 'train car'}
+    ]
 
     @require_version('0.90')
     def test_suggestions(self):

@@ -4,7 +4,7 @@ With `test_utils` you can use this testcase.
 from django.test import TestCase
 
 from django.conf import settings
-from elasticsearch.exceptions import ConnectionError, NotFoundError
+from elasticsearch.exceptions import ConnectionError
 from elasticsearch.helpers import bulk_index
 
 # Try really really hard to find a valid skip thing.

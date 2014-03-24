@@ -146,6 +146,13 @@ The MLT class
    .. automethod:: elasticutils.MLT.to_python
 
 
+The ESTestCase class
+====================
+
+.. autoclass:: elasticutils.estestcase.ESTestCase
+   :members:
+
+
 Helper utilites
 ===============
 

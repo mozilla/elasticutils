@@ -68,23 +68,23 @@ class FakeMappingType(MappingType, Indexable):
 
 
 class ModelTest(ESTestCase):
+    mapping_type_name = FakeMappingType.get_mapping_type_name()
+    mapping = {
+        FakeMappingType.get_mapping_type_name(): FakeMappingType.get_mapping()
+    }
+
     def test_refresh(self):
         """Calling refresh_index shouldn't throw an exception"""
         FakeMappingType.refresh_index()
 
     def setUp(self):
         super(ESTestCase, self).setUp()
-        mapping_type_name = FakeMappingType.get_mapping_type_name()
-        self.create_index(settings={
-                'mappings': {
-                    mapping_type_name: FakeMappingType.get_mapping()
-                }
-        })
+        ESTestCase.setup_class()
 
     def tearDown(self):
-        FakeModel.reset()
-        self.cleanup_index()
         super(ESTestCase, self).tearDown()
+        ESTestCase.teardown_class()
+        FakeModel.reset()
 
     def test_index(self):
         obj1 = FakeModel(id=1, title='First post!', tags=['blog', 'post'])

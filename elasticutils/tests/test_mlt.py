@@ -5,23 +5,15 @@ from elasticutils.tests import ESTestCase
 
 
 class MoreLikeThisTest(ESTestCase):
-    @classmethod
-    def setup_class(cls):
-        super(MoreLikeThisTest, cls).setup_class()
-        if cls.skip_tests:
-            return
-
-        cls.create_index()
-        cls.index_data([
-                {'id': 1, 'foo': 'bar', 'tag': 'awesome'},
-                {'id': 2, 'foo': 'bar', 'tag': 'boring'},
-                {'id': 3, 'foo': 'bar', 'tag': 'awesome'},
-                {'id': 4, 'foo': 'bar', 'tag': 'boring'},
-                {'id': 5, 'foo': 'bar', 'tag': 'elite'},
-                {'id': 6, 'foo': 'notbar', 'tag': 'gross'},
-                {'id': 7, 'foo': 'notbar', 'tag': 'awesome'},
-            ])
-        cls.refresh()
+    data = [
+        {'id': 1, 'foo': 'bar', 'tag': 'awesome'},
+        {'id': 2, 'foo': 'bar', 'tag': 'boring'},
+        {'id': 3, 'foo': 'bar', 'tag': 'awesome'},
+        {'id': 4, 'foo': 'bar', 'tag': 'boring'},
+        {'id': 5, 'foo': 'bar', 'tag': 'elite'},
+        {'id': 6, 'foo': 'notbar', 'tag': 'gross'},
+        {'id': 7, 'foo': 'notbar', 'tag': 'awesome'},
+    ]
 
     def test_bad_mlt(self):
         """Tests S or index and doc_type is specified."""
