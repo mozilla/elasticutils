@@ -1108,9 +1108,9 @@ class FacetTest(ESTestCase):
         data = qs.facet_counts()
         eq_(data["created1"].data,
             [
-                    {u'count': 3, u'term': u'red'},
-                    {u'count': 2, u'term': u'yellow'}
-                ]
+                {u'count': 3, u'term': u'red'},
+                {u'count': 2, u'term': u'yellow'}
+            ]
         )
 
 
@@ -1187,26 +1187,25 @@ class FacetTest(ESTestCase):
 
         qs = (self.get_s()
               .facet_raw(created1={
-                    'range': {
-                        'field': 'value',
-                        'ranges': [
-                            {'from': 0, 'to': 5},
-                            {'from': 5, 'to': 20}
-                        ]
-                    }
-              }
-              )
+                  'range': {
+                      'field': 'value',
+                      'ranges': [
+                          {'from': 0, 'to': 5},
+                          {'from': 5, 'to': 20}
+                      ]
+                  }
+              })
         )
 
         data = qs.facet_counts()
         eq_(data["created1"].data,
             [
                 {u'count': 9, u'from': 0.0, u'min': 1.0, u'max': 4.0,
-                     u'to': 5.0, u'total_count': 9, u'total': 20.0,
-                     u'mean': 2.2222222222222223},
+                 u'to': 5.0, u'total_count': 9, u'total': 20.0,
+                 u'mean': 2.2222222222222223},
                 {u'count': 0, u'from': 5.0, u'total_count': 0,
-                     u'to': 20.0, u'total': 0.0, u'mean': 0.0}
-                ]
+                 u'to': 20.0, u'total': 0.0, u'mean': 0.0}
+            ]
         )
 
     def test_facet_histogram(self):
@@ -1291,7 +1290,7 @@ class FacetTest(ESTestCase):
               })
             )
         data = qs.facet_counts()
-        stat = data["created1"]
+        stat = data['created1']
         eq_(stat.count, 9)
         eq_(stat._type, u'statistical')
         eq_(stat.min, 1.0)
@@ -1329,8 +1328,8 @@ class FacetTest(ESTestCase):
         qs = (self.get_s().facet_raw(red_or_yellow=red_or_yellow_filter))
 
         data = qs.facet_counts()
-        eq_(data["red_or_yellow"]._type, "filter")
-        eq_(data["red_or_yellow"].count, 5)
+        eq_(data['red_or_yellow']._type, 'filter')
+        eq_(data['red_or_yellow'].count, 5)
 
     def test_query_facet(self):
         """Test query facet"""
@@ -1357,8 +1356,8 @@ class FacetTest(ESTestCase):
 
         data = qs.facet_counts()
 
-        eq_(data["red_query"]._type, "query")
-        eq_(data["red_query"].count, 3)
+        eq_(data['red_query']._type, 'query')
+        eq_(data['red_query'].count, 3)
 
     def test_invalid_field_type(self):
         """Invalid _type should raise InvalidFacetType."""

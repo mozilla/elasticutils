@@ -19,6 +19,17 @@ DEFAULT_INDEXES = None
 DEFAULT_TIMEOUT = 5
 
 
+#: Valid facet types
+FACET_TYPES = [
+    'date_histogram',
+    'filter',
+    'histogram',
+    'query',
+    'range',
+    'statistical',
+    'terms',
+]
+
 #: Maps ElasticUtils field actions to their Elasticsearch query names.
 QUERY_ACTION_MAP = {
     None: 'term',  # Default to term
@@ -193,33 +204,24 @@ def _facet_counts(items):
 
     """
     facets = {}
-    for key, val in items:
-        facets[key] = FacetResult(val, key)
+    for name, data in items:
+        facets[name] = FacetResult(name, data)
     return facets
 
 
 class FacetResult(object):
-    def __init__(self, val, k, *args, **kwargs):
-        if val['_type'] not in (
-                                'terms',
-                                'range',
-                                'histogram',
-                                'date_histogram',
-                                'filter',
-                                'query',
-                                'statistical',
-                                ):
+    def __init__(self, name, data, *args, **kwargs):
+        if data['_type'] not in FACET_TYPES:
             raise InvalidFacetType(
-                'Facet _type "%s". key "%s" val "%r"' %
-                (val['_type'], k, val))
-        for key, v in val.items():
-            setattr(self, key, v)
-        if hasattr(self, 'entries'):
-            self.data = self.entries[:]
-        elif hasattr(self, 'ranges'):
-            self.data = self.ranges[:]
-        elif hasattr(self, 'terms'):
-            self.data = self.terms[:]
+                'Facet _type "{0}". key "{1}" val "{2}"'.format(
+                    data['_type'], name, data))
+
+        self.__dict__.update(data)
+
+        for attr in ('entries', 'ranges', 'terms'):
+            if attr in data:
+                self.data = getattr(self, attr)[:]
+                break
         else:
             self.data = []
 
@@ -228,10 +230,9 @@ class FacetResult(object):
 
     def __getitem__(self, key):
         try:
-            k = getattr(self, key)
-        except AttributeError as ex:
-            raise KeyError(ex)
-        return k
+            return getattr(self, key)
+        except AttributeError as exc:
+            raise KeyError(exc.message)
 
 
 class F(object):
