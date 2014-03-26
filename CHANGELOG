@@ -117,6 +117,13 @@ Version 0.9: In development
 
 * **S.facet() can now take a size keyword argument**
 
+* **S.facet_couts() now returns a dict of FacetResults objects**
+
+  The FacetResults object contains all the data we get back
+  from that section in the Elasticsearch response.
+
+* **SearchResults now has facet data in facets property**
+
 
 Version 0.8.2: January 6th, 2014
 ================================
