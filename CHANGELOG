@@ -124,6 +124,12 @@ Version 0.9: In development
 
 * **SearchResults now has facet data in facets property**
 
+* **elasticutils.estestcase.ESTestCase available and cleaned up**
+
+  Previously, it was in ``elasticutils/tests/__init__.py``. This
+  makes it so everyone can use the same TestCase subclass we're
+  using for our tests.
+
 
 Version 0.8.2: January 6th, 2014
 ================================
