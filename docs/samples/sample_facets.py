@@ -85,30 +85,48 @@ s = basic_s.facet('product')
 
 print s.facet_counts()
 # Pretty-printed output:
-# {u'product': [
-#    {u'count': 5, u'term': u'Firefox'},
-#    {u'count': 3, u'term': u'Firefox for mobile'},
-#    {u'count': 1, u'term': u'Boot2Gecko'}
-#    ]}
+# {u'product': {
+#     u'_type': u'terms',
+#     u'total': 9,
+#     u'terms': [
+#         {u'count': 5, u'term': u'Firefox'},
+#         {u'count': 3, u'term': u'Firefox for mobile'},
+#         {u'count': 1, u'term': u'Boot2Gecko'}
+#     ],
+#     u'other': 0,
+#     u'missing': 0
+#     }}
 
 # Let's do a query for 'cookie' and do a facet count.
 print s.query(title__text='cookie').facet_counts()
 # Pretty-printed output:
-# {u'product': [
-#    {u'count': 1, u'term': u'Firefox for mobile'},
-#    {u'count': 1, u'term': u'Firefox'}
-#    ]}
+# {u'product': {
+#     u'_type': u'terms',
+#     u'total': 2,
+#     u'terms': [
+#         {u'count': 1, u'term': u'Firefox for mobile'},
+#         {u'count': 1, u'term': u'Firefox'}
+#     ],
+#     u'other': 0,
+#     u'missing': 0
+#     }}
 
 # Note that the facet_counts are affected by the query.
 
 # Let's do a filter for 'flash' in the topic.
 print s.filter(topics='flash').facet_counts()
 # Pretty-printed output:
-# {u'product': [
-#    {u'count': 5, u'term': u'Firefox'},
-#    {u'count': 3, u'term': u'Firefox for mobile'},
-#    {u'count': 1, u'term': u'Boot2Gecko'}
-#    ]}
+# {u'product': {
+#     u'_type': u'terms',
+#     u'total': 9,
+#     u'terms': [
+#         {u'count': 5, u'term': u'Firefox'},
+#         {u'count': 3, u'term': u'Firefox for mobile'},
+#         {u'count': 1, u'term': u'Boot2Gecko'}
+#     ],
+#     u'other': 0,
+#     u'missing': 0
+#     }}
 
 # Note that the facet_counts are NOT affected by filters.
 
@@ -116,9 +134,15 @@ print s.filter(topics='flash').facet_counts()
 # filtered=True.
 print s.facet('product', filtered=True).filter(topics='flash').facet_counts()
 # Pretty-printed output:
-# {u'product': [
-#    {u'count': 1, u'term': u'Firefox'}
-#    ]}
+# {u'product': {
+#     u'_type': u'terms',
+#     u'total': 1,
+#     u'terms': [
+#         {u'count': 1, u'term': u'Firefox'}
+#     ],
+#     u'other': 0,
+#     u'missing': 0
+#     }}
 
 # Using filtered=True causes the facet_counts to be affected by the
 # filters.
@@ -128,17 +152,23 @@ print s.facet('product', filtered=True).filter(topics='flash').facet_counts()
 # field that is analyzed.
 print basic_s.facet('topics').facet_counts()
 # Pretty-printed output:
-# {u'topics': [
-#    {u'count': 3, u'term': u'privacy'},
-#    {u'count': 3, u'term': u'cookies'},
-#    {u'count': 2, u'term': u'basic'},
-#    {u'count': 1, u'term': u'websites'},
-#    {u'count': 1, u'term': u'user'},
-#    {u'count': 1, u'term': u'tips'},
-#    {u'count': 1, u'term': u'search'},
-#    {u'count': 1, u'term': u'interface'},
-#    {u'count': 1, u'term': u'flash'}
-#    ]}
+# {u'topics': {
+#     u'_type': u'terms',
+#     u'total': 14,
+#     u'terms': [
+#         {u'count': 3, u'term': u'privacy'},
+#         {u'count': 3, u'term': u'cookies'},
+#         {u'count': 2, u'term': u'basic'},
+#         {u'count': 1, u'term': u'websites'},
+#         {u'count': 1, u'term': u'user'},
+#         {u'count': 1, u'term': u'tips'},
+#         {u'count': 1, u'term': u'search'},
+#         {u'count': 1, u'term': u'interface'},
+#         {u'count': 1, u'term': u'flash'}
+#     ],
+#     u'other': 0,
+#     u'missing': 0
+#     }}
 
 # Note how the facet counts shows 'user' and 'interface' as two
 # separate terms even though they're a single topic for document with
