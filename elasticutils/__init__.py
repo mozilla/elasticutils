@@ -216,6 +216,7 @@ class FacetResult(object):
                 'Facet _type "{0}". key "{1}" val "{2}"'.format(
                     data['_type'], name, data))
 
+        self._data = data
         self.__dict__.update(data)
 
         for attr in ('entries', 'ranges', 'terms'):
@@ -224,6 +225,9 @@ class FacetResult(object):
                 break
         else:
             self.data = []
+
+    def __repr__(self):
+        return repr(self._data)
 
     def __iter__(self):
         return iter(self.data)
