@@ -15,6 +15,8 @@
 
 4. Update ``CONTRIBUTORS``, ``CHANGELOG``, ``MANIFEST.in``.
 
+   Make sure to set the date for the release in CHANGELOG.
+
 5. Verify correctness.
 
    1. Run tests.
