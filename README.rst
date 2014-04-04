@@ -42,4 +42,4 @@ That corresponds with
 Quick start
 ===========
 
-See https://elasticutils.rtfd.org/ for the quick start.
+See https://elasticutils.readthedocs.org/ for the quick start.
