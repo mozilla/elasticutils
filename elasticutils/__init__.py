@@ -182,10 +182,10 @@ def _process_facets(facets, flags):
     rv = {}
     for fieldname in facets:
         facet_type = {'terms': {'field': fieldname}}
-        if flags.get('global_'):
-            facet_type['global'] = flags['global_']
         if flags.get('size'):
             facet_type['terms']['size'] = flags['size']
+        if flags.get('global_'):
+            facet_type['global'] = flags['global_']
         elif flags.get('filtered'):
             # Note: This is an indicator that the facet_filter should
             # get filled in later when we know all the filters.

@@ -984,8 +984,11 @@ class FacetTest(ESTestCase):
             ])
         FacetTest.refresh()
 
-        qs = self.get_s().facet('tag', size=2)
-        eq_(facet_counts_dict(qs, 'tag'), dict(awesome=3, boat=2))
+        qs = self.get_s()
+        eq_(facet_counts_dict(qs.facet('tag'), 'tag'),
+            {u'boring': 1, u'awesome': 3, u'boat': 2})
+        eq_(facet_counts_dict(qs.facet('tag', size=2), 'tag'),
+            {u'awesome': 3, u'boat': 2})
 
     def test_filtered_facet(self):
         FacetTest.index_data([
@@ -1006,6 +1009,31 @@ class FacetTest(ESTestCase):
         # filter does apply to facets
         eq_(facet_counts_dict(qs.facet('tag', filtered=True), 'tag'),
             {'awesome': 1})
+
+    def test_filtered_facet_with_size(self):
+        FacetTest.index_data([
+                {'id': 1, 'foo': 'bar', 'tag': 'awesome', 'width': 1},
+                {'id': 2, 'foo': 'bart', 'tag': 'boring', 'width': 2},
+                {'id': 3, 'foo': 'car', 'tag': 'awesome', 'width': 1},
+                {'id': 4, 'foo': 'duck', 'tag': 'boat', 'width': 5},
+                {'id': 5, 'foo': 'train car', 'tag': 'awesome', 'width': 5},
+                {'id': 6, 'foo': 'canoe', 'tag': 'boat', 'width': 5},
+                {'id': 7, 'foo': 'plane', 'tag': 'awesome', 'width': 5},
+                {'id': 8, 'foo': 'cargo plane', 'tag': 'boring', 'width': 5},
+            ])
+        FacetTest.refresh()
+
+        qs = self.get_s().filter(width=5)
+
+        # regular facet
+        eq_(facet_counts_dict(qs.facet('tag'), 'tag'),
+            {'boring': 2, 'awesome': 4, 'boat': 2})
+        # apply the filter
+        eq_(facet_counts_dict(qs.facet('tag', filtered=True), 'tag'),
+            {'boring': 1, 'awesome': 2, 'boat': 2})
+        # apply the filter and restrict the size
+        eq_(facet_counts_dict(qs.facet('tag', size=2, filtered=True), 'tag'),
+            {'awesome': 2, 'boat': 2})
 
     def test_filtered_facet_no_filters(self):
         FacetTest.index_data([
