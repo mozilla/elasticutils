@@ -6,12 +6,14 @@ What's new in ElasticUtils
    :local:
 
 
-Version 0.10: In development
-============================
+Version 0.9.1: In development
+=============================
 
 **API-breaking changes:**
 
 **Changes:**
+
+* **Fixed bug with facets that are both sized and filtered**
 
 
 Version 0.9: April 3rd, 2014
