@@ -1,11 +1,13 @@
 """
 With `test_utils` you can use this testcase.
 """
+from __future__ import print_function
 from django.test import TestCase
 
 from django.conf import settings
 from elasticsearch.exceptions import ConnectionError
 from elasticsearch.helpers import bulk_index
+import six
 
 # Try really really hard to find a valid skip thing.
 try:
@@ -24,7 +26,7 @@ except ImportError:
                 skip('skipping: es not set up')
         except ImportError:
             def skip_this_test():
-                print 'SKIPPING: es not set up'
+                print('SKIPPING: es not set up')
                 return
 
 
@@ -33,15 +35,15 @@ from elasticutils import get_es
 
 def testify(indexes):
     """Returns indexes with '_eutest' suffix.
-    
+
     :arg indexes: dict of mapping type name -> index name(s)
-    
+
     :returns: dict with ``_eutest`` appended to all index names
-    
+
     """
     ret = {}
     for k, v in indexes.items():
-        if isinstance(v, basestring):
+        if isinstance(v, six.string_types):
             ret[k] = v + '_eutest'
         elif isinstance(v, (list, tuple)):
             ret[k] = [v_item + '_eutest' for v_item in v]

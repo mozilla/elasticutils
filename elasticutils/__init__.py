@@ -2,6 +2,8 @@ import copy
 import logging
 from datetime import datetime
 from operator import itemgetter
+import six
+from six import string_types
 
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk_index
@@ -87,7 +89,7 @@ def _build_key(urls, timeout, **settings):
 
     # elasticsearch allows urls to be a string, so we make sure to
     # account for that when converting whatever it is into a tuple.
-    if isinstance(urls, basestring):
+    if isinstance(urls, string_types):
         urls = (urls,)
     else:
         urls = tuple(urls)
@@ -257,7 +259,10 @@ class F(object):
     """
     def __init__(self, **filters):
         """Creates an F"""
-        filters = filters.items()
+        if six.PY2:
+            filters = filters.items()
+        else:
+            filters = list(filters.items())
         if len(filters) > 1:
             self.filters = [{'and': filters}]
         else:
@@ -416,7 +421,7 @@ class PythonMixin(object):
            This does the conversion in-place!
 
         """
-        if isinstance(obj, basestring):
+        if isinstance(obj, string_types):
             if len(obj) == 26:
                 try:
                     return datetime.strptime(obj, '%Y-%m-%dT%H:%M:%S.%f')
@@ -794,7 +799,8 @@ class S(PythonMixin):
         details on adding support for new filter types.
 
         """
-        return self._clone(next_step=('filter', list(filters) + kw.items()))
+        return self._clone(
+            next_step=('filter', list(filters) + list(kw.items())))
 
     def filter_raw(self, filter_):
         """
@@ -926,7 +932,7 @@ class S(PythonMixin):
         Return a new S instance with raw facet args combined with
         existing set.
         """
-        return self._clone(next_step=('facet_raw', kw.items()))
+        return self._clone(next_step=('facet_raw', list(kw.items())))
 
     def highlight(self, *fields, **kwargs):
         """Set highlight/excerpting with specified options.
@@ -1074,7 +1080,7 @@ class S(PythonMixin):
             if action == 'order_by':
                 sort = []
                 for key in value:
-                    if isinstance(key, basestring) and key.startswith('-'):
+                    if isinstance(key, string_types) and key.startswith('-'):
                         sort.append({key[1:]: 'desc'})
                     else:
                         sort.append(key)
@@ -1191,7 +1197,7 @@ class S(PythonMixin):
         if explain:
             qs['explain'] = True
 
-        for suggestion, (term, kwargs) in suggestions.iteritems():
+        for suggestion, (term, kwargs) in six.iteritems(suggestions):
             qs.setdefault('suggest', {})[suggestion] = {
                 'text': term,
                 'term': {
@@ -1226,7 +1232,10 @@ class S(PythonMixin):
                     continue
 
             elif isinstance(f, dict):
-                key = f.keys()[0]
+                if six.PY2:
+                    key = f.keys()[0]
+                else:
+                    key = list(f.keys())[0]
                 val = f[key]
                 key = key.strip('_')
 
@@ -1433,7 +1442,7 @@ class S(PythonMixin):
 
         if self.type is not None:
             indexes = self.type.get_index()
-            if isinstance(indexes, basestring):
+            if isinstance(indexes, string_types):
                 indexes = [indexes]
             return indexes
 
