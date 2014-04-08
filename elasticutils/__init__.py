@@ -259,10 +259,10 @@ class F(object):
     """
     def __init__(self, **filters):
         """Creates an F"""
-        if six.PY2:
-            filters = filters.items()
-        else:
-            filters = list(filters.items())
+
+        filters = filters.items()
+        if six.PY3:
+            filters = list(filters)
         if len(filters) > 1:
             self.filters = [{'and': filters}]
         else:
@@ -799,8 +799,11 @@ class S(PythonMixin):
         details on adding support for new filter types.
 
         """
+        items = kw.items()
+        if six.PY3:
+            items = list(items)
         return self._clone(
-            next_step=('filter', list(filters) + list(kw.items())))
+            next_step=('filter', list(filters) + items))
 
     def filter_raw(self, filter_):
         """
@@ -932,7 +935,10 @@ class S(PythonMixin):
         Return a new S instance with raw facet args combined with
         existing set.
         """
-        return self._clone(next_step=('facet_raw', list(kw.items())))
+        items = kw.items()
+        if six.PY3:
+            items = list(items)
+        return self._clone(next_step=('facet_raw', items))
 
     def highlight(self, *fields, **kwargs):
         """Set highlight/excerpting with specified options.
