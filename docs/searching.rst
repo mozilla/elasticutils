@@ -609,7 +609,7 @@ The F class
 Suppose you want either Korean or Mexican food. For that, you need an
 "or". You can do something like this::
 
-   q = S().filter(or_={'style': 'korean', 'style'='mexican'})
+   q = S().filter(or_={'style': 'korean', 'style':'mexican'})
 
 
 But, wow---that's icky looking and not particularly helpful!
