@@ -2001,7 +2001,7 @@ class MappingType(object):
             # We want instance/class attributes to take precedence.
             # So if something like that exists, we raise an
             # AttributeError and Python handles it.
-            raise AttributeError
+            raise AttributeError(name)
 
         if name == 'object':
             # 'object' is lazy-loading. We don't do this with a
@@ -2013,7 +2013,7 @@ class MappingType(object):
         if name in self._results_dict:
             return self._results_dict[name]
 
-        raise AttributeError
+        raise AttributeError(name)
 
     # Simulate read-only container access
 
