@@ -1,3 +1,4 @@
+import six
 import logging
 from functools import wraps
 
@@ -177,14 +178,14 @@ class S(BaseS):
         doctype = self.type.get_mapping_type_name()
         indexes = (settings.ES_INDEXES.get(doctype) or
                    settings.ES_INDEXES['default'])
-        if isinstance(indexes, basestring):
+        if isinstance(indexes, six.string_types):
             indexes = [indexes]
         return super(S, self).get_indexes(default_indexes=indexes)
 
     def get_doctypes(self, default_doctypes=None):
         """Returns the doctypes (or mapping type names) to use."""
         doctypes = self.type.get_mapping_type_name()
-        if isinstance(doctypes, basestring):
+        if isinstance(doctypes, six.string_types):
             doctypes = [doctypes]
         return super(S, self).get_doctypes(default_doctypes=doctypes)
 
@@ -238,7 +239,7 @@ class MappingType(BaseMappingType):
         """
         indexes = settings.ES_INDEXES
         index = indexes.get(cls.get_mapping_type_name()) or indexes['default']
-        if not (isinstance(index, basestring)):
+        if not (isinstance(index, six.string_types)):
             # FIXME - not sure what to do here, but we only want one
             # index and somehow this isn't one index.
             index = index[0]

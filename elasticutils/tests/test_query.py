@@ -8,6 +8,7 @@ from elasticutils import (
     InvalidFlagsError, SearchResults, DefaultMappingType, MappingType,
     DEFAULT_INDEXES, DEFAULT_DOCTYPES)
 from elasticutils.tests import ESTestCase, facet_counts_dict, require_version
+import six
 
 
 def eqish_(item1, item2):
@@ -476,8 +477,13 @@ class QueryTest(ESTestCase):
             # with a single key. So we extract that and put it in a
             # dict so we don't have to deal with the order of things
             # in the 'must' list.
-            return dict([clause.items()[0]
+            if six.PY2:
+                out = dict([clause.items()[0]
                          for clause in search['query']['bool']['must']])
+            else:
+                out = dict([list(clause.items())[0]
+                         for clause in search['query']['bool']['must']])
+            return out
 
         q1 = self.get_s().boost(foo=4.0).query(foo='car', foo__prefix='car')
         eq_(_get_queries(q1.build_search())['term']['foo']['boost'], 4.0)

@@ -4,3 +4,4 @@
 nose
 Sphinx
 tox
+six

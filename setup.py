@@ -28,7 +28,8 @@ setup(
     license='BSD',
     packages=find_packages(),
     install_requires=[
-        'elasticsearch >= 0.4.3, < 1.0'
+        'elasticsearch >= 0.4.3, < 1.0',
+        'six'
     ],
     include_package_data=True,
     classifiers=[

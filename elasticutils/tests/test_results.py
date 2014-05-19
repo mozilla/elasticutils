@@ -87,7 +87,9 @@ class TestResultsWithData(ESTestCase):
         assert isinstance(searcher[0], tuple)
         # We sort the result and expected result here so that the
         # order is stable and comparable.
-        eq_(sorted(searcher[0]), sorted((u'2', u'bar', u'awesome', 1)))
+        eq_(
+            sorted(searcher[0], key=str),
+            sorted((u'2', u'bar', u'awesome', 1), key=str))
 
     def test_values_list_results(self):
         """With values_list fields, returns list of tuples."""
