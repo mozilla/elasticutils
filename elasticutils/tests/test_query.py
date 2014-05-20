@@ -122,51 +122,51 @@ class STest(TestCase):
 
 class QTest(TestCase):
     def test_q_should(self):
-        q = Q(foo__text='abc', bar__text='def', should=True)
-        eq_(sorted(q.should_q), [('bar__text', 'def'), ('foo__text', 'abc')])
+        q = Q(foo__match='abc', bar__match='def', should=True)
+        eq_(sorted(q.should_q), [('bar__match', 'def'), ('foo__match', 'abc')])
         eq_(sorted(q.must_q), [])
         eq_(sorted(q.must_not_q), [])
 
     def test_q_must(self):
-        q = Q(foo__text='abc', bar__text='def', must=True)
+        q = Q(foo__match='abc', bar__match='def', must=True)
         eq_(sorted(q.should_q), [])
-        eq_(sorted(q.must_q), [('bar__text', 'def'), ('foo__text', 'abc')])
+        eq_(sorted(q.must_q), [('bar__match', 'def'), ('foo__match', 'abc')])
         eq_(sorted(q.must_not_q), [])
 
     def test_q_must_not(self):
-        q = Q(foo__text='abc', bar__text='def', must_not=True)
+        q = Q(foo__match='abc', bar__match='def', must_not=True)
         eq_(sorted(q.should_q), [])
         eq_(sorted(q.must_q), [])
-        eq_(sorted(q.must_not_q), [('bar__text', 'def'), ('foo__text', 'abc')])
+        eq_(sorted(q.must_not_q), [('bar__match', 'def'), ('foo__match', 'abc')])
 
     def test_q_must_should(self):
         with self.assertRaises(InvalidFlagsError):
-            Q(foo__text='abc', must=True, should=True)
+            Q(foo__match='abc', must=True, should=True)
 
     def test_q_basic_add(self):
         """Adding one Q to another Q combines them."""
-        q = Q(foo__text='abc') + Q(bar__text='def')
+        q = Q(foo__match='abc') + Q(bar__match='def')
 
         eq_(sorted(q.should_q), [])
-        eq_(sorted(q.must_q), [('bar__text', 'def'), ('foo__text', 'abc')])
+        eq_(sorted(q.must_q), [('bar__match', 'def'), ('foo__match', 'abc')])
         eq_(sorted(q.must_not_q), [])
 
     def test_q_order(self):
-        q1 = Q(foo__text='abc') + Q(bar__text='def')
+        q1 = Q(foo__match='abc') + Q(bar__match='def')
 
-        q2 = Q(bar__text='def') + Q(foo__text='abc')
+        q2 = Q(bar__match='def') + Q(foo__match='abc')
         eq_(q1, q2)
 
-        q2 = Q(bar__text='def')
-        q2 += Q(foo__text='abc')
+        q2 = Q(bar__match='def')
+        q2 += Q(foo__match='abc')
         eq_(q1, q2)
 
-        q2 = Q(foo__text='abc')
-        q2 += Q(bar__text='def')
+        q2 = Q(foo__match='abc')
+        q2 += Q(bar__match='def')
         eq_(q1, q2)
 
     def test_q_mixed(self):
-        q1 = Q(foo__text='should', bar__text='should', should=True)
+        q1 = Q(foo__match='should', bar__match='should', should=True)
         q2 = Q(baz='must')
         q3 = Q(bat='must_not', must_not=True)
         q4 = Q(ban='must', must=True)
@@ -175,7 +175,7 @@ class QTest(TestCase):
         q_all = q1 + q2 + q3 + q4 + q5
 
         eq_(sorted(q_all.should_q),
-            [('bar__text', 'should'), ('foo__text', 'should')])
+            [('bar__match', 'should'), ('foo__match', 'should')])
 
         eq_(sorted(q_all.must_q),
             [('bam', 'must'), ('ban', 'must'), ('baz', 'must')])
@@ -274,11 +274,6 @@ class QueryTest(ESTestCase):
         eq_(len(self.get_s().query(height__range=(5, 7))
                             .boost(height__range=100)), 3)
 
-    def test_q_text(self):
-        eq_(len(self.get_s().query(foo__text='car')), 2)
-
-        eq_(len(self.get_s().query(Q(foo__text='car'))), 2)
-
     def test_q_match(self):
         eq_(len(self.get_s().query(foo__match='car')), 2)
 
@@ -286,31 +281,8 @@ class QueryTest(ESTestCase):
 
     def test_q_prefix(self):
         eq_(len(self.get_s().query(foo__prefix='ca')), 2)
-        eq_(len(self.get_s().query(foo__startswith='ca')), 2)
 
         eq_(len(self.get_s().query(Q(foo__prefix='ca'))), 2)
-        eq_(len(self.get_s().query(Q(foo__startswith='ca'))), 2)
-
-    def test_q_text_phrase(self):
-        # Doing a text query for the two words in either order kicks up
-        # two results.
-        eq_(len(self.get_s().query(foo__text='train car')), 2)
-        eq_(len(self.get_s().query(foo__text='car train')), 2)
-
-        eq_(len(self.get_s().query(Q(foo__text='train car'))), 2)
-        eq_(len(self.get_s().query(Q(foo__text='car train'))), 2)
-
-        # Doing a text_phrase query for the two words in the right order
-        # kicks up one result.
-        eq_(len(self.get_s().query(foo__text_phrase='train car')), 1)
-
-        eq_(len(self.get_s().query(Q(foo__text_phrase='train car'))), 1)
-
-        # Doing a text_phrase query for the two words in the wrong order
-        # kicks up no results.
-        eq_(len(self.get_s().query(foo__text_phrase='car train')), 0)
-
-        eq_(len(self.get_s().query(Q(foo__text_phrase='car train'))), 0)
 
     def test_q_match_phrase(self):
         # Doing a match query for the two words in either order kicks up
@@ -334,10 +306,10 @@ class QueryTest(ESTestCase):
         eq_(len(self.get_s().query(Q(foo__match_phrase='car train'))), 0)
 
     def test_q_fuzzy(self):
-        # Mispelled word gets no results with text query.
-        eq_(len(self.get_s().query(foo__text='tran')), 0)
+        # Mispelled word gets no results with match query.
+        eq_(len(self.get_s().query(foo__match='tran')), 0)
 
-        eq_(len(self.get_s().query(Q(foo__text='tran'))), 0)
+        eq_(len(self.get_s().query(Q(foo__match='tran'))), 0)
 
         # Mispelled word gets one result with fuzzy query.
         eq_(len(self.get_s().query(foo__fuzzy='tran')), 1)
@@ -352,7 +324,7 @@ class QueryTest(ESTestCase):
         eq_(len(self.get_s().query(Q(foo__wildcard='tra?n'))), 1)
 
     def test_q_demote(self):
-        s = self.get_s().query(foo__text='car')
+        s = self.get_s().query(foo__match='car')
         scores = [(sr['id'], sr.es_meta.score) for sr in s.values_dict('id')]
 
         s = s.demote(0.5, width__term='5')
@@ -363,7 +335,7 @@ class QueryTest(ESTestCase):
         assert scores[0] != demoted_scores
 
         # Now we do the whole thing again with Qs.
-        s = self.get_s().query(Q(foo__text='car'))
+        s = self.get_s().query(Q(foo__match='car'))
         scores = [(sr['id'], sr.es_meta.score) for sr in s.values_dict('id')]
 
         s = s.demote(0.5, Q(width__term='5'))
@@ -418,8 +390,8 @@ class QueryTest(ESTestCase):
 
     def test_query_raw_overrides_everything(self):
         s = self.get_s().query_raw({'match': {'title': 'example'}})
-        s = s.query(foo__text='foo')
-        s = s.demote(0.5, title__text='bar')
+        s = s.query(foo__match='foo')
+        s = s.demote(0.5, title__match='bar')
         s = s.boost(title=5.0)
 
         eq_(s.build_search(),
@@ -429,7 +401,7 @@ class QueryTest(ESTestCase):
         """Boosted queries shouldn't raise a SearchPhaseExecutionException."""
         q1 = (self.get_s()
                   .boost(foo=4.0)
-                  .query(foo='car', foo__text='car', foo__text_phrase='car'))
+                  .query(foo='car', foo__match='car', foo__match_phrase='car'))
 
         # Make sure the query executes without throwing an exception.
         list(q1)
@@ -440,9 +412,9 @@ class QueryTest(ESTestCase):
                 'query': {
                     'bool': {
                         'must': [
-                            {'text_phrase': {'foo': {'query': 'car', 'boost': 4.0}}},
+                            {'match_phrase': {'foo': {'query': 'car', 'boost': 4.0}}},
                             {'term': {'foo': {'value': 'car', 'boost': 4.0}}},
-                            {'text': {'foo': {'query': 'car', 'boost': 4.0}}}
+                            {'match': {'foo': {'query': 'car', 'boost': 4.0}}}
                         ]
                     }
                 }
@@ -451,7 +423,7 @@ class QueryTest(ESTestCase):
         # Do the same thing with Qs.
         q1 = (self.get_s()
                   .boost(foo=4.0)
-                  .query(Q(foo='car', foo__text='car', foo__text_phrase='car')))
+                  .query(Q(foo='car', foo__match='car', foo__match_phrase='car')))
 
         # Make sure the query executes without throwing an exception.
         list(q1)
@@ -462,9 +434,9 @@ class QueryTest(ESTestCase):
                 'query': {
                     'bool': {
                         'must': [
-                            {'text_phrase': {'foo': {'query': 'car', 'boost': 4.0}}},
+                            {'match_phrase': {'foo': {'query': 'car', 'boost': 4.0}}},
                             {'term': {'foo': {'value': 'car', 'boost': 4.0}}},
-                            {'text': {'foo': {'query': 'car', 'boost': 4.0}}}
+                            {'match': {'foo': {'query': 'car', 'boost': 4.0}}}
                         ]
                     }
                 }
@@ -1422,7 +1394,7 @@ class HighlightTest(ESTestCase):
         call, not just the ones mentioned in the query or in ``values_dict()``.
 
         """
-        s = (self.get_s().query(foo__text='car')
+        s = (self.get_s().query(foo__match='car')
                          .filter(id=5)
                          .highlight('tag', 'foo'))
         result = list(s)[0]
@@ -1430,7 +1402,7 @@ class HighlightTest(ESTestCase):
         # excerpts.
         eq_(result.es_meta.highlight['foo'], [u'train <em>car</em>'])
 
-        s = (self.get_s().query(foo__text='car')
+        s = (self.get_s().query(foo__match='car')
                          .filter(id=5)
                          .highlight('tag', 'foo')
                          .values_dict('tag', 'foo'))
@@ -1446,7 +1418,7 @@ class HighlightTest(ESTestCase):
         call, not just the ones mentioned in the query or in ``values_list()``.
 
         """
-        s = (self.get_s().query(foo__text='car')
+        s = (self.get_s().query(foo__match='car')
                          .filter(id=5)
                          .highlight('tag', 'foo')
                          .values_list('tag', 'foo'))
@@ -1457,7 +1429,7 @@ class HighlightTest(ESTestCase):
 
     def test_highlight_options(self):
         """Make sure highlighting with options works."""
-        s = (self.get_s().query(foo__text='car')
+        s = (self.get_s().query(foo__match='car')
                          .filter(id=5)
                          .highlight('tag', 'foo',
                                     pre_tags=['<b>'],
@@ -1470,7 +1442,7 @@ class HighlightTest(ESTestCase):
     def test_highlight_cumulative(self):
         """Make sure highlighting fields are cumulative and none clears them."""
         # No highlighted fields means no highlights.
-        s = (self.get_s().query(foo__text='car')
+        s = (self.get_s().query(foo__match='car')
                          .filter(id=5)
                          .highlight())
         eq_(list(s)[0].es_meta.highlight, {})
@@ -1546,13 +1518,13 @@ class SuggestionTest(ESTestCase):
         different fields.
 
         """
-        s = (self.get_s().query(name__text='mary')
+        s = (self.get_s().query(name__match='mary')
                          .suggest('mysuggest', 'mary'))
         suggestions = s.suggestions()
         options = [o['text'] for o in suggestions['mysuggest'][0]['options']]
         eq_(options, ['mark', 'mart'])
 
-        s = (self.get_s().query(name__text='mary')
+        s = (self.get_s().query(name__match='mary')
                          .suggest('mysuggest', 'mary', field='name'))
         suggestions = s.suggestions()
         options = [o['text'] for o in suggestions['mysuggest'][0]['options']]

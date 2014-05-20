@@ -38,18 +38,16 @@ QUERY_ACTION_MAP = {
     'in': 'in',
     'term': 'term',
     'terms': 'terms',
-    'startswith': 'prefix',  # Backwards compatability
     'prefix': 'prefix',
-    'text': 'text',
-    'text_phrase': 'text_phrase',
-    'match': 'match',  # ES 0.19.9 renamed text to match
+    'match': 'match',
     'match_phrase': 'match_phrase',
     'wildcard': 'wildcard',
-    'fuzzy': 'fuzzy'}
+    'fuzzy': 'fuzzy'
+}
 
 
-#: List of text/match actions.
-TEXTMATCH_ACTIONS = ['text', 'text_phrase', 'match', 'match_phrase']
+#: List of match actions.
+MATCH_ACTIONS = ['match', 'match_phrase']
 #: List of range actions.
 RANGE_ACTIONS = ['gt', 'gte', 'lt', 'lte']
 
@@ -329,17 +327,17 @@ class Q(object):
     example::
 
         q = Q()
-        q += Q(title__text='shoes')
-        q += Q(summary__text='shoes')
+        q += Q(title__match='shoes')
+        q += Q(summary__match='shoes')
 
     creates a BooleanQuery with two `must` clauses.
 
     Example 2::
 
         q = Q()
-        q += Q(title__text='shoes', should=True)
-        q += Q(summary__text='shoes')
-        q += Q(description__text='shoes', must=True)
+        q += Q(title__match='shoes', should=True)
+        q += Q(summary__match='shoes')
+        q += Q(description__match='shoes', must=True)
 
     creates a BooleanQuery with one `should` clause (title) and two
     `must` clauses (summary and description).
@@ -395,9 +393,9 @@ def _boosted_value(name, action, key, value, boost):
     """Boost a value if we should in _process_queries"""
     if boost is not None:
         # Note: Most queries use 'value' for the key name except
-        # Text/Match queries which use 'query'. So we have to do some
+        # Match queries which use 'query'. So we have to do some
         # switcheroo for that.
-        value_key = 'query' if action in TEXTMATCH_ACTIONS else 'value'
+        value_key = 'query' if action in MATCH_ACTIONS else 'value'
         return {name: {'boost': boost, value_key: value}}
     return {name: value}
 
@@ -708,7 +706,7 @@ class S(PythonMixin):
 
         >>> s = S().query(foo='bar')
         >>> s = S().query(Q(foo='bar'))
-        >>> s = S().query(foo='bar', bat__text='baz')
+        >>> s = S().query(foo='bar', bat__match='baz')
         >>> s = S().query(foo='bar', should=True)
         >>> s = S().query(foo='bar', should=True).query(baz='bat', must=True)
 
@@ -836,8 +834,8 @@ class S(PythonMixin):
         Examples::
 
             q = (S().query(title='taco trucks',
-                           description__text='awesome')
-                    .boost(title=4.0, description__text=2.0))
+                           description__match='awesome')
+                    .boost(title=4.0, description__match=2.0))
 
 
         If the key is a field name, then the boost will apply to all
@@ -870,15 +868,15 @@ class S(PythonMixin):
         For example, if you had::
 
             qs = (S().boost(title=4.0, summary=2.0)
-                     .query(title__text=value,
-                            summary__text=value,
-                            content__text=value,
+                     .query(title__match=value,
+                            summary__match=value,
+                            content__match=value,
                             should=True))
 
 
-        ``title__text`` would be boosted twice as much as
-        ``summary__text`` and ``summary__text`` twice as much as
-        ``content__text``.
+        ``title__match`` would be boosted twice as much as
+        ``summary__match`` and ``summary__match`` twice as much as
+        ``content__match``.
 
         """
         new = self._clone()
@@ -892,10 +890,10 @@ class S(PythonMixin):
         You can demote documents that match query criteria::
 
             q = (S().query(title='trucks')
-                    .demote(0.5, description__text='gross'))
+                    .demote(0.5, description__match='gross'))
 
             q = (S().query(title='trucks')
-                    .demote(0.5, Q(description__text='gross')))
+                    .demote(0.5, Q(description__match='gross')))
 
         This is implemented using the boosting query in
         Elasticsearch. Anything you specify with ``.query()`` goes
@@ -956,7 +954,7 @@ class S(PythonMixin):
 
         For example::
 
-            q = (S().query(title__text='crash', content__text='crash')
+            q = (S().query(title__match='crash', content__match='crash')
                     .highlight('title', 'content'))
 
             for result in q:
@@ -968,7 +966,7 @@ class S(PythonMixin):
 
         For example, this search won't highlight anything::
 
-            q = (S().query(title__text='crash')
+            q = (S().query(title__match='crash')
                     .highlight('title')          # highlights 'title' field
                     .highlight(None))            # clears highlight
 
@@ -1767,7 +1765,7 @@ class SearchResults(object):
 
     Example::
 
-        s = S().query(bio__text='archaeologist')
+        s = S().query(bio__match='archaeologist')
         results = s.execute()
 
         # Shows how long the search took

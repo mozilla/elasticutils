@@ -11,6 +11,11 @@ Version 0.10: In development
 
 **API-breaking changes:**
 
+* Removed ``text`` and ``text_phrase`` queries. They're renamed
+  in Elasticsearch to ``match`` and ``match_phrase``.
+
+* Removed ``startswith`` query. Replace uses of it with ``prefix``.
+
 **Changes:**
 
 * Python 3 support (Python >= 3.3)
