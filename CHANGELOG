@@ -13,6 +13,8 @@ Version 0.10: In development
 
 **Changes:**
 
+* Python 3 support (Python >= 3.3)
+
 
 Version 0.9.1: April 7th, 2014
 ==============================
