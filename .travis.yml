@@ -1,17 +1,22 @@
 language: python
 
-services:
-    - elasticsearch
+notifications:
+    email: false
 
 python:
     - "2.6"
     - "2.7"
     - "3.3"
 
-notifications:
-    email: false
+env:
+    - ESVER=0.90.13
+    - ESVER=1.0.3
 
 install:
+    - scripts/travis/install.sh
+
+before_script:
+    - scripts/travis/setup.sh
     - virtualenv .
     - ./bin/pip install -r requirements/dev.txt
 
