@@ -2,6 +2,7 @@ import copy
 import logging
 from datetime import datetime
 from operator import itemgetter
+
 import six
 from six import string_types
 
@@ -9,6 +10,10 @@ from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk_index
 
 from elasticutils._version import __version__  # noqa
+from elasticutils import monkeypatch
+
+
+monkeypatch.monkeypatch_es()
 
 
 log = logging.getLogger('elasticutils')
