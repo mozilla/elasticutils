@@ -192,7 +192,7 @@ Here's one that uses `Indexable` and handles indexing:
         def extract_document(cls, obj_id, obj=None):
             """Converts this instance into an Elasticsearch document"""
             if obj is None:
-                obj = cls.get_model().get(pk=obj_id)
+                obj = cls.get_model().objects.get(pk=obj_id)
 
             return {
                 'id': obj.id,
