@@ -34,6 +34,8 @@
 
 8. Update PyPI::
 
-       $ python setup.py sdist upload
+       $ rm -rf dist/*
+       $ python setup.py sdist bdist_wheel
+       $ twine upload dist/*
 
 9. Update topic in ``#elasticutils``, blog post, twitter, etc.
