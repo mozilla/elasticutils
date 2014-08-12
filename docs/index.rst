@@ -84,6 +84,7 @@ User's Guide
    mlt
    debugging
    api
+   migrating_0.90_to_1.0
 
 
 Using ElasticUtils with Django
