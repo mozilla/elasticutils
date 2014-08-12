@@ -308,6 +308,7 @@ field action            Elasticsearch query type
 (no action specified)   Term query
 term                    Term query
 terms                   Terms query
+in                      Terms query
 text                    Text query (`DEPRECATED`)
 match                   Match query [1]_
 prefix                  Prefix query [2]_
