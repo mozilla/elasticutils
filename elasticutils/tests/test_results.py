@@ -76,26 +76,45 @@ class TestResultsWithData(ESTestCase):
         searcher = list(self.get_s(FakeMappingType).query(foo='bar'))
         assert isinstance(searcher[0], FakeMappingType)
 
-    def test_values_dict_results(self):
+    def test_values_dict_no_fields(self):
         """With values_dict, return list of dicts."""
         searcher = list(self.get_s().query(foo='bar').values_dict())
         assert isinstance(searcher[0], dict)
 
+    def test_values_dict_results(self):
+        """With values_dict, return list of dicts."""
+        searcher = list(self.get_s()
+                        .query(foo='bar')
+                        .values_dict('foo', 'width'))
+        assert isinstance(searcher[0], dict)
+        eq_(
+            sorted(searcher[0].items()),
+            sorted([(u'foo', [u'bar']), (u'width', [u'2'])])
+        )
+
     def test_values_list_no_fields(self):
-        """Specifying no fields with values_list defaults to ['id']."""
-        searcher = list(self.get_s().query(foo='bar').values_list())
+        """Specifying no fields with values_list returns what's stored."""
+        searcher = list(self.get_s()
+                        .query(foo='bar')
+                        .values_list())
         assert isinstance(searcher[0], tuple)
         # We sort the result and expected result here so that the
         # order is stable and comparable.
         eq_(
-            sorted(searcher[0], key=str),
-            sorted((u'2', u'bar', u'awesome', 1), key=str))
+            sorted(searcher[0]),
+            sorted([[u'1'], [u'elasticutilsmappingtype']])
+        )
 
     def test_values_list_results(self):
         """With values_list fields, returns list of tuples."""
-        searcher = list(self.get_s().query(foo='bar')
-                                    .values_list('foo', 'width'))
+        searcher = list(self.get_s()
+                        .query(foo='bar')
+                        .values_list('foo', 'width'))
         assert isinstance(searcher[0], tuple)
+        eq_(
+            sorted(searcher[0]),
+            sorted(([u'2'], [u'bar']))
+        )
 
     def test_default_results_form_has_metadata(self):
         """Test default results form has metadata."""
@@ -135,14 +154,126 @@ class TestResultsWithData(ESTestCase):
         eq_(S().query(fld1=2)
                .values_dict()
                .build_search(),
-            {"query": {"term": {"fld1": 2}}})
+            {"query": {"term": {"fld1": 2}}, 'fields': ['*']})
 
     def test_values_list_no_args(self):
-        """Calling values() with no args fetches only id."""
+        """Calling values_list() with no args fetches all fields."""
         eq_(S().query(fld1=2)
                .values_list()
                .build_search(),
-            {'query': {"term": {"fld1": 2}}})
+            {'query': {"term": {"fld1": 2}}, 'fields': ['*']})
+
+
+class TestResultsWithStoredFields(ESTestCase):
+    def test_values_list_no_args_no_stored_fields(self):
+        # If there are no fields specified in the values_list() call
+        # and no stored fields for that document, then we pass in
+        # fields=['*'] and ES returns nothing, so we return the _id
+        # and _type.
+        self.cleanup_index()
+        self.create_index(
+            mappings={
+                self.mapping_type_name: {
+                    'id': {'type': 'integer'},
+                    'name': {'type': 'string'},
+                    'weight': {'type': 'integer'},
+                }
+            }
+        )
+        data = [
+            {'id': 1, 'name': 'bob', 'weight': 40}
+        ]
+
+        self.index_data(data)
+        self.refresh()
+
+        results = list(self.get_s().values_list())
+        eq_(sorted(results[0], key=repr),
+            # Note: This is the _id of the document--not the "id" in
+            # the document.
+            sorted(([u'1'], [u'elasticutilsmappingtype']), key=repr)
+        )
+
+    def test_values_list_no_args_with_stored_fields(self):
+        # If there are no fields specified, then ES returns the fields
+        # marked as stored.
+        self.cleanup_index()
+        self.create_index(
+            mappings={
+                self.mapping_type_name: {
+                    'properties': {
+                        'id': {'type': 'integer', 'store': True},
+                        'name': {'type': 'string', 'store': True},
+                        'weight': {'type': 'integer'},
+                    }
+                }
+            }
+        )
+
+        data = [
+            {'id': 1, 'name': 'bob', 'weight': 40}
+        ]
+
+        self.index_data(data)
+        self.refresh()
+
+        results = list(self.get_s().values_list())
+        eq_(sorted(results[0], key=repr),
+            sorted(([1], [u'bob']), key=repr)
+        )
+
+    def test_values_dict_no_args_no_stored_fields(self):
+        self.cleanup_index()
+        self.create_index(
+            mappings={
+                self.mapping_type_name: {
+                    'id': {'type': 'integer'},
+                    'name': {'type': 'string'},
+                    'weight': {'type': 'integer'},
+                }
+            }
+        )
+        data = [
+            {'id': 1, 'name': 'bob', 'weight': 40}
+        ]
+
+        self.index_data(data)
+        self.refresh()
+
+        results = list(self.get_s().values_dict())
+        eq_(sorted(results[0].items()),
+            # Note: This is the _id of the document--not the "id" in
+            # the document.
+            sorted([('_id', [u'1']), ('_type', [u'elasticutilsmappingtype'])])
+        )
+
+    def test_values_dict_no_args_with_stored_fields(self):
+        # If there are no fields specified, then ES returns the fields
+        # marked as stored.
+        self.cleanup_index()
+        self.create_index(
+            mappings={
+                self.mapping_type_name: {
+                    'properties': {
+                        'id': {'type': 'integer', 'store': True},
+                        'name': {'type': 'string', 'store': True},
+                        'weight': {'type': 'integer'},
+                    }
+                }
+            }
+        )
+
+        data = [
+            {'id': 1, 'name': 'bob', 'weight': 40}
+        ]
+
+        self.index_data(data)
+        self.refresh()
+
+        results = list(self.get_s().values_dict())
+        eq_(sorted(results[0].items()),
+            sorted([(u'id', [1]), (u'name', [u'bob'])])
+        )
 
 
 class TestFakeMappingType(ESTestCase):
@@ -175,13 +306,11 @@ class TestResultsWithDates(ESTestCase):
         """Datetime strings in ES results get converted to Python datetimes"""
         self.cleanup_index()
         self.create_index(
-            settings={
-                'mappings': {
-                    self.mapping_type_name: {
-                        'id': {'type': 'integer'},
-                        'bday': {'type': 'date', 'format': 'YYYY-mm-dd'},
-                        'btime': {'type': 'date'}
-                    }
+            mappings={
+                self.mapping_type_name: {
+                    'id': {'type': 'integer'},
+                    'bday': {'type': 'date', 'format': 'YYYY-mm-dd'},
+                    'btime': {'type': 'date'}
                 }
             }
         )
@@ -193,36 +322,34 @@ class TestResultsWithDates(ESTestCase):
         self.index_data(data)
         self.refresh()
 
-        results = list(self.get_s().values_dict())
+        results = list(self.get_s().values_dict('id', 'bday', 'btime'))
         eq_(results,
-            [{u'bday': datetime(2012, 12, 1, 0, 0),
-              u'btime': datetime(2012, 12, 1, 12, 0),
-              u'id': 1}]
+            [{u'bday': [datetime(2012, 12, 1, 0, 0)],
+              u'btime': [datetime(2012, 12, 1, 12, 0)],
+              u'id': [1]}]
         )
 
     def test_dates_lookalikes(self):
         """Datetime strings in ES results get converted to Python datetimes"""
         self.cleanup_index()
         self.create_index(
-            settings={
-                'mappings': {
-                    self.mapping_type_name: {
-                        'id': {'type': 'integer'},
-                        'bday': {'type': 'string', 'analyzer': 'keyword'}
-                    }
+            mappings={
+                self.mapping_type_name: {
+                    'id': {'type': 'integer'},
+                    'bday': {'type': 'string', 'analyzer': 'keyword'}
                 }
             }
         )
         data = [
-            {'id': 1, 'bday': 'xxxx-xx-xxTxx:xx:xx'}
+            {'id': [1], 'bday': ['xxxx-xx-xxTxx:xx:xx']}
         ]
 
         self.index_data(data)
         self.refresh()
 
-        results = list(self.get_s().values_dict())
+        results = list(self.get_s().values_dict('id', 'bday'))
         eq_(results,
-            [{u'id': 1, u'bday': u'xxxx-xx-xxTxx:xx:xx'}]
+            [{u'id': [1], u'bday': [u'xxxx-xx-xxTxx:xx:xx']}]
         )
 
 

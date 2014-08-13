@@ -11,6 +11,34 @@ Version 0.10: In development
 
 **API-breaking changes:**
 
+* **big ``.values_list()`` and ``.values_dict()`` changes**
+
+  ``.values_list()`` and ``.values_dict()`` will now **always** specify
+  the Elasticsearch ``fields`` property.
+
+  If you call these two functions with no arguments (i.e. you specify
+  no fields), they will send ``fields=*`` to Elasticsearch. It will
+  send any fields marked as stored in the document mapping. If you
+  have no fields marked as stored, then it will return the id and type
+  of the result.
+
+  If you call these two functions with arguments (i.e. you specify
+  fields), then it'll return those fields---same as before.
+
+  However, they now return all values as lists. For example::
+
+      >>> S().values_list()
+      [([100], ['bob'], [40]), ...]
+
+      >>> S().values_list('id')
+      [([100],), ([101],), ...]
+
+      >>> S().values_dict()
+      [({'id': [100], 'name': ['bob'], 'weight': [40]}), ...]
+
+      >>> S().values_dict('id', 'name')
+      [({'id': [100], 'name': ['bob']}), ...]
+
 * Removed ``text`` and ``text_phrase`` queries. They're renamed
   in Elasticsearch to ``match`` and ``match_phrase``.
 

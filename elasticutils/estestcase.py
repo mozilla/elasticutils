@@ -53,7 +53,7 @@ class ESTestCase(TestCase):
         # Note: TestCase has no setup_class, so we don't call super()
         # here.
         cls.cleanup_index()
-        cls.create_index(settings={'mappings': cls.mapping})
+        cls.create_index(mappings=cls.mapping)
         if cls.data:
             cls.index_data(cls.data)
             cls.refresh()
@@ -98,18 +98,16 @@ class ESTestCase(TestCase):
                  .doctypes(cls.mapping_type_name))
 
     @classmethod
-    def create_index(cls, settings=None):
+    def create_index(cls, **kwargs):
         """Creates an index with specified settings
 
         Uses ``cls.index_name`` as the index to create.
 
-        :arg settings: Any additional settings to use to create the
-            index.
+        :arg kwargs: Any additional args to put in the body like
+            "settings", "mappings", etc.
 
         """
-        body = {}
-        if settings:
-            body['settings'] = settings
+        body = kwargs if kwargs else {}
         cls.get_es().indices.create(index=cls.index_name, body=body)
 
     @classmethod

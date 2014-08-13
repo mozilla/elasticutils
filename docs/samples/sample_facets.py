@@ -98,7 +98,7 @@ print s.facet_counts()
 #     }}
 
 # Let's do a query for 'cookie' and do a facet count.
-print s.query(title__text='cookie').facet_counts()
+print s.query(title__match='cookie').facet_counts()
 # Pretty-printed output:
 # {u'product': {
 #     u'_type': u'terms',

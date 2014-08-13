@@ -79,7 +79,7 @@ print basic_s.count()
 
 # Print articles with 'cookie' in the title.
 print [item['title']
-       for item in basic_s.query(title__text='cookie')]
+       for item in basic_s.query(title__match='cookie')]
 # Prints:
 # [u'Deleting cookies', u'What is a cookie?',
 #  u'Websites say cookies are blocked - Unblock them']
@@ -87,7 +87,7 @@ print [item['title']
 # Print articles with 'cookie' in the title that are related to
 # websites.
 print [item['title']
-       for item in basic_s.query(title__text='cookie')
+       for item in basic_s.query(title__match='cookie')
                           .filter(topics='websites')]
 # Prints:
 # [u'Websites say cookies are blocked - Unblock them']
@@ -100,7 +100,7 @@ print [item['title']
 
 # Do a query and use the highlighter to denote the matching text.
 print [(item['title'], item.es_meta.highlight['title'])
-       for item in basic_s.query(title__text='cookie').highlight('title')]
+       for item in basic_s.query(title__match='cookie').highlight('title')]
 # Prints:
 # [
 #    (u'Deleting cookies', [u'Deleting <em>cookies</em>']),

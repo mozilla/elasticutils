@@ -576,7 +576,7 @@ class QueryTest(ESTestCase):
         # Test caching of empty results
         try:
             self.teardown_class()
-            self.create_index(settings={'mappings': self.mapping})
+            self.create_index(mappings=self.mapping)
             self.refresh()
 
             s = self.get_s()
@@ -1499,6 +1499,64 @@ class SearchTypeTest(ESTestCase):
         # query_and_fetch combines results from every shard, therefore
         # limiting the query to 1 result will still produce two
         eq_(len(s[:1]), 2)
+
+
+class ValuesTest(ESTestCase):
+    def test_values_list_chaining(self):
+        s = self.get_s()
+        s = s.values_list()
+        eqish_(s.build_search(),
+               {
+                   'fields': ['*']
+               })
+
+        s = s.values_list('id')
+        eqish_(s.build_search(),
+               {
+                   'fields': ['id']
+               })
+
+        # Add new fields
+        s = s.values_list('name', 'title')
+        eqish_(s.build_search(),
+               {
+                   'fields': ['id', 'name', 'title']
+               })
+
+        # Fields don't show up more than once
+        s = s.values_list('id')
+        eqish_(s.build_search(),
+               {
+                   'fields': ['id', 'name', 'title']
+               })
+
+    def test_values_dict_chaining(self):
+        s = self.get_s()
+        s = s.values_dict()
+        eqish_(s.build_search(),
+               {
+                   'fields': ['*']
+               })
+
+        s = s.values_dict('id')
+        eqish_(s.build_search(),
+               {
+                   'fields': ['id']
+               })
+
+        # Add new fields
+        s = s.values_dict('name', 'title')
+        eqish_(s.build_search(),
+               {
+                   'fields': ['id', 'name', 'title']
+               })
+
+        # Fields don't show up more than once
+        s = s.values_dict('id')
+        eqish_(s.build_search(),
+               {
+                   'fields': ['id', 'name', 'title']
+               })
 
 
 class SuggestionTest(ESTestCase):

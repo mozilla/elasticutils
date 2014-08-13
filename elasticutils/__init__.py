@@ -1,7 +1,6 @@
 import copy
 import logging
 from datetime import datetime
-from operator import itemgetter
 
 import six
 from six import string_types
@@ -601,53 +600,61 @@ class S(PythonMixin):
         return self._clone(next_step=('explain', value))
 
     def values_list(self, *fields):
-        """
-        Return a new S instance that returns ListSearchResults.
+        """Return a new S instance that returns ListSearchResults.
 
         :arg fields: the list of fields to have in the results.
 
-            With no arguments, returns a list of tuples of all the
-            data for that document.
+            With no arguments, passes ``fields=*`` and returns values
+            for any fields you have marked as "stored = True" for that
+            mapping.
 
-            With arguments, returns a list of tuples where the fields
-            in the tuple are in the order specified.
+            With arguments, passes those field arguments via
+            ``fields`` and returns a list of tuples with values in the
+            order specified.
 
-        For example:
+        For example (assume id, name and age are stored fields):
 
         >>> list(S().values_list())
-        [(1, 'fred', 40), (2, 'brian', 30), (3, 'james', 45)]
+        [([1], ['fred'], [40]), ([2], ['brian'], [30]), ...]
         >>> list(S().values_list('id', 'name'))
-        [(1, 'fred'), (2, 'brian'), (3, 'james')]
+        [([1], ['fred']), ([2], ['brian']), ([3], ['james'])]
         >>> list(S().values_list('name', 'id'))
-        [('fred', 1), ('brian', 2), ('james', 3)]
+        [(['fred'], [1]), (['brian'], [2]), (['james'], [3])]
 
         .. Note::
 
-           If you don't specify fields, the data comes back in an
-           arbitrary order. It's probably best to specify fields or
-           use ``values_dict``.
+            If you do not specify any fields and you have no fields
+            marked as stored, then you will get back the ``_id`` and
+            ``_type`` of each result and that's it.
 
         """
         return self._clone(next_step=('values_list', fields))
 
     def values_dict(self, *fields):
-        """
-        Return a new S instance that returns DictSearchResults.
+        """Return a new S instance that returns DictSearchResults.
 
         :arg fields: the list of fields to have in the results.
 
-            With no arguments, this returns a list of dicts with all
-            the fields.
+            With no arguments, passes ``fields=*`` and returns values
+            for any fields you have marked as "stored = True" for that
+            mapping.
 
-            With arguments, it returns a list of dicts with the
-            specified fields.
+            With arguments, passes those field arguments via
+            ``fields`` and returns a list of dicts with the specified
+            fields.
 
-        For example:
+        For example (assuming id, name and age are stored):
 
         >>> list(S().values_dict())
-        [{'id': 1, 'name': 'fred', 'age': 40}, ...]
+        [{'id': [1], 'name': ['fred'], 'age': [40]}, ...]
         >>> list(S().values_dict('id', 'name'))
-        [{'id': 1, 'name': 'fred'}, ...]
+        [{'id': [1], 'name': ['fred']}, ...]
+
+        .. Note::
+
+            If you do not specify any fields and you have no fields
+            marked as stored, then you will get back the ``_id`` and
+            ``_type`` of each result and that's it.
 
         """
         return self._clone(next_step=('values_dict', fields))
@@ -1173,10 +1180,10 @@ class S(PythonMixin):
             elif pq:
                 qs['query'] = pq
 
-        if as_list and list_fields:
-            fields = qs['fields'] = list(list_fields)
-        elif as_dict and dict_fields:
-            fields = qs['fields'] = list(dict_fields)
+        if as_list:
+            fields = qs['fields'] = list(list_fields) if list_fields else ['*']
+        elif as_dict:
+            fields = qs['fields'] = list(dict_fields) if dict_fields else ['*']
         else:
             fields = set()
 
@@ -1816,10 +1823,29 @@ class DictSearchResults(SearchResults):
     dict.
     """
     def set_objects(self, results):
-        key = 'fields' if self.fields else '_source'
-        self.objects = [decorate_with_metadata(DictResult(r[key]), r)
+        def listify(d):
+            return dict([(key, val if isinstance(val, list) else [val])
+                         for key, val in d.items()])
+
+        if results:
+            if 'fields' in results[0]:
+                objs = [(r['fields'], r) for r in results]
+
+            elif '_source' in results[0]:
+                objs = [(r['_source'], r) for r in results]
+
+            else:
+                # No fields and no source, so we just return _id and
+                # _type.
+                objs = [({'_id': r['_id'], '_type': r['_type']}, r)
                         for r in results]
 
+        else:
+            objs = []
+
+        # Decorate with metadata and listify values
+        self.objects = [decorate_with_metadata(DictResult(listify(obj)), r)
+                        for obj, r in objs]
 
 class ListSearchResults(SearchResults):
     """
@@ -1827,19 +1853,26 @@ class ListSearchResults(SearchResults):
     tuple.
     """
     def set_objects(self, results):
-        if self.fields:
-            getter = itemgetter(*self.fields)
-            objs = [(getter(r['fields']), r) for r in results]
+        def listify(values):
+            return [(val if isinstance(val, list) else [val])
+                    for val in values]
 
-            # itemgetter returns an item--not a tuple of one item--if
-            # there is only one thing in self.fields. Since we want
-            # this to always return a list of tuples, we need to fix
-            # that case here.
-            if len(self.fields) == 1:
-                objs = [((obj,), r) for obj, r in objs]
+        if results:
+            if 'fields' in results[0]:
+                objs = [(r['fields'].values(), r) for r in results]
+
+            elif '_source' in results[0]:
+                objs = [(r['_source'].values(), r) for r in results]
+
+            else:
+                # No fields and no source, so we just return _id and
+                # _type.
+                objs = [((r['_id'], r['_type']), r) for r in results]
         else:
-            objs = [(r['_source'].values(), r) for r in results]
-        self.objects = [decorate_with_metadata(TupleResult(obj), r)
+            objs = []
+
+        # Decorate with metadata and listify values
+        self.objects = [decorate_with_metadata(TupleResult(listify(obj)), r)
                         for obj, r in objs]
 
 
