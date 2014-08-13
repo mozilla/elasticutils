@@ -1241,10 +1241,10 @@ class S(PythonMixin):
                     continue
 
             elif isinstance(f, dict):
-                if six.PY2:
-                    key = f.keys()[0]
-                else:
+                if six.PY3:
                     key = list(f.keys())[0]
+                else:
+                    key = f.keys()[0]
                 val = f[key]
                 key = key.strip('_')
 

@@ -449,11 +449,11 @@ class QueryTest(ESTestCase):
             # with a single key. So we extract that and put it in a
             # dict so we don't have to deal with the order of things
             # in the 'must' list.
-            if six.PY2:
-                out = dict([clause.items()[0]
+            if six.PY3:
+                out = dict([list(clause.items())[0]
                          for clause in search['query']['bool']['must']])
             else:
-                out = dict([list(clause.items())[0]
+                out = dict([clause.items()[0]
                          for clause in search['query']['bool']['must']])
             return out
 
