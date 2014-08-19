@@ -1,7 +1,12 @@
 -e .
 
 -r django.txt
+
+# Tests and docs
 nose
 Sphinx
 tox
-six
+
+# For releases
+twine
+wheel
