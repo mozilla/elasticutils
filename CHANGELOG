@@ -9,6 +9,20 @@ What's new in ElasticUtils
 Version 0.10: In development
 ============================
 
+.. Note::
+
+   This version supports Elasticsearch 0.90, 1.0 and 1.1. It does not
+   support versions earlier than 0.90 or later than 1.1.
+
+   ElasticUtils 0.10 does not work with elasticsearch-py > 0.4.5.
+
+   This is a bridging release to help people migrate from Elasticsearch
+   <= 0.90 to Elasticsearch >= 1.0.
+
+   The next version of ElasticUtils will not support versions of
+   Elasticsearch < 1.0.
+
+
 **API-breaking changes:**
 
 * **big ``.values_list()`` and ``.values_dict()`` changes**
@@ -48,6 +62,8 @@ Version 0.10: In development
 
 * Python 3 support (Python >= 3.3)
 
+* Supports Elasticsearch 0.90, 1.0 and 1.1
+
 
 Version 0.9.1: April 7th, 2014
 ==============================
@@ -64,11 +80,11 @@ Version 0.9: April 3rd, 2014
 
    This is a *big* change. We switched from pyelasticsearch to
    elasticsearch-py. The Elasticsearch object you get back from
-   ``get_es`` is pretty different. When you upgrade to v0.9, you'll
-   probably need to rewrite code.
+   ``get_es`` is pretty different. When you upgrade to ElasticUtils
+   v0.9, you'll probably need to rewrite code.
 
    If this terrifies you, read through these notes carefully and/or
-   stay with v0.8.
+   stay with ElasticUtils v0.8.
 
 
 .. Note::
