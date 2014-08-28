@@ -841,6 +841,18 @@ class FilterTest(ESTestCase):
     def test_filter_in(self):
         eq_(len(self.get_s().filter(foo__in=['car', 'bar'])), 3)
 
+    def test_filter_distance(self):
+        s = self.get_s().filter(F(location__distance=('5km', 45, 10)))
+
+        eqish_(s.build_search(), {
+            'filter': {
+                'geo_distance': {
+                    'distance': '5km',
+                    'location': [10, 45]
+                }
+            }
+        })
+
     def test_filter_prefix(self):
         eq_(len(self.get_s().filter(foo__prefix='c')), 3)
 

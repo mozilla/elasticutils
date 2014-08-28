@@ -1300,6 +1300,16 @@ class S(PythonMixin):
                     lower, upper = val
                     rv.append({'range': {key: {'gte': lower, 'lte': upper}}})
 
+                elif field_action == 'distance':
+                    distance, latitude, longitude = val
+
+                    rv.append({
+                        'geo_distance': {
+                            'distance': distance,
+                            key: [longitude, latitude]
+                        }
+                    })
+
                 else:
                     raise InvalidFieldActionError(
                         '%s is not a valid field action' % field_action)
