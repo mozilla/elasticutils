@@ -337,7 +337,7 @@ distance                Geo distance query [5]_
        the range at once. The range is inclusive on both sides and accepts
        a tuple with the lower value first and upper value second.
 
-.. [4] The ``distance`` field need accepts a tuple with distance, latitude and longitude
+.. [5] The ``distance`` field need accepts a tuple with distance, latitude and longitude
        where distance is a string like 5km.
 
 
