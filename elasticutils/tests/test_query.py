@@ -940,6 +940,45 @@ class FilterTest(ESTestCase):
             {'filter': {'term': {'tag': 'awesome'}}})
 
 
+class GeoFilterTest(ESTestCase):
+    mapping = {
+        ESTestCase.mapping_type_name: {
+            'properties': {
+                'id': {'type': 'integer'},
+                'foo': {'type': 'string'},
+                'tag': {'type': 'string'},
+                'location': {'type': 'geo_point', 'store': True},
+                'width': {'type': 'string', 'null_value': True}
+                }
+            }
+        }
+
+    data = [
+        {'id': 1, 'location': [14.766654999999998, 40.9168853], 'foo': 'bar', 'tag': 'awesome', 'width': '2'},
+        {'id': 2, 'location': [14.7924042, 40.9275213], 'foo': 'bart', 'tag': 'boring', 'width': '7'},
+        {'id': 3, 'location': [14.8167801, 40.9174042], 'foo': 'car', 'tag': 'awesome', 'width': '5'},
+        {'id': 4, 'location': [14.6578217, 40.872507], 'foo': 'duck', 'tag': 'boat', 'width': '11'},
+        {'id': 5, 'location': [14.9530792, 40.9804164], 'foo': 'car', 'tag': 'awesome', 'width': '7'},
+        {'id': 6, 'location': [14.790612099999978, 40.914388], 'foo': 'caboose', 'tag': 'end', 'width': None}
+    ]
+
+    def test_filter_distance(self):
+        coords = [14.790612099999978, 40.914388]
+
+        s = self.get_s().filter(F(location__distance=('5km', coords[1], coords[0])))
+
+        eqish_(s.build_search(), {
+            'filter': {
+                'geo_distance': {
+                    'distance': '5km',
+                    'location': [14.790612099999978, 40.914388]
+                }
+            }
+        })
+
+        eq_(len(s), 4)
+
+
 class FacetTest(ESTestCase):
     def setUp(self):
         super(FacetTest, self).setUp()
