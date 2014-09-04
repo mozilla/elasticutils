@@ -319,6 +319,7 @@ wildcard                Wildcard query
 text_phrase             Text phrase query (`DEPRECATED`)
 match_phrase            Match phrase query [1]_
 query_string            Querystring query [3]_
+distance                Geo distance query [5]_
 ======================  ================================
 
 
@@ -335,6 +336,9 @@ query_string            Querystring query [3]_
 .. [4] The ``range`` field action is a shortcut for defining both sides of
        the range at once. The range is inclusive on both sides and accepts
        a tuple with the lower value first and upper value second.
+
+.. [5] The ``distance`` field need accepts a tuple with distance, latitude and longitude
+       where distance is a string like 5km.
 
 
 .. seealso::
@@ -368,6 +372,9 @@ query_string            Querystring query [3]_
 
    http://www.elasticsearch.org/guide/reference/query-dsl/query-string-query.html
      Elasticsearch docs on query_string queries
+
+   http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-geo-distance-filter.html
+     Elasticsearch docs on geo_distance queries
 
 
 Advanced queries: ``Q`` and ``query_raw``
