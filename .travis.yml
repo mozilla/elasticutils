@@ -2,15 +2,23 @@ language: python
 
 notifications:
     email: false
+    irc:
+        channels:
+            - "irc.mozilla.org#elasticutils"
+        on_success: always
+        on_failure: always
 
 python:
     - "2.6"
     - "2.7"
     - "3.3"
+    - "3.4"
 
 env:
     - ESVER=0.90.13
     - ESVER=1.0.3
+    - ESVER=1.1.2
+    - ESVER=1.2.4
 
 install:
     - scripts/travis/install.sh
