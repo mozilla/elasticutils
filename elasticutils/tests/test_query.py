@@ -1516,11 +1516,9 @@ class SearchTypeTest(ESTestCase):
                 'shard': {'type': 'integer'},
                 'text': {'type': 'string'},
             },
-            'order': {
-                '_routing': {
-                    'required': True,
-                    'path': 'shard',
-                },
+            '_routing': {
+                'required': True,
+                'path': 'shard',
             },
         }
     }

@@ -174,9 +174,11 @@ class TestResultsWithStoredFields(ESTestCase):
         self.create_index(
             mappings={
                 self.mapping_type_name: {
-                    'id': {'type': 'integer'},
-                    'name': {'type': 'string'},
-                    'weight': {'type': 'integer'},
+                    'properties': {
+                        'id': {'type': 'integer'},
+                        'name': {'type': 'string'},
+                        'weight': {'type': 'integer'},
+                    }
                 }
             }
         )
@@ -227,9 +229,11 @@ class TestResultsWithStoredFields(ESTestCase):
         self.create_index(
             mappings={
                 self.mapping_type_name: {
-                    'id': {'type': 'integer'},
-                    'name': {'type': 'string'},
-                    'weight': {'type': 'integer'},
+                    'properties': {
+                        'id': {'type': 'integer'},
+                        'name': {'type': 'string'},
+                        'weight': {'type': 'integer'},
+                    }
                 }
             }
         )
@@ -308,9 +312,11 @@ class TestResultsWithDates(ESTestCase):
         self.create_index(
             mappings={
                 self.mapping_type_name: {
-                    'id': {'type': 'integer'},
-                    'bday': {'type': 'date', 'format': 'YYYY-mm-dd'},
-                    'btime': {'type': 'date'}
+                    'properties': {
+                        'id': {'type': 'integer'},
+                        'bday': {'type': 'date', 'format': 'YYYY-mm-dd'},
+                        'btime': {'type': 'date'}
+                    }
                 }
             }
         )
@@ -335,8 +341,10 @@ class TestResultsWithDates(ESTestCase):
         self.create_index(
             mappings={
                 self.mapping_type_name: {
-                    'id': {'type': 'integer'},
-                    'bday': {'type': 'string', 'analyzer': 'keyword'}
+                    'properties': {
+                        'id': {'type': 'integer'},
+                        'bday': {'type': 'string', 'analyzer': 'keyword'}
+                    }
                 }
             }
         )

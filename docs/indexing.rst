@@ -127,11 +127,13 @@ You can also define mappings when you create the index:
         body={
             'mappings': {
                 'blog-entry-type': {
-                    'id': {'type': 'integer'},
-                    'title': {'type': 'string'},
-                    'content': {'type': 'string'},
-                    'tags': {'type': 'string'},
-                    'created': {'type': 'date'}
+                    'properties': {
+                        'id': {'type': 'integer'},
+                        'title': {'type': 'string'},
+                        'content': {'type': 'string'},
+                        'tags': {'type': 'string'},
+                        'created': {'type': 'date'}
+                    }
                 }
             }
         }
