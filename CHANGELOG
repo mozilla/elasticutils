@@ -20,6 +20,28 @@ Version 0.11: In development
 **Changes:**
 
 
+Version 0.10.1: In development
+==============================
+
+.. Note::
+
+   This supports Elasticsearch 0.90, 1.0, 1.1 and 1.2. It doesn't
+   support versions earlier than 0.90 or later than 1.2.
+
+   ElasticUtils 0.10 does not work with elasticsearch-py > 0.4.5.
+
+   This is a bridging release to help people migrate from Elasticsearch
+   <= 0.90 to Elasticsearch >= 1.0.
+
+   The next version of ElasticUtils will not support versions of
+   Elasticsearch < 1.0.
+
+
+**Changes:**
+
+* Fixed tests to support Elasticsearch 1.2.
+
+
 Version 0.10: August 19th, 2014
 ===============================
 
