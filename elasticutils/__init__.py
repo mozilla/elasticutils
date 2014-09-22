@@ -2070,6 +2070,11 @@ class MappingType(object):
             # subclasses.
             return self.get_object()
 
+        if name == '_results_dict':
+            # Prevent infinite recursion when unpickling a
+            # mapping type instance.
+            raise AttributeError(name)
+
         # If that doesn't exist, then check the results_dict.
         if name in self._results_dict:
             return self._results_dict[name]
