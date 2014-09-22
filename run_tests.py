@@ -14,6 +14,9 @@ import django
 os.environ.update({'DJANGO_SETTINGS_MODULE': 'test_settings'})
 sys.path.insert(0, ROOT)
 
+if django.VERSION >= (1, 7, 0):
+    django.setup()
+
 # This can't be imported until after we've fiddled with the
 # environment.
 from django.test.utils import setup_test_environment
