@@ -37,9 +37,21 @@ Version 0.10.1: In development
    Elasticsearch < 1.0.
 
 
+**API-breaking changes:**
+
+* **requires elasticsearch-py > 0.4.5**
+
 **Changes:**
 
-* Fixed tests to support Elasticsearch 1.2.
+* Add distance filter
+
+* Fix tests to work with Elasticsearch 1.2
+
+* Invert monkeypatch for bulk indexing
+
+* Fix infinite recursion when pickling MappingType instances
+
+* Invert monkeypatch--ElasticUtils now requires elasticsearch-py > 0.4.5
 
 
 Version 0.10: August 19th, 2014
