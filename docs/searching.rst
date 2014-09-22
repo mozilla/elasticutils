@@ -535,12 +535,12 @@ field action         elasticsearch filter
 ===================  ====================
 in                   Terms filter
 gt, gte, lt, lte     Range filter
-range                Range filter [5]_
+range                Range filter [6]_
 prefix, startswith   Prefix filter
 (no action)          Term filter
 ===================  ====================
 
-.. [5] The ``range`` field action is a shortcut for defining both sides of
+.. [6] The ``range`` field action is a shortcut for defining both sides of
        the range at once. The range is inclusive on both sides and accepts
        a tuple with the lower value first and upper value second.
 

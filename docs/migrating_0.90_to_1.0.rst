@@ -1,6 +1,6 @@
 
 ============================================================
- Migrating from Elasticsearch 0.90 to 1.0 with ElasticUtils
+ Migrating from Elasticsearch 0.90 to 1.x with ElasticUtils
 ============================================================
 
 .. Note::
@@ -12,42 +12,46 @@ Summary
 =======
 
 There are a bunch of API-breaking changes between Elasticsearch 0.90
-and 1.0. Because of this, it's really tricky to get over this hump
+and 1.x. Because of this, it's really tricky to get over this hump
 without having downtime.
 
 This document covers a high-level walk through for upgrading from
-Elasticsearch 0.90 to 1.0 and the steps you should take to reduce
+Elasticsearch 0.90 to 1.x and the steps you should take to reduce
 your downtime.
+
+.. Note::
+
+   "1.x" covers 1.0, 1.1 and 1.2.
 
 
 Steps
 =====
 
+Each of these steps should result in a working system. Do them one at
+a time and test everything in between.
+
 1. Upgrade to ElasticUtils 0.9.1
 
-   This includes the elasticsearch-py library version 0.4.5--don't use
-   a later version!
+   You must use elasticsearch-py version 0.4.5--don't use a later version!
 
-2. Upgrade your cluster to Elasticsearch 0.90.13
+2. Upgrade your Elasticsearch cluster to version 0.90.13
 
-3. Upgrade to ElasticUtils 0.10
+3. Upgrade to ElasticUtils 0.10.1
 
-   Continue using elasticsearch-py 0.4.5.
+   You will need to update elasticsearch-py past 0.4.5. The latest version
+   should work fine.
 
 4. Make any changes to your code so that it works with both Elasticsearch
-   0.90 and 1.0
+   0.90 and 1.x
 
    There are some tricky things here, see the :ref:`tricky-things` section.
 
-
-5. Upgrade to Elasticsearch 1.0.3
-
-6. (Not implemented, yet) Upgrade to ElasticUtils 0.11
-
-   This will use a more recent version of elasticsearch-py to be determined.
+5. Upgrade to Elasticsearch 1.x
 
 
-At that point, you should be fine.
+At that point, you should be using a recent version of the
+elasticsearch-py library and a recent version of Elasticsearch and
+should be all set.
 
 
 Resources
@@ -77,9 +81,9 @@ Changes with ``.values_dict()`` and ``.values_list()``
 Explanation
 ~~~~~~~~~~~
 
-In Elasticsearch 1.0+, you get back different shapes of things depending
+In Elasticsearch 1.x, you get back different shapes of things depending
 on whether you specify "fields". To smooth this out and normalize the
-differences between Elasticsearch 0.90 and 1.0, ElasticUtils now **always**
+differences between Elasticsearch 0.90 and 1.x, ElasticUtils now **always**
 passes in ``fields`` property when you use
 :py:meth:`elasticutils.S.values_list` and
 :py:meth:`elasticutils.S.values_dict`.
