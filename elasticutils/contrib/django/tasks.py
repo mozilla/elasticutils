@@ -57,7 +57,7 @@ def index_objects(mapping_type, ids, chunk_size=100, es=None, index=None):
         for obj in model.objects.filter(id__in=id_list):
             try:
                 documents.append(mapping_type.extract_document(obj.id, obj))
-            except StandardError as exc:
+            except Exception as exc:
                 log.exception('Unable to extract document {0}: {1}'.format(
                         obj, repr(exc)))
 
