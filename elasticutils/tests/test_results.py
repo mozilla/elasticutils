@@ -1,4 +1,5 @@
 from datetime import date, datetime
+import pickle
 
 from nose.tools import eq_
 
@@ -411,3 +412,16 @@ class TestMappingType(ESTestCase):
         self.assertRaises(AttributeError, lambda: result.doesnt_exist)
         # If it doesn't exist, throw KeyError
         self.assertRaises(KeyError, lambda: result['doesnt_exist'])
+
+    def test_pickleable(self):
+        data = [
+            {'id': 1, '_object': 'foo'}
+        ]
+
+        self.index_data(data)
+        s = self.get_s(DefaultMappingType)
+        result = list(s)[0]
+
+        pickled_mt = pickle.dumps(result, 2)
+        unpickled = pickle.loads(pickled_mt)
+        eq_(unpickled.id, 1)
