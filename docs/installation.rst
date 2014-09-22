@@ -11,12 +11,12 @@ ElasticUtils requires:
 
 * Python 2.6, 2.7, 3.3 or 3.4
 
-* elasticsearch-py >= 0.4.3 < 1.0 and its dependencies
+* elasticsearch-py >= 1.0 and its dependencies
 
-* Elasticsearch 0.90, 1.0 or 1.1
+* Elasticsearch 0.90 or greater
 
   This does not work with versions of Elasticsearch older than
-  0.90 or newer than 1.1.
+  0.90.
 
 
 Installation
