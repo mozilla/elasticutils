@@ -24,8 +24,11 @@ def monkeypatch_es():
         @wraps(fun)
         def _fixed_bulk(self, *args, **kwargs):
             def fix_item(item):
-                if 'ok' in item['index']:
-                    item['index']['status'] = 201
+                # Go through all the possible sections of item looking
+                # for 'ok' and adding an additional 'status'.
+                for key, val in item.items():
+                    if 'ok' in val:
+                        val['status'] = 201
                 return item
 
             ret = fun(self, *args, **kwargs)
