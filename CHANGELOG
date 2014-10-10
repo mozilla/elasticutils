@@ -5,6 +5,20 @@ What's new in ElasticUtils
 .. contents::
    :local:
 
+Version 0.11: In development
+-============================
+ 
+ .. Note::
+ 
+   This version supports Elasticsearch 1.0 and later. It does not
+   support versions earlier than 1.0.
+
+   This supports elasticsearch-py >= 1.0.
+ 
+**API-breaking changes:**
+
+**Changes:**
+
 
 Version 0.10.2: October 10th, 2014
 ==================================
