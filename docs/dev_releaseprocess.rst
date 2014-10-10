@@ -31,6 +31,8 @@
 
        $ git tag -a v0.4
 
+   Copy the details from ``CHANGELOG`` into the tag comment.
+
 7. Push everything::
 
        $ git push --tags official master
