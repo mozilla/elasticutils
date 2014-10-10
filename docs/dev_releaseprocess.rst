@@ -17,6 +17,9 @@
 
    Make sure to set the date for the release in CHANGELOG.
 
+   Make sure requirements in ``setup.py``, ``docs/installation.rst``
+   and ``CHANGELOG`` all match.
+
 5. Verify correctness.
 
    1. Run tests.

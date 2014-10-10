@@ -13,7 +13,7 @@ ElasticUtils requires:
 
 * elasticsearch-py >= 1.0 and its dependencies
 
-* Elasticsearch 0.90 or greater
+* Elasticsearch >= 0.90
 
   This does not work with versions of Elasticsearch older than
   0.90.
