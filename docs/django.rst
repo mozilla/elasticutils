@@ -189,6 +189,7 @@ Here's one that uses `Indexable` and handles indexing:
                 }
             }
 
+        @classmethod
         def extract_document(cls, obj_id, obj=None):
             """Converts this instance into an Elasticsearch document"""
             if obj is None:
