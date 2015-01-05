@@ -4,6 +4,13 @@
  ElasticUtils
 ==============
 
+**Deprecated January 5th, 2015**
+
+This project is no longer being maintained. Last release is
+ElasticUtils 0.10.2. You should consider switching to
+`elasticsearch-dsl-py <https://github.com/elasticsearch/elasticsearch-dsl-py>`_.
+
+
 :Version:       |release|
 :Code:          https://github.com/mozilla/elasticutils
 :License:       BSD; see LICENSE file
