@@ -5,19 +5,20 @@ What's new in ElasticUtils
 .. contents::
    :local:
 
-Version 0.11: In development
-============================
+Version 0.11: There will be no 0.11
+===================================
  
- .. Note::
- 
-   This version supports Elasticsearch 1.0 and later. It does not
-   support versions earlier than 1.0.
+.. Warning::
 
-   This supports elasticsearch-py >= 1.0.
- 
-**API-breaking changes:**
+   Development on this project has ceased. There will be no 0.11.
+
+
+Version 0.10.3: March 4th, 2015
+===============================
 
 **Changes:**
+
+* Added support for terms_stats facet.
 
 
 Version 0.10.2: October 10th, 2014
