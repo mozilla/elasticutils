@@ -34,6 +34,7 @@ FACET_TYPES = [
     'range',
     'statistical',
     'terms',
+    'terms_stats',
 ]
 
 #: Maps ElasticUtils field actions to their Elasticsearch query names.
